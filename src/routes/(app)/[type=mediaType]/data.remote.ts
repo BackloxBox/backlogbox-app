@@ -34,12 +34,12 @@ const addItemSchema = v.object({
 	pageCount: v.optional(v.nullable(v.number())),
 	isbn: v.optional(v.nullable(v.string())),
 	director: v.optional(v.nullable(v.string())),
+	genre: v.optional(v.nullable(v.string())),
 	runtime: v.optional(v.nullable(v.number())),
 	tmdbId: v.optional(v.nullable(v.number())),
 	totalSeasons: v.optional(v.nullable(v.number())),
 	currentSeason: v.optional(v.nullable(v.number())),
 	platform: v.optional(v.nullable(v.string())),
-	genre: v.optional(v.nullable(v.string())),
 	playtimeMinutes: v.optional(v.nullable(v.number())),
 	igdbId: v.optional(v.nullable(v.number())),
 	host: v.optional(v.nullable(v.string())),
@@ -93,8 +93,8 @@ function resolveType(slug: string): MediaType {
 function extractMeta(type: MediaType, data: Record<string, unknown>): Record<string, unknown> {
 	const metaFields: Record<MediaType, string[]> = {
 		book: ['author', 'pageCount', 'isbn'],
-		movie: ['director', 'runtime', 'tmdbId'],
-		series: ['totalSeasons', 'currentSeason', 'tmdbId'],
+		movie: ['director', 'genre', 'runtime', 'tmdbId'],
+		series: ['genre', 'totalSeasons', 'currentSeason', 'tmdbId'],
 		game: ['platform', 'genre', 'playtimeMinutes', 'igdbId'],
 		podcast: ['host', 'totalEpisodes', 'currentEpisode', 'applePodcastId']
 	};

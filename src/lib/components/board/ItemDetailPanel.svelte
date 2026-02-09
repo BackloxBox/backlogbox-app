@@ -85,14 +85,16 @@
 		}
 		if (i.movieMeta) {
 			if (i.movieMeta.director) entries.push({ label: 'Director', value: i.movieMeta.director });
+			if (i.movieMeta.genre) entries.push({ label: 'Genre', value: i.movieMeta.genre });
 			if (i.movieMeta.runtime)
 				entries.push({ label: 'Runtime', value: `${i.movieMeta.runtime} min` });
 		}
 		if (i.seriesMeta) {
-			if (i.seriesMeta.totalSeasons)
-				entries.push({ label: 'Seasons', value: String(i.seriesMeta.totalSeasons) });
 			if (i.seriesMeta.currentSeason)
-				entries.push({ label: 'Current', value: `S${i.seriesMeta.currentSeason}` });
+				entries.push({ label: 'Season', value: `S${i.seriesMeta.currentSeason}` });
+			if (i.seriesMeta.genre) entries.push({ label: 'Genre', value: i.seriesMeta.genre });
+			if (i.seriesMeta.totalSeasons)
+				entries.push({ label: 'Total seasons', value: String(i.seriesMeta.totalSeasons) });
 		}
 		if (i.gameMeta) {
 			if (i.gameMeta.platform) entries.push({ label: 'Platform', value: i.gameMeta.platform });
@@ -124,7 +126,16 @@
 	<Sheet.Content side="right" class="flex w-full max-w-md flex-col p-0">
 		{#if item}
 			<Sheet.Header class="px-5 pt-5 pb-0">
-				<Sheet.Title class="truncate">{item.title}</Sheet.Title>
+				<Sheet.Title class="flex items-center gap-2 truncate">
+					{item.title}
+					{#if item.seriesMeta?.currentSeason}
+						<span
+							class="shrink-0 rounded bg-primary px-1.5 py-0.5 text-xs leading-none font-bold text-primary-foreground"
+						>
+							S{item.seriesMeta.currentSeason}
+						</span>
+					{/if}
+				</Sheet.Title>
 				<Sheet.Description class="sr-only">Item details</Sheet.Description>
 			</Sheet.Header>
 

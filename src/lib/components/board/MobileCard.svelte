@@ -15,11 +15,17 @@
 		return '\u2605'.repeat(rating) + '\u2606'.repeat(5 - rating);
 	}
 
+	/** Season badge label for series items (e.g. "S2") */
+	const seasonBadge = $derived.by(() => {
+		const s = item.seriesMeta?.currentSeason;
+		return s ? `S${s}` : null;
+	});
+
 	const sub = $derived.by(() => {
 		if (item.bookMeta?.author) return item.bookMeta.author;
-		if (item.movieMeta?.director) return item.movieMeta.director;
-		if (item.seriesMeta?.totalSeasons) return `${item.seriesMeta.totalSeasons} seasons`;
-		if (item.gameMeta?.platform) return item.gameMeta.platform;
+		if (item.movieMeta) return item.movieMeta.genre ?? item.movieMeta.director ?? '';
+		if (item.seriesMeta) return item.seriesMeta.genre ?? '';
+		if (item.gameMeta) return item.gameMeta.genre ?? item.gameMeta.platform ?? '';
 		if (item.podcastMeta?.host) return item.podcastMeta.host;
 		return '';
 	});
@@ -34,7 +40,7 @@
 		if (e.key === 'Enter' || e.key === ' ') onclick?.(item);
 	}}
 >
-	<div class="flex gap-2.5">
+	<div class="relative flex gap-2.5">
 		<MediaCover title={item.title} coverUrl={item.coverUrl} size="md" />
 		<div class="min-w-0 flex-1">
 			<p class="truncate text-sm font-medium text-foreground">{item.title}</p>
@@ -45,5 +51,12 @@
 				<p class="mt-0.5 text-xs text-amber-400">{stars(item.rating)}</p>
 			{/if}
 		</div>
+		{#if seasonBadge}
+			<span
+				class="absolute -top-1 -right-1 rounded bg-primary px-1 py-0.5 text-[10px] leading-none font-bold text-primary-foreground"
+			>
+				{seasonBadge}
+			</span>
+		{/if}
 	</div>
 </div>

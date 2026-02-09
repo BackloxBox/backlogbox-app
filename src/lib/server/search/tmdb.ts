@@ -7,6 +7,7 @@ interface TMDBMovieResult {
 	poster_path: string | null;
 	release_date?: string;
 	overview?: string;
+	genre_ids?: number[];
 }
 
 interface TMDBTVResult {
@@ -16,10 +17,56 @@ interface TMDBTVResult {
 	first_air_date?: string;
 	overview?: string;
 	number_of_seasons?: number;
+	genre_ids?: number[];
 }
 
 interface TMDBSearchResponse<T> {
 	results: T[];
+}
+
+/**
+ * TMDB genre ID → name mappings (combined movie + TV).
+ * Sourced from /genre/movie/list and /genre/tv/list — static to avoid extra API calls.
+ */
+const TMDB_GENRES: Record<number, string> = {
+	28: 'Action',
+	12: 'Adventure',
+	16: 'Animation',
+	35: 'Comedy',
+	80: 'Crime',
+	99: 'Documentary',
+	18: 'Drama',
+	10751: 'Family',
+	14: 'Fantasy',
+	36: 'History',
+	27: 'Horror',
+	10402: 'Music',
+	9648: 'Mystery',
+	10749: 'Romance',
+	878: 'Sci-Fi',
+	10770: 'TV Movie',
+	53: 'Thriller',
+	10752: 'War',
+	37: 'Western',
+	// TV-specific
+	10759: 'Action & Adventure',
+	10762: 'Kids',
+	10763: 'News',
+	10764: 'Reality',
+	10765: 'Sci-Fi & Fantasy',
+	10766: 'Soap',
+	10767: 'Talk',
+	10768: 'War & Politics'
+};
+
+/** Resolve genre IDs to a comma-separated label string, taking the first two */
+function genreLabel(ids: number[] | undefined): string | null {
+	if (!ids || ids.length === 0) return null;
+	const names = ids
+		.slice(0, 2)
+		.map((id) => TMDB_GENRES[id])
+		.filter(Boolean);
+	return names.length > 0 ? names.join(', ') : null;
 }
 
 function posterUrl(path: string | null): string | null {
@@ -61,7 +108,8 @@ export const tmdbMovieProvider: SearchProvider = {
 			releaseYear: yearFromDate(movie.release_date),
 			meta: {
 				tmdbId: movie.id,
-				director: null // Would need a separate /credits call; skip for search
+				director: null, // Would need a separate /credits call; skip for search
+				genre: genreLabel(movie.genre_ids)
 			}
 		}));
 	}
@@ -89,6 +137,7 @@ export const tmdbSeriesProvider: SearchProvider = {
 			releaseYear: yearFromDate(tv.first_air_date),
 			meta: {
 				tmdbId: tv.id,
+				genre: genreLabel(tv.genre_ids),
 				totalSeasons: tv.number_of_seasons ?? null,
 				currentSeason: null
 			}
