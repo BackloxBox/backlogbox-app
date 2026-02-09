@@ -15,7 +15,12 @@
 		type MediaType
 	} from '$lib/types';
 	import { getBoardItems, addItem, updateItem, deleteItem, reorderItems } from './data.remote';
-	import { searchMedia, getSeriesSeasons, getBookDescription } from '../search.remote';
+	import {
+		searchMedia,
+		getSeriesSeasons,
+		getBookDescription,
+		getMovieDetails
+	} from '../search.remote';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 	import type { SearchResult } from '$lib/server/search';
 
@@ -61,6 +66,17 @@
 		if (mediaType === 'book' && result.externalId) {
 			const description = await getBookDescription(result.externalId);
 			if (description) meta.description = description;
+		}
+
+		// Fetch movie details (director, description, runtime, cast) from TMDB
+		if (mediaType === 'movie' && meta.tmdbId) {
+			const details = await getMovieDetails(meta.tmdbId as number);
+			if (details) {
+				if (details.director) meta.director = details.director;
+				if (details.description) meta.description = details.description;
+				if (details.runtime) meta.runtime = details.runtime;
+				if (details.cast) meta.cast = details.cast;
+			}
 		}
 
 		await addItem({

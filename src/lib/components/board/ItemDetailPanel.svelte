@@ -103,8 +103,13 @@
 		if (i.movieMeta) {
 			if (i.movieMeta.director) entries.push({ label: 'Director', value: i.movieMeta.director });
 			if (i.movieMeta.genre) entries.push({ label: 'Genre', value: i.movieMeta.genre });
-			if (i.movieMeta.runtime)
-				entries.push({ label: 'Runtime', value: `${i.movieMeta.runtime} min` });
+			if (i.movieMeta.cast) entries.push({ label: 'Cast', value: i.movieMeta.cast });
+			if (i.movieMeta.runtime) {
+				const h = Math.floor(i.movieMeta.runtime / 60);
+				const m = i.movieMeta.runtime % 60;
+				const formatted = h > 0 ? `${h}h ${m}m` : `${m}m`;
+				entries.push({ label: 'Runtime', value: formatted });
+			}
 		}
 		if (i.seriesMeta) {
 			if (i.seriesMeta.genre) entries.push({ label: 'Genre', value: i.seriesMeta.genre });
@@ -171,10 +176,15 @@
 					</div>
 				</div>
 
-				<!-- Description (books) -->
+				<!-- Description -->
 				{#if item.bookMeta?.description}
 					<p class="mt-4 text-sm leading-relaxed text-muted-foreground">
 						{item.bookMeta.description}
+					</p>
+				{/if}
+				{#if item.movieMeta?.description}
+					<p class="mt-4 text-sm leading-relaxed text-muted-foreground">
+						{item.movieMeta.description}
 					</p>
 				{/if}
 

@@ -24,6 +24,23 @@ interface TMDBTVDetails {
 	number_of_seasons: number;
 }
 
+interface TMDBMovieDetails {
+	id: number;
+	overview?: string;
+	runtime?: number;
+	credits?: {
+		crew: Array<{ job: string; name: string }>;
+		cast: Array<{ name: string; order: number }>;
+	};
+}
+
+export interface TmdbMovieDetailsResult {
+	director: string | null;
+	description: string | null;
+	runtime: number | null;
+	cast: string | null;
+}
+
 interface TMDBSearchResponse<T> {
 	results: T[];
 }
@@ -157,6 +174,38 @@ export async function fetchTmdbSeriesSeasons(tmdbId: number): Promise<number | n
 		if (!response.ok) return null;
 		const data: TMDBTVDetails = await response.json();
 		return data.number_of_seasons ?? null;
+	} catch {
+		return null;
+	}
+}
+
+/** Fetch movie details (director, description, runtime, cast) from TMDB */
+export async function fetchTmdbMovieDetails(
+	tmdbId: number
+): Promise<TmdbMovieDetailsResult | null> {
+	try {
+		const params = new URLSearchParams({
+			api_key: getApiKey(),
+			append_to_response: 'credits'
+		});
+		const response = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?${params}`);
+		if (!response.ok) return null;
+		const data: TMDBMovieDetails = await response.json();
+
+		const director = data.credits?.crew.find((c) => c.job === 'Director')?.name ?? null;
+		const cast =
+			data.credits?.cast
+				.sort((a, b) => a.order - b.order)
+				.slice(0, 3)
+				.map((c) => c.name)
+				.join(', ') || null;
+
+		return {
+			director,
+			description: data.overview || null,
+			runtime: data.runtime ?? null,
+			cast
+		};
 	} catch {
 		return null;
 	}

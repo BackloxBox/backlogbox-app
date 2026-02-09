@@ -69,6 +69,8 @@ export const movieMeta = pgTable('movie_meta', {
 		.references(() => mediaItem.id, { onDelete: 'cascade' }),
 	director: text('director'),
 	genre: text('genre'),
+	description: text('description'),
+	cast: text('cast'),
 	runtime: integer('runtime'),
 	tmdbId: integer('tmdb_id')
 });
