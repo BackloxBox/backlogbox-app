@@ -144,7 +144,7 @@ export const updateItem = command(updateItemSchema, async (data) => {
 	const userId = requireUserId();
 	const type = resolveType(data.slug);
 
-	if (data.fields) {
+	if (data.fields && Object.keys(data.fields).length > 0) {
 		await updateMediaItemFields(data.id, userId, data.fields);
 	}
 
