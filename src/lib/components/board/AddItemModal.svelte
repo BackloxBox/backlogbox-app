@@ -13,9 +13,10 @@
 		onSearch: (query: string) => Promise<SearchResult[]>;
 		onAdd: (result: SearchResult) => Promise<void>;
 		onManualAdd: (title: string) => Promise<void>;
+		onFetchSeasons?: (tmdbId: number) => Promise<number | null>;
 	};
 
-	let { slug, open, onClose, onSearch, onAdd, onManualAdd }: Props = $props();
+	let { slug, open, onClose, onSearch, onAdd, onManualAdd, onFetchSeasons }: Props = $props();
 
 	let searchQuery = $state('');
 	let results = $state<SearchResult[]>([]);
@@ -30,7 +31,9 @@
 	// Season picker state for series
 	// Season 0 = "All seasons" (no specific season)
 	let pendingResult = $state<SearchResult | null>(null);
+	let pendingTotalSeasons = $state(0);
 	let selectedSeasons = $state<Set<number>>(new Set());
+	let loadingSeasons = $state(false);
 
 	const isSeries = $derived(slug === 'series');
 	const allSeasonsSelected = $derived(selectedSeasons.has(0));
@@ -43,7 +46,9 @@
 		showManualForm = false;
 		manualTitle = '';
 		pendingResult = null;
+		pendingTotalSeasons = 0;
 		selectedSeasons = new Set();
+		loadingSeasons = false;
 	}
 
 	function handleClose() {
@@ -74,23 +79,36 @@
 	}
 
 	async function handleSelect(result: SearchResult) {
-		const totalSeasons = result.meta.totalSeasons as number | null;
-		if (isSeries && totalSeasons && totalSeasons > 0) {
-			// Show season picker
-			pendingResult = result;
-			selectedSeasons = new Set();
+		if (!isSeries) {
+			// Non-series — add directly
+			adding = true;
+			try {
+				await onAdd(result);
+				handleClose();
+			} catch (err) {
+				console.error('Failed to add item:', err);
+			} finally {
+				adding = false;
+			}
 			return;
 		}
 
-		// Non-series or series without season info — add directly
-		adding = true;
-		try {
-			await onAdd(result);
-			handleClose();
-		} catch (err) {
-			console.error('Failed to add item:', err);
-		} finally {
-			adding = false;
+		// Series — fetch season count from TMDB details, then show picker
+		pendingResult = result;
+		selectedSeasons = new Set();
+		pendingTotalSeasons = 0;
+
+		const tmdbId = result.meta.tmdbId as number | null;
+		if (tmdbId && onFetchSeasons) {
+			loadingSeasons = true;
+			try {
+				const count = await onFetchSeasons(tmdbId);
+				pendingTotalSeasons = count ?? 0;
+			} catch {
+				pendingTotalSeasons = 0;
+			} finally {
+				loadingSeasons = false;
+			}
 		}
 	}
 
@@ -120,15 +138,19 @@
 		if (!pendingResult || selectedSeasons.size === 0) return;
 		adding = true;
 		try {
+			const baseMeta = {
+				...pendingResult.meta,
+				totalSeasons: pendingTotalSeasons > 0 ? pendingTotalSeasons : null
+			};
 			if (selectedSeasons.has(0)) {
 				// "All seasons" — add without currentSeason
-				await onAdd(pendingResult);
+				await onAdd({ ...pendingResult, meta: baseMeta });
 			} else {
 				const seasons = [...selectedSeasons].sort((a, b) => a - b);
 				for (const season of seasons) {
 					const seasonResult: SearchResult = {
 						...pendingResult,
-						meta: { ...pendingResult.meta, currentSeason: season }
+						meta: { ...baseMeta, currentSeason: season }
 					};
 					await onAdd(seasonResult);
 				}
@@ -189,7 +211,6 @@
 		<div class="space-y-3">
 			{#if pendingResult}
 				<!-- Season picker for series -->
-				{@const totalSeasons = (pendingResult.meta.totalSeasons as number | null) ?? 0}
 				<div class="space-y-3">
 					<div class="flex items-center gap-3">
 						<MediaCover title={pendingResult.title} coverUrl={pendingResult.coverUrl} size="sm" />
@@ -199,30 +220,34 @@
 						</div>
 					</div>
 
-					<div class="flex flex-wrap gap-1.5">
-						<button
-							class="rounded border px-2.5 py-1 text-xs font-medium transition
-							{allSeasonsSelected
-								? 'border-primary bg-primary text-primary-foreground'
-								: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
-							onclick={() => toggleSeason(0)}
-						>
-							All
-						</button>
-						{#each { length: totalSeasons } as _, i}
-							{@const season = i + 1}
-							{@const selected = selectedSeasons.has(season)}
+					{#if loadingSeasons}
+						<p class="py-4 text-center text-sm text-muted-foreground">Loading seasons...</p>
+					{:else}
+						<div class="flex flex-wrap gap-1.5">
 							<button
 								class="rounded border px-2.5 py-1 text-xs font-medium transition
-								{selected
+								{allSeasonsSelected
 									? 'border-primary bg-primary text-primary-foreground'
 									: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
-								onclick={() => toggleSeason(season)}
+								onclick={() => toggleSeason(0)}
 							>
-								S{season}
+								All
 							</button>
-						{/each}
-					</div>
+							{#each { length: pendingTotalSeasons } as _, i}
+								{@const season = i + 1}
+								{@const selected = selectedSeasons.has(season)}
+								<button
+									class="rounded border px-2.5 py-1 text-xs font-medium transition
+									{selected
+										? 'border-primary bg-primary text-primary-foreground'
+										: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
+									onclick={() => toggleSeason(season)}
+								>
+									S{season}
+								</button>
+							{/each}
+						</div>
+					{/if}
 
 					<div class="flex gap-2">
 						<Button

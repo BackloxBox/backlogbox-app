@@ -15,7 +15,7 @@
 		type MediaType
 	} from '$lib/types';
 	import { getBoardItems, addItem, updateItem, deleteItem, reorderItems } from './data.remote';
-	import { searchMedia } from '../search.remote';
+	import { searchMedia, getSeriesSeasons } from '../search.remote';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 	import type { SearchResult } from '$lib/server/search';
 
@@ -48,6 +48,10 @@
 
 	async function handleSearch(query: string) {
 		return searchMedia({ slug, query });
+	}
+
+	async function handleFetchSeasons(tmdbId: number) {
+		return getSeriesSeasons(tmdbId);
 	}
 
 	async function handleAddFromSearch(result: SearchResult) {
@@ -116,6 +120,7 @@
 	onSearch={handleSearch}
 	onAdd={handleAddFromSearch}
 	onManualAdd={handleManualAdd}
+	onFetchSeasons={handleFetchSeasons}
 />
 
 {#if mediaType}

@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import { query } from '$app/server';
 import { requireUserId } from '$lib/server/auth-guard';
 import { getSearchProvider, type SearchResult } from '$lib/server/search';
+import { fetchTmdbSeriesSeasons } from '$lib/server/search/tmdb';
 import { slugToMediaType } from '$lib/types';
 import { error } from '@sveltejs/kit';
 
@@ -28,4 +29,10 @@ export const searchMedia = query(searchSchema, async (input): Promise<SearchResu
 		console.error(`Search failed for ${type}:`, err);
 		return [];
 	}
+});
+
+/** Fetch total season count for a TMDB series by its tmdbId */
+export const getSeriesSeasons = query(v.number(), async (tmdbId): Promise<number | null> => {
+	requireUserId();
+	return fetchTmdbSeriesSeasons(tmdbId);
 });

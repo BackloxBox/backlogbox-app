@@ -16,8 +16,12 @@ interface TMDBTVResult {
 	poster_path: string | null;
 	first_air_date?: string;
 	overview?: string;
-	number_of_seasons?: number;
 	genre_ids?: number[];
+}
+
+interface TMDBTVDetails {
+	id: number;
+	number_of_seasons: number;
 }
 
 interface TMDBSearchResponse<T> {
@@ -138,9 +142,18 @@ export const tmdbSeriesProvider: SearchProvider = {
 			meta: {
 				tmdbId: tv.id,
 				genre: genreLabel(tv.genre_ids),
-				totalSeasons: tv.number_of_seasons ?? null,
+				totalSeasons: null,
 				currentSeason: null
 			}
 		}));
 	}
 };
+
+/** Fetch season count for a specific TV show from TMDB details endpoint */
+export async function fetchTmdbSeriesSeasons(tmdbId: number): Promise<number | null> {
+	const params = new URLSearchParams({ api_key: getApiKey() });
+	const response = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?${params}`);
+	if (!response.ok) return null;
+	const data: TMDBTVDetails = await response.json();
+	return data.number_of_seasons ?? null;
+}
