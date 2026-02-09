@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { useSortable } from '@dnd-kit-svelte/svelte/sortable';
+	import MediaCover from './MediaCover.svelte';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 
 	type Props = {
@@ -43,9 +44,7 @@
 
 {#snippet cardContent()}
 	<div class="flex gap-2.5">
-		{#if item.coverUrl}
-			<img src={item.coverUrl} alt="" class="h-14 w-10 shrink-0 rounded-sm object-cover" />
-		{/if}
+		<MediaCover title={item.title} coverUrl={item.coverUrl} size="md" />
 		<div class="min-w-0 flex-1">
 			<p class="truncate text-sm font-medium text-foreground">{item.title}</p>
 			{#if sub}

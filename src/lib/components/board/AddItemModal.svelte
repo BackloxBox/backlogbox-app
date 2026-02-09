@@ -3,6 +3,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
+	import MediaCover from './MediaCover.svelte';
 	import type { SearchResult } from '$lib/server/search';
 
 	type Props = {
@@ -132,19 +133,7 @@
 								onclick={() => handleSelect(result)}
 								disabled={adding}
 							>
-								{#if result.coverUrl}
-									<img
-										src={result.coverUrl}
-										alt=""
-										class="h-12 w-9 shrink-0 rounded-sm object-cover"
-									/>
-								{:else}
-									<div
-										class="flex h-12 w-9 shrink-0 items-center justify-center rounded-sm bg-muted text-xs text-muted-foreground"
-									>
-										?
-									</div>
-								{/if}
+								<MediaCover title={result.title} coverUrl={result.coverUrl} size="sm" />
 								<div class="min-w-0 flex-1">
 									<p class="truncate text-sm font-medium text-foreground">{result.title}</p>
 									{#if resultDetail(result)}

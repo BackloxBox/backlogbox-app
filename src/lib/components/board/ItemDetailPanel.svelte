@@ -5,6 +5,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
+	import MediaCover from './MediaCover.svelte';
 	import StarRating from './StarRating.svelte';
 	import { MEDIA_STATUSES, STATUS_LABELS, type MediaStatus, type MediaType } from '$lib/types';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
@@ -131,9 +132,7 @@
 			<div class="flex-1 overflow-y-auto px-5 py-4">
 				<!-- Cover + basic info -->
 				<div class="flex gap-4">
-					{#if item.coverUrl}
-						<img src={item.coverUrl} alt="" class="h-36 w-24 shrink-0 rounded-md object-cover" />
-					{/if}
+					<MediaCover title={item.title} coverUrl={item.coverUrl} size="lg" />
 					<div class="min-w-0 flex-1 space-y-2">
 						{#if item.releaseYear}
 							<p class="text-sm text-muted-foreground">{item.releaseYear}</p>

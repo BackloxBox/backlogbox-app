@@ -57,14 +57,14 @@ export const STATUS_LABELS: Record<MediaType, Record<MediaStatus, string>> = {
 	}
 };
 
-/** Dot color for each status column header */
+/** Dot color for each status column header — high saturation for light & dark legibility */
 export const STATUS_COLORS: Record<MediaStatus, string> = {
-	wishlist: '#6B9BD2',
-	backlog: '#8B8B8B',
-	in_progress: '#E5A63B',
-	on_hold: '#D97A3B',
-	completed: '#4CAF7D',
-	abandoned: '#C45B5B'
+	wishlist: '#3B82F6',
+	backlog: '#737373',
+	in_progress: '#F59E0B',
+	on_hold: '#F97316',
+	completed: '#22C55E',
+	abandoned: '#EF4444'
 };
 
 /** Display name for each media type (singular/plural) */
