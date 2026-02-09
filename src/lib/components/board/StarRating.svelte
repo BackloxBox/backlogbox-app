@@ -22,7 +22,7 @@
 		<button
 			type="button"
 			class="text-lg transition {readonly ? 'cursor-default' : 'cursor-pointer'}
-			{filled ? 'text-amber-400' : 'text-gray-600'}"
+			{filled ? 'text-amber-400' : 'text-muted-foreground/50'}"
 			onclick={() => handleClick(star)}
 			onmouseenter={() => {
 				if (!readonly) hovered = star;

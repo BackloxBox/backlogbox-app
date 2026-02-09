@@ -11,16 +11,16 @@
 </script>
 
 <div class="p-6 lg:p-8">
-	<h1 class="text-2xl font-bold text-white">Dashboard</h1>
-	<p class="mt-1 text-sm text-gray-400">Choose a board to get started.</p>
+	<h1 class="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+	<p class="mt-1 text-sm text-muted-foreground">Choose a board to get started.</p>
 
-	<div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+	<div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 		{#each boards as board}
 			<a
 				href={board.href}
-				class="rounded-lg border border-gray-800 bg-gray-900 p-6 transition hover:border-indigo-500 hover:bg-gray-800"
+				class="rounded-lg border border-border bg-card p-6 text-card-foreground transition hover:bg-accent"
 			>
-				<h2 class="text-lg font-semibold text-white">{board.label}</h2>
+				<h2 class="text-base font-medium">{board.label}</h2>
 			</a>
 		{/each}
 	</div>

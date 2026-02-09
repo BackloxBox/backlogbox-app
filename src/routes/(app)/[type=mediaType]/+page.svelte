@@ -3,6 +3,9 @@
 	import KanbanBoard from '$lib/components/board/KanbanBoard.svelte';
 	import AddItemModal from '$lib/components/board/AddItemModal.svelte';
 	import ItemDetailPanel from '$lib/components/board/ItemDetailPanel.svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Separator } from '$lib/components/ui/separator/index.js';
+	import Plus from '@lucide/svelte/icons/plus';
 	import {
 		slugToMediaType,
 		MEDIA_TYPE_LABELS,
@@ -66,6 +69,8 @@
 
 	async function handleUpdateItem(fields: Record<string, unknown>, meta?: Record<string, unknown>) {
 		if (!selectedItem) return;
+		// Optimistically update the local snapshot so the panel reflects changes immediately
+		selectedItem = { ...selectedItem, ...fields } as MediaItemWithMeta;
 		await updateItem({ id: selectedItem.id, slug, fields, meta });
 		getBoardItems(slug).refresh();
 	}
@@ -79,15 +84,15 @@
 </script>
 
 <div class="flex h-full flex-col">
-	<header class="flex items-center justify-between border-b border-gray-800 px-6 py-4">
-		<h1 class="text-xl font-bold text-white">{typeLabel}</h1>
-		<button
-			class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
-			onclick={() => (addModalOpen = true)}
-		>
-			+ Add
-		</button>
+	<header class="flex items-center justify-between px-6 py-3">
+		<h1 class="text-lg font-semibold tracking-tight text-foreground">{typeLabel}</h1>
+		<Button size="sm" onclick={() => (addModalOpen = true)}>
+			<Plus class="size-4" />
+			Add
+		</Button>
 	</header>
+
+	<Separator />
 
 	{#if statusLabels && slug}
 		{@const allItems = await getBoardItems(slug)}

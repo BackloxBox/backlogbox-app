@@ -6,7 +6,14 @@
 	import KanbanColumn from './KanbanColumn.svelte';
 	import KanbanCard from './KanbanCard.svelte';
 	import MobileCard from './MobileCard.svelte';
-	import { MEDIA_STATUSES, type MediaStatus } from '$lib/types';
+	import {
+		Collapsible,
+		CollapsibleContent,
+		CollapsibleTrigger
+	} from '$lib/components/ui/collapsible/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import { MEDIA_STATUSES, STATUS_COLORS, type MediaStatus } from '$lib/types';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 
 	type Props = {
@@ -83,11 +90,12 @@
 			}}
 			onDragEnd={handleDragEnd}
 		>
-			<div class="flex h-full gap-4 overflow-x-auto p-4 lg:p-6">
+			<div class="flex h-full gap-3 overflow-x-auto p-4">
 				{#each MEDIA_STATUSES as status}
 					<KanbanColumn
 						{status}
 						label={statusLabels[status]}
+						color={STATUS_COLORS[status]}
 						items={columns[status] ?? []}
 						{slug}
 						{onCardClick}
@@ -106,24 +114,30 @@
 		</DragDropProvider>
 	{:else}
 		<!-- SSR placeholder: render static columns without DnD -->
-		<div class="flex h-full gap-4 overflow-x-auto p-4 lg:p-6">
+		<div class="flex h-full gap-3 overflow-x-auto p-4">
 			{#each MEDIA_STATUSES as status}
 				{@const items = columns[status] ?? []}
-				<div class="flex w-72 min-w-72 flex-col rounded-lg border border-gray-800 bg-gray-900">
-					<div class="flex items-center justify-between border-b border-gray-800 px-4 py-3">
-						<h2 class="text-sm font-semibold text-gray-300">{statusLabels[status]}</h2>
-						<span class="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-400"
-							>{items.length}</span
-						>
+				<div class="flex min-w-0 flex-1 flex-col rounded-lg border border-border bg-muted/40">
+					<div
+						class="flex items-center justify-between rounded-t-lg border-b border-border bg-muted/60 px-3 py-2"
+					>
+						<div class="flex items-center gap-2">
+							<span
+								class="size-2 shrink-0 rounded-full"
+								style:background-color={STATUS_COLORS[status]}
+							></span>
+							<h2 class="text-xs font-medium tracking-wide text-muted-foreground">
+								{statusLabels[status]}
+							</h2>
+						</div>
+						<Badge variant="secondary" class="text-[10px]">{items.length}</Badge>
 					</div>
-					<div class="flex flex-1 flex-col gap-2 overflow-y-auto p-2">
+					<div class="flex flex-1 flex-col gap-1.5 overflow-y-auto p-2">
 						{#each items as item (item.id)}
 							<MobileCard {item} onclick={onCardClick} />
 						{/each}
 						{#if items.length === 0}
-							<div class="flex flex-1 items-center justify-center py-8 text-xs text-gray-600">
-								No items
-							</div>
+							<div class="py-8 text-center text-xs text-muted-foreground">No items</div>
 						{/if}
 					</div>
 				</div>
@@ -137,41 +151,33 @@
 	{#each MEDIA_STATUSES as status}
 		{@const items = columns[status] ?? []}
 		{@const expanded = expandedSections.has(status)}
-		<div class="mb-2">
-			<button
-				class="flex w-full items-center justify-between rounded-md bg-gray-900 px-4 py-3 text-left"
+		<Collapsible open={expanded} class="mb-1.5">
+			<CollapsibleTrigger
+				class="flex w-full items-center justify-between rounded-lg bg-muted/60 px-3 py-2.5 text-left"
 				onclick={() => toggleSection(status)}
 			>
-				<span class="text-sm font-semibold text-gray-300">{statusLabels[status]}</span>
 				<span class="flex items-center gap-2">
-					<span class="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-400"
-						>{items.length}</span
-					>
-					<svg
-						class="h-4 w-4 text-gray-500 transition {expanded ? 'rotate-180' : ''}"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M19 9l-7 7-7-7"
-						/>
-					</svg>
+					<span class="size-2 shrink-0 rounded-full" style:background-color={STATUS_COLORS[status]}
+					></span>
+					<span class="text-sm font-medium text-foreground">{statusLabels[status]}</span>
 				</span>
-			</button>
-			{#if expanded}
-				<div class="mt-1 space-y-2 px-1">
+				<span class="flex items-center gap-2">
+					<Badge variant="secondary" class="text-[10px]">{items.length}</Badge>
+					<ChevronDown
+						class="size-3.5 text-muted-foreground transition {expanded ? 'rotate-180' : ''}"
+					/>
+				</span>
+			</CollapsibleTrigger>
+			<CollapsibleContent>
+				<div class="mt-1.5 space-y-1.5 px-0.5">
 					{#each items as item (item.id)}
 						<MobileCard {item} onclick={onCardClick} />
 					{/each}
 					{#if items.length === 0}
-						<p class="py-4 text-center text-xs text-gray-600">No items</p>
+						<p class="py-4 text-center text-xs text-muted-foreground">No items</p>
 					{/if}
 				</div>
-			{/if}
-		</div>
+			</CollapsibleContent>
+		</Collapsible>
 	{/each}
 </div>

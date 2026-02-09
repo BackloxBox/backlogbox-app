@@ -1,4 +1,10 @@
 <script lang="ts">
+	import * as Sheet from '$lib/components/ui/sheet/index.js';
+	import { NativeSelect, NativeSelectOption } from '$lib/components/ui/native-select/index.js';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Separator } from '$lib/components/ui/separator/index.js';
 	import StarRating from './StarRating.svelte';
 	import { MEDIA_STATUSES, STATUS_LABELS, type MediaStatus, type MediaType } from '$lib/types';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
@@ -108,106 +114,86 @@
 	}
 </script>
 
-{#if item}
-	<!-- Backdrop -->
-	<button
-		class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-		onclick={onClose}
-		aria-label="Close panel"
-		tabindex="-1"
-	></button>
+<Sheet.Root
+	open={item !== null}
+	onOpenChange={(v) => {
+		if (!v) onClose();
+	}}
+>
+	<Sheet.Content side="right" class="flex w-full max-w-md flex-col p-0">
+		{#if item}
+			<Sheet.Header class="px-5 pt-5 pb-0">
+				<Sheet.Title class="truncate">{item.title}</Sheet.Title>
+				<Sheet.Description class="sr-only">Item details</Sheet.Description>
+			</Sheet.Header>
 
-	<!-- Slide-over panel -->
-	<div
-		class="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-gray-700 bg-gray-900 shadow-2xl"
-	>
-		<!-- Header -->
-		<div class="flex items-center justify-between border-b border-gray-800 px-5 py-4">
-			<h2 class="truncate text-lg font-semibold text-white">{item.title}</h2>
-			<button class="shrink-0 text-gray-400 hover:text-white" onclick={onClose} aria-label="Close">
-				<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M6 18L18 6M6 6l12 12"
-					/>
-				</svg>
-			</button>
-		</div>
-
-		<!-- Scrollable content -->
-		<div class="flex-1 overflow-y-auto p-5">
-			<!-- Cover + basic info -->
-			<div class="flex gap-4">
-				{#if item.coverUrl}
-					<img src={item.coverUrl} alt="" class="h-40 w-28 shrink-0 rounded-md object-cover" />
-				{/if}
-				<div class="min-w-0 flex-1 space-y-2">
-					{#if item.releaseYear}
-						<p class="text-sm text-gray-400">{item.releaseYear}</p>
+			<!-- Scrollable content -->
+			<div class="flex-1 overflow-y-auto px-5 py-4">
+				<!-- Cover + basic info -->
+				<div class="flex gap-4">
+					{#if item.coverUrl}
+						<img src={item.coverUrl} alt="" class="h-36 w-24 shrink-0 rounded-md object-cover" />
 					{/if}
+					<div class="min-w-0 flex-1 space-y-2">
+						{#if item.releaseYear}
+							<p class="text-sm text-muted-foreground">{item.releaseYear}</p>
+						{/if}
 
-					<!-- Type-specific metadata -->
-					{#each metaEntries(item) as entry}
-						<div>
-							<span class="text-xs text-gray-500">{entry.label}</span>
-							<p class="text-sm text-gray-300">{entry.value}</p>
-						</div>
-					{/each}
+						{#each metaEntries(item) as entry}
+							<div>
+								<span class="text-xs text-muted-foreground">{entry.label}</span>
+								<p class="text-sm text-foreground">{entry.value}</p>
+							</div>
+						{/each}
+					</div>
 				</div>
-			</div>
 
-			<!-- Status -->
-			<div class="mt-6">
-				<label for="status-select" class="block text-xs font-medium text-gray-500">Status</label>
-				<select
-					id="status-select"
-					class="mt-1 block w-full rounded-md border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-					value={item.status}
-					onchange={handleStatusChange}
-					disabled={saving}
-				>
-					{#each MEDIA_STATUSES as status}
-						<option value={status}>{labels[status]}</option>
-					{/each}
-				</select>
-			</div>
+				<Separator class="my-5" />
 
-			<!-- Rating -->
-			<div class="mt-5">
-				<span class="block text-xs font-medium text-gray-500">Rating</span>
-				<div class="mt-1">
+				<!-- Status -->
+				<div class="space-y-1.5">
+					<Label for="status-select">Status</Label>
+					<NativeSelect
+						id="status-select"
+						class="w-full"
+						value={item.status}
+						onchange={handleStatusChange}
+						disabled={saving}
+					>
+						{#each MEDIA_STATUSES as status}
+							<NativeSelectOption value={status}>{labels[status]}</NativeSelectOption>
+						{/each}
+					</NativeSelect>
+				</div>
+
+				<!-- Rating -->
+				<div class="mt-5 space-y-1.5">
+					<Label>Rating</Label>
 					<StarRating value={item.rating} onRate={handleRate} />
 				</div>
+
+				<!-- Notes -->
+				<div class="mt-5 space-y-1.5">
+					<Label for="notes-textarea">Notes</Label>
+					<Textarea
+						id="notes-textarea"
+						rows={4}
+						placeholder="Your thoughts..."
+						bind:value={notes}
+						oninput={handleNotesInput}
+					/>
+					{#if saving}
+						<p class="text-xs text-muted-foreground">Saving...</p>
+					{/if}
+				</div>
 			</div>
 
-			<!-- Notes -->
-			<div class="mt-5">
-				<label for="notes-textarea" class="block text-xs font-medium text-gray-500">Notes</label>
-				<textarea
-					id="notes-textarea"
-					class="mt-1 block w-full rounded-md border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-					rows="4"
-					placeholder="Your thoughts..."
-					bind:value={notes}
-					oninput={handleNotesInput}
-				></textarea>
-				{#if saving}
-					<p class="mt-1 text-xs text-gray-500">Saving...</p>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Footer actions -->
-		<div class="border-t border-gray-800 px-5 py-4">
-			<button
-				class="w-full rounded-md border border-red-800 px-4 py-2 text-sm text-red-400 transition hover:bg-red-900/30 disabled:opacity-50"
-				onclick={handleDelete}
-				disabled={deleting}
-			>
-				{deleting ? 'Deleting...' : 'Delete item'}
-			</button>
-		</div>
-	</div>
-{/if}
+			<!-- Footer actions -->
+			<Sheet.Footer class="border-t border-border px-5 py-4">
+				<Button variant="destructive" class="w-full" onclick={handleDelete} disabled={deleting}>
+					{deleting ? 'Deleting...' : 'Delete item'}
+				</Button>
+			</Sheet.Footer>
+		{/if}
+	</Sheet.Content>
+</Sheet.Root>

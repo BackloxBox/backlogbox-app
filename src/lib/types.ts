@@ -57,6 +57,16 @@ export const STATUS_LABELS: Record<MediaType, Record<MediaStatus, string>> = {
 	}
 };
 
+/** Dot color for each status column header */
+export const STATUS_COLORS: Record<MediaStatus, string> = {
+	wishlist: '#6B9BD2',
+	backlog: '#8B8B8B',
+	in_progress: '#E5A63B',
+	on_hold: '#D97A3B',
+	completed: '#4CAF7D',
+	abandoned: '#C45B5B'
+};
+
 /** Display name for each media type (singular/plural) */
 export const MEDIA_TYPE_LABELS: Record<MediaType, { singular: string; plural: string }> = {
 	book: { singular: 'Book', plural: 'Books' },

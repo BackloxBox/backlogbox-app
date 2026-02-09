@@ -12,8 +12,6 @@
 
 	let { item, index = 0, group = '', isOverlay = false, onclick }: Props = $props();
 
-	// useSortable is a hook that must be called unconditionally;
-	// when used as overlay, we still call it but won't attach the ref
 	const sortable = useSortable({
 		id: () => item.id,
 		index: () => index,
@@ -44,17 +42,17 @@
 </script>
 
 {#snippet cardContent()}
-	<div class="flex gap-3">
+	<div class="flex gap-2.5">
 		{#if item.coverUrl}
-			<img src={item.coverUrl} alt="" class="h-16 w-11 shrink-0 rounded-sm object-cover" />
+			<img src={item.coverUrl} alt="" class="h-14 w-10 shrink-0 rounded-sm object-cover" />
 		{/if}
 		<div class="min-w-0 flex-1">
-			<p class="truncate text-sm font-medium text-white">{item.title}</p>
+			<p class="truncate text-sm font-medium text-foreground">{item.title}</p>
 			{#if sub}
-				<p class="truncate text-xs text-gray-400">{sub}</p>
+				<p class="truncate text-xs text-muted-foreground">{sub}</p>
 			{/if}
 			{#if item.rating}
-				<p class="mt-1 text-xs text-amber-400">{stars(item.rating)}</p>
+				<p class="mt-0.5 text-xs text-amber-400">{stars(item.rating)}</p>
 			{/if}
 		</div>
 	</div>
@@ -66,9 +64,9 @@
 		{@attach ref}
 		role="button"
 		tabindex="0"
-		class="cursor-pointer rounded-md border border-gray-700 bg-gray-800 p-3 transition select-none
+		class="cursor-pointer rounded-lg border border-border bg-card p-2.5 transition select-none
 		{isDragging ? 'opacity-30' : 'opacity-100'}
-		{isOverlay ? 'shadow-xl ring-2 ring-indigo-500' : 'hover:border-gray-600'}"
+		{isOverlay ? 'shadow-lg ring-2 ring-ring' : 'hover:bg-accent'}"
 		onclick={() => onclick?.(item)}
 		onkeydown={(e) => {
 			if (e.key === 'Enter' || e.key === ' ') onclick?.(item);
@@ -78,8 +76,8 @@
 	</div>
 {:else}
 	<div
-		class="rounded-md border border-gray-700 bg-gray-800 p-3
-		{isOverlay ? 'shadow-xl ring-2 ring-indigo-500' : ''}"
+		class="rounded-lg border border-border bg-card p-2.5
+		{isOverlay ? 'shadow-lg ring-2 ring-ring' : ''}"
 	>
 		{@render cardContent()}
 	</div>

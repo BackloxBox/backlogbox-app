@@ -2,21 +2,24 @@
 	import { useDroppable } from '@dnd-kit-svelte/svelte';
 	import { CollisionPriority } from '@dnd-kit/abstract';
 	import KanbanCard from './KanbanCard.svelte';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import type { MediaStatus } from '$lib/types';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 
 	type Props = {
 		status: MediaStatus;
 		label: string;
+		color: string;
 		items: MediaItemWithMeta[];
 		slug: string;
 		onCardClick?: (item: MediaItemWithMeta) => void;
 	};
 
-	let { status, label, items, slug, onCardClick }: Props = $props();
+	let { status, label, color, items, slug, onCardClick }: Props = $props();
 
 	const { ref, isDropTarget } = useDroppable({
-		id: status,
+		id: () => status,
 		type: 'column',
 		accept: ['item'],
 		collisionPriority: CollisionPriority.Low
@@ -24,23 +27,28 @@
 </script>
 
 <div
-	class="flex w-72 min-w-72 flex-col rounded-lg border bg-gray-900
-	{isDropTarget.current ? 'border-indigo-500' : 'border-gray-800'}"
+	class="flex min-w-0 flex-1 flex-col rounded-lg border border-border bg-muted/40 transition-colors
+	{isDropTarget.current ? 'ring-2 ring-ring' : ''}"
 >
-	<div class="flex items-center justify-between border-b border-gray-800 px-4 py-3">
-		<h2 class="text-sm font-semibold text-gray-300">{label}</h2>
-		<span class="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-400">
-			{items.length}
-		</span>
+	<div
+		class="flex items-center justify-between rounded-t-lg border-b border-border bg-muted/60 px-3 py-2"
+	>
+		<div class="flex items-center gap-2">
+			<span class="size-2 shrink-0 rounded-full" style:background-color={color}></span>
+			<h2 class="text-xs font-medium tracking-wide text-muted-foreground">{label}</h2>
+		</div>
+		<Badge variant="secondary" class="text-[10px]">{items.length}</Badge>
 	</div>
 
-	<div {@attach ref} class="flex flex-1 flex-col gap-2 overflow-y-auto p-2" data-group={status}>
-		{#each items as item, index (item.id)}
-			<KanbanCard {item} {index} group={status} onclick={onCardClick} />
-		{/each}
+	<ScrollArea class="flex-1">
+		<div {@attach ref} class="flex flex-col gap-1.5 p-2" data-group={status}>
+			{#each items as item, index (item.id)}
+				<KanbanCard {item} {index} group={status} onclick={onCardClick} />
+			{/each}
 
-		{#if items.length === 0}
-			<div class="flex flex-1 items-center justify-center py-8 text-xs text-gray-600">No items</div>
-		{/if}
-	</div>
+			{#if items.length === 0}
+				<div class="py-8 text-center text-xs text-muted-foreground">No items</div>
+			{/if}
+		</div>
+	</ScrollArea>
 </div>
