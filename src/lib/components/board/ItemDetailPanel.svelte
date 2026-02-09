@@ -48,13 +48,10 @@
 		}
 	}
 
-	async function handleSeasonChange(e: Event) {
-		const target = e.target as HTMLSelectElement;
-		const val = parseInt(target.value, 10);
+	async function handleSeasonSelect(season: number | null) {
 		saving = true;
 		try {
-			// 0 means "All seasons" → store null
-			await onUpdate({}, { currentSeason: val === 0 ? null : val });
+			await onUpdate({}, { currentSeason: season });
 		} finally {
 			saving = false;
 		}
@@ -193,22 +190,36 @@
 
 				<!-- Season selector (series only) -->
 				{#if item.seriesMeta}
+					{@const currentSeason = item.seriesMeta.currentSeason ?? 0}
 					<div class="mt-5 space-y-1.5">
-						<Label for="season-select">Season</Label>
-						<NativeSelect
-							id="season-select"
-							class="w-full"
-							value={String(item.seriesMeta.currentSeason ?? 0)}
-							onchange={handleSeasonChange}
-							disabled={saving}
-						>
-							<NativeSelectOption value="0">All seasons</NativeSelectOption>
+						<Label>Season</Label>
+						<div class="flex flex-wrap gap-1.5">
+							<button
+								class="rounded border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50
+								{currentSeason === 0
+									? 'border-primary bg-primary text-primary-foreground'
+									: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
+								disabled={saving}
+								onclick={() => handleSeasonSelect(null)}
+							>
+								All
+							</button>
 							{#if item.seriesMeta.totalSeasons}
 								{#each { length: item.seriesMeta.totalSeasons } as _, i}
-									<NativeSelectOption value={String(i + 1)}>Season {i + 1}</NativeSelectOption>
+									{@const season = i + 1}
+									<button
+										class="rounded border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50
+										{currentSeason === season
+											? 'border-primary bg-primary text-primary-foreground'
+											: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
+										disabled={saving}
+										onclick={() => handleSeasonSelect(season)}
+									>
+										S{season}
+									</button>
 								{/each}
 							{/if}
-						</NativeSelect>
+						</div>
 					</div>
 				{/if}
 
