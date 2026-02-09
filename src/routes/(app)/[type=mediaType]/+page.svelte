@@ -73,8 +73,20 @@
 
 	async function handleUpdateItem(fields: Record<string, unknown>, meta?: Record<string, unknown>) {
 		if (!selectedItem) return;
-		// Optimistically update the local snapshot so the panel reflects changes immediately
-		selectedItem = { ...selectedItem, ...fields } as MediaItemWithMeta;
+
+		// Optimistically update top-level fields
+		let updated = { ...selectedItem, ...fields };
+
+		// Optimistically update nested meta for the current media type
+		if (meta && mediaType) {
+			const metaKey = `${mediaType}Meta` as keyof MediaItemWithMeta;
+			const existing = updated[metaKey];
+			if (existing && typeof existing === 'object') {
+				updated = { ...updated, [metaKey]: { ...existing, ...meta } };
+			}
+		}
+
+		selectedItem = updated as MediaItemWithMeta;
 		await updateItem({ id: selectedItem.id, slug, fields, meta });
 		getBoardItems(slug).refresh();
 	}
