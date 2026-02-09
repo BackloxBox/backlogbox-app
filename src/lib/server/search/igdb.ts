@@ -75,7 +75,7 @@ export const igdbProvider: SearchProvider = {
 		const { clientId, accessToken } = await getAccessToken();
 
 		// Escape double quotes in query for IGDB query language
-		const escapedQuery = query.replace(/"/g, '\\"');
+		const escapedQuery = query.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 		const body = `search "${escapedQuery}"; fields id, name, cover.image_id, platforms.name, genres.name, first_release_date; limit 20;`;
 
 		const response = await fetch('https://api.igdb.com/v4/games', {

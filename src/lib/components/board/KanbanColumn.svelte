@@ -37,7 +37,7 @@
 			<span class="size-2 shrink-0 rounded-full" style:background-color={color}></span>
 			<h2 class="text-xs font-medium tracking-wide text-muted-foreground">{label}</h2>
 		</div>
-		<Badge variant="secondary" class="text-[10px]">{items.length}</Badge>
+		<Badge variant="secondary" class="bg-muted-foreground/15 text-[10px]">{items.length}</Badge>
 	</div>
 
 	<ScrollArea class="flex-1">

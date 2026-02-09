@@ -15,6 +15,13 @@
       "when": 1770661266867,
       "tag": "0001_add_genre_to_movie_series_meta",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770667236945,
+      "tag": "0002_book_meta_genre_description",
+      "breakpoints": true
     }
   ]
 }

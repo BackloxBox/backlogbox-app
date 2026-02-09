@@ -57,6 +57,8 @@ export const bookMeta = pgTable('book_meta', {
 		.primaryKey()
 		.references(() => mediaItem.id, { onDelete: 'cascade' }),
 	author: text('author'),
+	genre: text('genre'),
+	description: text('description'),
 	pageCount: integer('page_count'),
 	isbn: text('isbn')
 });

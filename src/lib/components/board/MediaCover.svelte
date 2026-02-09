@@ -26,7 +26,7 @@
 
 	const SIZE_CLASSES: Record<Size, string> = {
 		sm: 'h-12 w-9 text-xs rounded-sm',
-		md: 'h-14 w-10 text-sm rounded-sm',
+		md: 'h-18 w-12 text-sm rounded',
 		lg: 'h-36 w-24 text-2xl rounded-md'
 	};
 </script>

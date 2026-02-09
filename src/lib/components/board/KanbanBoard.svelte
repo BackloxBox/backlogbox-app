@@ -130,7 +130,9 @@
 								{statusLabels[status]}
 							</h2>
 						</div>
-						<Badge variant="secondary" class="text-[10px]">{items.length}</Badge>
+						<Badge variant="secondary" class="bg-muted-foreground/15 text-[10px]"
+							>{items.length}</Badge
+						>
 					</div>
 					<div class="flex flex-1 flex-col gap-1.5 overflow-y-auto p-2">
 						{#each items as item (item.id)}
@@ -162,7 +164,9 @@
 					<span class="text-sm font-medium text-foreground">{statusLabels[status]}</span>
 				</span>
 				<span class="flex items-center gap-2">
-					<Badge variant="secondary" class="text-[10px]">{items.length}</Badge>
+					<Badge variant="secondary" class="bg-muted-foreground/15 text-[10px]"
+						>{items.length}</Badge
+					>
 					<ChevronDown
 						class="size-3.5 text-muted-foreground transition {expanded ? 'rotate-180' : ''}"
 					/>

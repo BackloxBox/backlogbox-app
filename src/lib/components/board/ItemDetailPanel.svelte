@@ -95,6 +95,7 @@
 
 		if (i.bookMeta) {
 			if (i.bookMeta.author) entries.push({ label: 'Author', value: i.bookMeta.author });
+			if (i.bookMeta.genre) entries.push({ label: 'Genre', value: i.bookMeta.genre });
 			if (i.bookMeta.pageCount)
 				entries.push({ label: 'Pages', value: String(i.bookMeta.pageCount) });
 			if (i.bookMeta.isbn) entries.push({ label: 'ISBN', value: i.bookMeta.isbn });
@@ -169,6 +170,13 @@
 						{/each}
 					</div>
 				</div>
+
+				<!-- Description (books) -->
+				{#if item.bookMeta?.description}
+					<p class="mt-4 text-sm leading-relaxed text-muted-foreground">
+						{item.bookMeta.description}
+					</p>
+				{/if}
 
 				<Separator class="my-5" />
 

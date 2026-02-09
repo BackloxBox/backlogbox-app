@@ -31,6 +31,7 @@ const addItemSchema = v.object({
 	status: v.optional(mediaStatusSchema, 'backlog'),
 	// Type-specific metadata (all optional)
 	author: v.optional(v.nullable(v.string())),
+	description: v.optional(v.nullable(v.string())),
 	pageCount: v.optional(v.nullable(v.number())),
 	isbn: v.optional(v.nullable(v.string())),
 	director: v.optional(v.nullable(v.string())),
@@ -92,7 +93,7 @@ function resolveType(slug: string): MediaType {
 /** Extract metadata fields for a given type from flat input */
 function extractMeta(type: MediaType, data: Record<string, unknown>): Record<string, unknown> {
 	const metaFields: Record<MediaType, string[]> = {
-		book: ['author', 'pageCount', 'isbn'],
+		book: ['author', 'genre', 'description', 'pageCount', 'isbn'],
 		movie: ['director', 'genre', 'runtime', 'tmdbId'],
 		series: ['genre', 'totalSeasons', 'currentSeason', 'tmdbId'],
 		game: ['platform', 'genre', 'playtimeMinutes', 'igdbId'],

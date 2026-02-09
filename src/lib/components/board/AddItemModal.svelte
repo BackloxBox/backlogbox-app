@@ -3,6 +3,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import MediaCover from './MediaCover.svelte';
 	import type { SearchResult } from '$lib/server/search';
 
@@ -12,7 +13,7 @@
 		onClose: () => void;
 		onSearch: (query: string) => Promise<SearchResult[]>;
 		onAdd: (result: SearchResult) => Promise<void>;
-		onManualAdd: (title: string) => Promise<void>;
+		onManualAdd: (data: Record<string, unknown>) => Promise<void>;
 		onFetchSeasons?: (tmdbId: number) => Promise<number | null>;
 	};
 
@@ -27,6 +28,15 @@
 	// Manual add form state
 	let showManualForm = $state(false);
 	let manualTitle = $state('');
+	let manualAuthor = $state('');
+	let manualDirector = $state('');
+	let manualGenre = $state('');
+	let manualPlatform = $state('');
+	let manualHost = $state('');
+	let manualYear = $state('');
+	let manualPageCount = $state('');
+	let manualRuntime = $state('');
+	let manualTotalSeasons = $state('');
 
 	// Season picker state for series
 	// Season 0 = "All seasons" (no specific season)
@@ -45,6 +55,15 @@
 		adding = false;
 		showManualForm = false;
 		manualTitle = '';
+		manualAuthor = '';
+		manualDirector = '';
+		manualGenre = '';
+		manualPlatform = '';
+		manualHost = '';
+		manualYear = '';
+		manualPageCount = '';
+		manualRuntime = '';
+		manualTotalSeasons = '';
 		pendingResult = null;
 		pendingTotalSeasons = 0;
 		selectedSeasons = new Set();
@@ -182,11 +201,41 @@
 		return parts.join(' \u00b7 ');
 	}
 
+	/** Collect manual form fields into a flat data object for the add command */
+	function collectManualData(): Record<string, unknown> {
+		const data: Record<string, unknown> = { title: manualTitle.trim() };
+		const year = parseInt(manualYear);
+		if (!isNaN(year)) data.releaseYear = year;
+
+		if (slug === 'books') {
+			if (manualAuthor.trim()) data.author = manualAuthor.trim();
+			if (manualGenre.trim()) data.genre = manualGenre.trim();
+			const pages = parseInt(manualPageCount);
+			if (!isNaN(pages)) data.pageCount = pages;
+		} else if (slug === 'movies') {
+			if (manualDirector.trim()) data.director = manualDirector.trim();
+			if (manualGenre.trim()) data.genre = manualGenre.trim();
+			const rt = parseInt(manualRuntime);
+			if (!isNaN(rt)) data.runtime = rt;
+		} else if (slug === 'series') {
+			if (manualGenre.trim()) data.genre = manualGenre.trim();
+			const ts = parseInt(manualTotalSeasons);
+			if (!isNaN(ts)) data.totalSeasons = ts;
+		} else if (slug === 'games') {
+			if (manualPlatform.trim()) data.platform = manualPlatform.trim();
+			if (manualGenre.trim()) data.genre = manualGenre.trim();
+		} else if (slug === 'podcasts') {
+			if (manualHost.trim()) data.host = manualHost.trim();
+		}
+
+		return data;
+	}
+
 	async function handleManualAdd() {
 		if (!manualTitle.trim()) return;
 		adding = true;
 		try {
-			await onManualAdd(manualTitle.trim());
+			await onManualAdd(collectManualData());
 			handleClose();
 		} catch (err) {
 			console.error('Failed to add item:', err);
@@ -319,17 +368,145 @@
 						Add manually
 					</button>
 				{:else}
-					<div class="flex gap-2">
-						<Input
-							type="text"
-							placeholder="Title"
-							bind:value={manualTitle}
-							onkeydown={(e: KeyboardEvent) => {
-								if (e.key === 'Enter') handleManualAdd();
-							}}
-						/>
-						<Button size="sm" onclick={handleManualAdd} disabled={adding || !manualTitle.trim()}>
-							Add
+					<Separator />
+					<div class="space-y-3">
+						<div class="space-y-1.5">
+							<Label for="manual-title">Title *</Label>
+							<Input id="manual-title" placeholder="Title" bind:value={manualTitle} />
+						</div>
+
+						{#if slug === 'books'}
+							<div class="space-y-1.5">
+								<Label for="manual-author">Author</Label>
+								<Input id="manual-author" placeholder="Author" bind:value={manualAuthor} />
+							</div>
+							<div class="space-y-1.5">
+								<Label for="manual-genre">Genre</Label>
+								<Input id="manual-genre" placeholder="Genre" bind:value={manualGenre} />
+							</div>
+							<div class="grid grid-cols-2 gap-3">
+								<div class="space-y-1.5">
+									<Label for="manual-pages">Pages</Label>
+									<Input
+										id="manual-pages"
+										type="number"
+										placeholder="320"
+										bind:value={manualPageCount}
+									/>
+								</div>
+								<div class="space-y-1.5">
+									<Label for="manual-year">Year</Label>
+									<Input
+										id="manual-year"
+										type="number"
+										placeholder="2024"
+										bind:value={manualYear}
+									/>
+								</div>
+							</div>
+						{:else if slug === 'movies'}
+							<div class="space-y-1.5">
+								<Label for="manual-director">Director</Label>
+								<Input id="manual-director" placeholder="Director" bind:value={manualDirector} />
+							</div>
+							<div class="space-y-1.5">
+								<Label for="manual-genre">Genre</Label>
+								<Input id="manual-genre" placeholder="Genre" bind:value={manualGenre} />
+							</div>
+							<div class="grid grid-cols-2 gap-3">
+								<div class="space-y-1.5">
+									<Label for="manual-runtime">Runtime (min)</Label>
+									<Input
+										id="manual-runtime"
+										type="number"
+										placeholder="120"
+										bind:value={manualRuntime}
+									/>
+								</div>
+								<div class="space-y-1.5">
+									<Label for="manual-year">Year</Label>
+									<Input
+										id="manual-year"
+										type="number"
+										placeholder="2024"
+										bind:value={manualYear}
+									/>
+								</div>
+							</div>
+						{:else if slug === 'series'}
+							<div class="space-y-1.5">
+								<Label for="manual-genre">Genre</Label>
+								<Input id="manual-genre" placeholder="Genre" bind:value={manualGenre} />
+							</div>
+							<div class="grid grid-cols-2 gap-3">
+								<div class="space-y-1.5">
+									<Label for="manual-seasons">Total seasons</Label>
+									<Input
+										id="manual-seasons"
+										type="number"
+										placeholder="3"
+										bind:value={manualTotalSeasons}
+									/>
+								</div>
+								<div class="space-y-1.5">
+									<Label for="manual-year">Year</Label>
+									<Input
+										id="manual-year"
+										type="number"
+										placeholder="2024"
+										bind:value={manualYear}
+									/>
+								</div>
+							</div>
+						{:else if slug === 'games'}
+							<div class="space-y-1.5">
+								<Label for="manual-platform">Platform</Label>
+								<Input
+									id="manual-platform"
+									placeholder="PC, PS5, Switch..."
+									bind:value={manualPlatform}
+								/>
+							</div>
+							<div class="grid grid-cols-2 gap-3">
+								<div class="space-y-1.5">
+									<Label for="manual-genre">Genre</Label>
+									<Input id="manual-genre" placeholder="Genre" bind:value={manualGenre} />
+								</div>
+								<div class="space-y-1.5">
+									<Label for="manual-year">Year</Label>
+									<Input
+										id="manual-year"
+										type="number"
+										placeholder="2024"
+										bind:value={manualYear}
+									/>
+								</div>
+							</div>
+						{:else if slug === 'podcasts'}
+							<div class="grid grid-cols-2 gap-3">
+								<div class="space-y-1.5">
+									<Label for="manual-host">Host</Label>
+									<Input id="manual-host" placeholder="Host" bind:value={manualHost} />
+								</div>
+								<div class="space-y-1.5">
+									<Label for="manual-year">Year</Label>
+									<Input
+										id="manual-year"
+										type="number"
+										placeholder="2024"
+										bind:value={manualYear}
+									/>
+								</div>
+							</div>
+						{/if}
+
+						<Button
+							class="w-full"
+							size="sm"
+							onclick={handleManualAdd}
+							disabled={adding || !manualTitle.trim()}
+						>
+							{adding ? 'Adding...' : 'Add'}
 						</Button>
 					</div>
 				{/if}

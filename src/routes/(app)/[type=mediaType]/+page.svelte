@@ -15,7 +15,7 @@
 		type MediaType
 	} from '$lib/types';
 	import { getBoardItems, addItem, updateItem, deleteItem, reorderItems } from './data.remote';
-	import { searchMedia, getSeriesSeasons } from '../search.remote';
+	import { searchMedia, getSeriesSeasons, getBookDescription } from '../search.remote';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 	import type { SearchResult } from '$lib/server/search';
 
@@ -55,19 +55,27 @@
 	}
 
 	async function handleAddFromSearch(result: SearchResult) {
+		const meta = { ...result.meta };
+
+		// Fetch book description from OpenLibrary works endpoint
+		if (mediaType === 'book' && result.externalId) {
+			const description = await getBookDescription(result.externalId);
+			if (description) meta.description = description;
+		}
+
 		await addItem({
 			slug,
 			title: result.title,
 			coverUrl: result.coverUrl,
 			releaseYear: result.releaseYear,
 			status: 'backlog',
-			...result.meta
+			...meta
 		});
 		getBoardItems(slug).refresh();
 	}
 
-	async function handleManualAdd(title: string) {
-		await addItem({ slug, title, status: 'backlog' });
+	async function handleManualAdd(data: Record<string, unknown>) {
+		await addItem({ slug, status: 'backlog', ...data } as Parameters<typeof addItem>[0]);
 		getBoardItems(slug).refresh();
 	}
 

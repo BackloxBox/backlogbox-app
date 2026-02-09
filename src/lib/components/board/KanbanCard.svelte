@@ -40,7 +40,10 @@
 
 	/** Subtitle based on media type metadata */
 	const sub = $derived.by(() => {
-		if (item.bookMeta?.author) return item.bookMeta.author;
+		if (item.bookMeta) {
+			const parts = [item.bookMeta.author, item.bookMeta.genre].filter(Boolean);
+			return parts.join(' \u00b7 ');
+		}
 		if (item.movieMeta) return item.movieMeta.genre ?? item.movieMeta.director ?? '';
 		if (item.seriesMeta) return item.seriesMeta.genre ?? '';
 		if (item.gameMeta) return item.gameMeta.genre ?? item.gameMeta.platform ?? '';

@@ -151,9 +151,13 @@ export const tmdbSeriesProvider: SearchProvider = {
 
 /** Fetch season count for a specific TV show from TMDB details endpoint */
 export async function fetchTmdbSeriesSeasons(tmdbId: number): Promise<number | null> {
-	const params = new URLSearchParams({ api_key: getApiKey() });
-	const response = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?${params}`);
-	if (!response.ok) return null;
-	const data: TMDBTVDetails = await response.json();
-	return data.number_of_seasons ?? null;
+	try {
+		const params = new URLSearchParams({ api_key: getApiKey() });
+		const response = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?${params}`);
+		if (!response.ok) return null;
+		const data: TMDBTVDetails = await response.json();
+		return data.number_of_seasons ?? null;
+	} catch {
+		return null;
+	}
 }

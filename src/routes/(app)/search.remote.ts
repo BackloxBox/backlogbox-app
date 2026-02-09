@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import { query } from '$app/server';
 import { requireUserId } from '$lib/server/auth-guard';
 import { getSearchProvider, type SearchResult } from '$lib/server/search';
+import { fetchBookDescription } from '$lib/server/search/openlibrary';
 import { fetchTmdbSeriesSeasons } from '$lib/server/search/tmdb';
 import { slugToMediaType } from '$lib/types';
 import { error } from '@sveltejs/kit';
@@ -35,4 +36,10 @@ export const searchMedia = query(searchSchema, async (input): Promise<SearchResu
 export const getSeriesSeasons = query(v.number(), async (tmdbId): Promise<number | null> => {
 	requireUserId();
 	return fetchTmdbSeriesSeasons(tmdbId);
+});
+
+/** Fetch book description from OpenLibrary works endpoint */
+export const getBookDescription = query(v.string(), async (workKey): Promise<string | null> => {
+	requireUserId();
+	return fetchBookDescription(workKey);
 });
