@@ -29,6 +29,13 @@
 		notes = item?.notes ?? '';
 	});
 
+	/** Season badge for the header */
+	const seasonLabel = $derived.by(() => {
+		if (!item?.seriesMeta) return null;
+		const s = item.seriesMeta.currentSeason;
+		return s ? `S${s}` : 'All';
+	});
+
 	const labels = $derived(STATUS_LABELS[mediaType]);
 
 	async function handleStatusChange(e: Event) {
@@ -36,6 +43,18 @@
 		saving = true;
 		try {
 			await onUpdate({ status: target.value });
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleSeasonChange(e: Event) {
+		const target = e.target as HTMLSelectElement;
+		const val = parseInt(target.value, 10);
+		saving = true;
+		try {
+			// 0 means "All seasons" → store null
+			await onUpdate({}, { currentSeason: val === 0 ? null : val });
 		} finally {
 			saving = false;
 		}
@@ -90,11 +109,7 @@
 				entries.push({ label: 'Runtime', value: `${i.movieMeta.runtime} min` });
 		}
 		if (i.seriesMeta) {
-			if (i.seriesMeta.currentSeason)
-				entries.push({ label: 'Season', value: `S${i.seriesMeta.currentSeason}` });
 			if (i.seriesMeta.genre) entries.push({ label: 'Genre', value: i.seriesMeta.genre });
-			if (i.seriesMeta.totalSeasons)
-				entries.push({ label: 'Total seasons', value: String(i.seriesMeta.totalSeasons) });
 		}
 		if (i.gameMeta) {
 			if (i.gameMeta.platform) entries.push({ label: 'Platform', value: i.gameMeta.platform });
@@ -128,11 +143,11 @@
 			<Sheet.Header class="px-5 pt-5 pb-0">
 				<Sheet.Title class="flex items-center gap-2 truncate">
 					{item.title}
-					{#if item.seriesMeta?.currentSeason}
+					{#if seasonLabel}
 						<span
 							class="shrink-0 rounded bg-primary px-1.5 py-0.5 text-xs leading-none font-bold text-primary-foreground"
 						>
-							S{item.seriesMeta.currentSeason}
+							{seasonLabel}
 						</span>
 					{/if}
 				</Sheet.Title>
@@ -175,6 +190,27 @@
 						{/each}
 					</NativeSelect>
 				</div>
+
+				<!-- Season selector (series only) -->
+				{#if item.seriesMeta}
+					<div class="mt-5 space-y-1.5">
+						<Label for="season-select">Season</Label>
+						<NativeSelect
+							id="season-select"
+							class="w-full"
+							value={String(item.seriesMeta.currentSeason ?? 0)}
+							onchange={handleSeasonChange}
+							disabled={saving}
+						>
+							<NativeSelectOption value="0">All seasons</NativeSelectOption>
+							{#if item.seriesMeta.totalSeasons}
+								{#each { length: item.seriesMeta.totalSeasons } as _, i}
+									<NativeSelectOption value={String(i + 1)}>Season {i + 1}</NativeSelectOption>
+								{/each}
+							{/if}
+						</NativeSelect>
+					</div>
+				{/if}
 
 				<!-- Rating -->
 				<div class="mt-5 space-y-1.5">

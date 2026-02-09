@@ -31,10 +31,11 @@
 		return '\u2605'.repeat(rating) + '\u2606'.repeat(5 - rating);
 	}
 
-	/** Season badge label for series items (e.g. "S2") */
+	/** Season badge label for series items (e.g. "S2" or "All") */
 	const seasonBadge = $derived.by(() => {
-		const s = item.seriesMeta?.currentSeason;
-		return s ? `S${s}` : null;
+		if (!item.seriesMeta) return null;
+		const s = item.seriesMeta.currentSeason;
+		return s ? `S${s}` : 'All';
 	});
 
 	/** Subtitle based on media type metadata */

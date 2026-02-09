@@ -28,10 +28,12 @@
 	let manualTitle = $state('');
 
 	// Season picker state for series
+	// Season 0 = "All seasons" (no specific season)
 	let pendingResult = $state<SearchResult | null>(null);
 	let selectedSeasons = $state<Set<number>>(new Set());
 
 	const isSeries = $derived(slug === 'series');
+	const allSeasonsSelected = $derived(selectedSeasons.has(0));
 
 	function reset() {
 		searchQuery = '';
@@ -94,10 +96,22 @@
 
 	function toggleSeason(season: number) {
 		const next = new Set(selectedSeasons);
-		if (next.has(season)) {
-			next.delete(season);
+		if (season === 0) {
+			// "All seasons" is exclusive — deselect individual seasons
+			if (next.has(0)) {
+				next.delete(0);
+			} else {
+				next.clear();
+				next.add(0);
+			}
 		} else {
-			next.add(season);
+			// Individual season — deselect "All"
+			next.delete(0);
+			if (next.has(season)) {
+				next.delete(season);
+			} else {
+				next.add(season);
+			}
 		}
 		selectedSeasons = next;
 	}
@@ -106,13 +120,18 @@
 		if (!pendingResult || selectedSeasons.size === 0) return;
 		adding = true;
 		try {
-			const seasons = [...selectedSeasons].sort((a, b) => a - b);
-			for (const season of seasons) {
-				const seasonResult: SearchResult = {
-					...pendingResult,
-					meta: { ...pendingResult.meta, currentSeason: season }
-				};
-				await onAdd(seasonResult);
+			if (selectedSeasons.has(0)) {
+				// "All seasons" — add without currentSeason
+				await onAdd(pendingResult);
+			} else {
+				const seasons = [...selectedSeasons].sort((a, b) => a - b);
+				for (const season of seasons) {
+					const seasonResult: SearchResult = {
+						...pendingResult,
+						meta: { ...pendingResult.meta, currentSeason: season }
+					};
+					await onAdd(seasonResult);
+				}
 			}
 			handleClose();
 		} catch (err) {
@@ -181,6 +200,15 @@
 					</div>
 
 					<div class="flex flex-wrap gap-1.5">
+						<button
+							class="rounded border px-2.5 py-1 text-xs font-medium transition
+							{allSeasonsSelected
+								? 'border-primary bg-primary text-primary-foreground'
+								: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
+							onclick={() => toggleSeason(0)}
+						>
+							All
+						</button>
 						{#each { length: totalSeasons } as _, i}
 							{@const season = i + 1}
 							{@const selected = selectedSeasons.has(season)}
@@ -213,7 +241,9 @@
 						>
 							{adding
 								? 'Adding...'
-								: `Add ${selectedSeasons.size} season${selectedSeasons.size !== 1 ? 's' : ''}`}
+								: allSeasonsSelected
+									? 'Add all seasons'
+									: `Add ${selectedSeasons.size} season${selectedSeasons.size !== 1 ? 's' : ''}`}
 						</Button>
 					</div>
 				</div>
