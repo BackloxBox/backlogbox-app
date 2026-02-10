@@ -8,6 +8,7 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import MediaCover from './MediaCover.svelte';
 	import StarRating from './StarRating.svelte';
+	import { getSeasonBadge, formatRuntime } from './card-utils';
 	import {
 		MEDIA_STATUSES,
 		STATUS_LABELS,
@@ -46,12 +47,10 @@
 		notes = item?.notes ?? '';
 	});
 
-	/** Season badge for the header */
-	const seasonLabel = $derived.by(() => {
-		if (!item?.seriesMeta) return null;
-		const s = item.seriesMeta.currentSeason;
-		return s ? `S${s}` : 'All';
-	});
+	const seasonLabel = $derived(item ? getSeasonBadge(item) : null);
+	const description = $derived(
+		item?.bookMeta?.description ?? item?.movieMeta?.description ?? item?.seriesMeta?.description
+	);
 
 	const labels = $derived(STATUS_LABELS[mediaType]);
 
@@ -157,12 +156,8 @@
 			if (i.movieMeta.director) entries.push({ label: 'Director', value: i.movieMeta.director });
 			if (i.movieMeta.genre) entries.push({ label: 'Genre', value: i.movieMeta.genre });
 			if (i.movieMeta.cast) entries.push({ label: 'Cast', value: i.movieMeta.cast });
-			if (i.movieMeta.runtime) {
-				const h = Math.floor(i.movieMeta.runtime / 60);
-				const m = i.movieMeta.runtime % 60;
-				const formatted = h > 0 ? `${h}h ${m}m` : `${m}m`;
-				entries.push({ label: 'Runtime', value: formatted });
-			}
+			if (i.movieMeta.runtime)
+				entries.push({ label: 'Runtime', value: formatRuntime(i.movieMeta.runtime) });
 		}
 		if (i.seriesMeta) {
 			if (i.seriesMeta.creator) entries.push({ label: 'Creator', value: i.seriesMeta.creator });
@@ -255,19 +250,9 @@
 				</div>
 
 				<!-- Description -->
-				{#if item.bookMeta?.description}
+				{#if description}
 					<p class="mt-4 text-sm leading-relaxed text-muted-foreground">
-						{item.bookMeta.description}
-					</p>
-				{/if}
-				{#if item.movieMeta?.description}
-					<p class="mt-4 text-sm leading-relaxed text-muted-foreground">
-						{item.movieMeta.description}
-					</p>
-				{/if}
-				{#if item.seriesMeta?.description}
-					<p class="mt-4 text-sm leading-relaxed text-muted-foreground">
-						{item.seriesMeta.description}
+						{description}
 					</p>
 				{/if}
 

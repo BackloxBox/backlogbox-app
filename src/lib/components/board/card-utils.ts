@@ -19,13 +19,23 @@ export function getYearBadge(item: MediaItemWithMeta): string | null {
 	return item.releaseYear ? String(item.releaseYear) : null;
 }
 
+/** Format minutes as "1h 32m", "2h", or "45m" */
+export function formatRuntime(minutes: number): string {
+	const h = Math.floor(minutes / 60);
+	const m = minutes % 60;
+	return h > 0 ? `${h}h${m > 0 ? ` ${m}m` : ''}` : `${m}m`;
+}
+
 /** Runtime badge for movies (e.g. "1h 32m") */
 export function getRuntimeBadge(item: MediaItemWithMeta): string | null {
 	const rt = item.movieMeta?.runtime;
 	if (!rt) return null;
-	const h = Math.floor(rt / 60);
-	const m = rt % 60;
-	return h > 0 ? `${h}h${m > 0 ? ` ${m}m` : ''}` : `${m}m`;
+	return formatRuntime(rt);
+}
+
+/** Single badge for the cover overlay — season for series, runtime for movies, year for books */
+export function getBadge(item: MediaItemWithMeta): string | null {
+	return getSeasonBadge(item) ?? getRuntimeBadge(item) ?? getYearBadge(item);
 }
 
 /** Subtitle string based on media type metadata */

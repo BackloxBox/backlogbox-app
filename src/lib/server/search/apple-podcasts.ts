@@ -1,4 +1,5 @@
 import type { SearchProvider, TypedSearchResult } from './types';
+import { yearFromDate } from './utils';
 
 interface ApplePodcast {
 	collectionId: number;
@@ -13,12 +14,6 @@ interface ApplePodcast {
 interface AppleSearchResponse {
 	resultCount: number;
 	results: ApplePodcast[];
-}
-
-function yearFromDate(dateStr: string | undefined): number | null {
-	if (!dateStr) return null;
-	const year = parseInt(dateStr.substring(0, 4), 10);
-	return Number.isNaN(year) ? null : year;
 }
 
 export const applePodcastsProvider: SearchProvider<'podcast'> = {

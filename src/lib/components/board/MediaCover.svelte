@@ -12,6 +12,9 @@
 
 	let { title, coverUrl, size = 'md', class: className }: Props = $props();
 
+	/** Track the URL that failed so we auto-reset when coverUrl changes */
+	let failedUrl = $state<string | null>(null);
+
 	/** Deterministic hue from title string for consistent placeholder colors */
 	function titleToHue(t: string): number {
 		let hash = 0;
@@ -23,6 +26,7 @@
 
 	const initial = $derived(title.trim().charAt(0).toUpperCase() || '?');
 	const hue = $derived(titleToHue(title));
+	const showImage = $derived(coverUrl && coverUrl !== failedUrl);
 
 	const SIZE_CLASSES: Record<Size, string> = {
 		sm: 'h-12 w-9 text-xs rounded-sm',
@@ -31,8 +35,14 @@
 	};
 </script>
 
-{#if coverUrl}
-	<img src={coverUrl} alt="" class={cn('shrink-0 object-cover', SIZE_CLASSES[size], className)} />
+{#if showImage}
+	<img
+		src={coverUrl}
+		alt={title}
+		loading="lazy"
+		onerror={() => (failedUrl = coverUrl)}
+		class={cn('shrink-0 object-cover', SIZE_CLASSES[size], className)}
+	/>
 {:else}
 	<div
 		class={cn(

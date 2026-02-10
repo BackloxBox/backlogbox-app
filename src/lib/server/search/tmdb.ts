@@ -1,5 +1,6 @@
 import { env } from '$env/dynamic/private';
 import type { SearchProvider, TypedSearchResult } from './types';
+import { yearFromDate } from './utils';
 
 interface TMDBMovieResult {
 	id: number;
@@ -109,12 +110,6 @@ function genreLabel(ids: number[] | undefined): string | null {
 function posterUrl(path: string | null): string | null {
 	if (!path) return null;
 	return `https://image.tmdb.org/t/p/w200${path}`;
-}
-
-function yearFromDate(dateStr: string | undefined): number | null {
-	if (!dateStr) return null;
-	const year = parseInt(dateStr.substring(0, 4), 10);
-	return Number.isNaN(year) ? null : year;
 }
 
 function getApiKey(): string {

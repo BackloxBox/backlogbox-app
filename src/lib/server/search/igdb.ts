@@ -1,5 +1,6 @@
 import { env } from '$env/dynamic/private';
 import type { SearchProvider, TypedSearchResult } from './types';
+import { yearFromTimestamp } from './utils';
 
 interface IGDBGame {
 	id: number;
@@ -61,11 +62,6 @@ async function getAccessToken(): Promise<{ clientId: string; accessToken: string
 function coverUrl(imageId: string | undefined): string | null {
 	if (!imageId) return null;
 	return `https://images.igdb.com/igdb/image/upload/t_cover_big/${imageId}.jpg`;
-}
-
-function yearFromTimestamp(ts: number | undefined): number | null {
-	if (!ts) return null;
-	return new Date(ts * 1000).getFullYear();
 }
 
 export const igdbProvider: SearchProvider<'game'> = {
