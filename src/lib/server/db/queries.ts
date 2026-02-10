@@ -1,6 +1,6 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { db } from './index';
-import { bookMeta, gameMeta, mediaItem, movieMeta, podcastMeta, seriesMeta } from './schema';
+import { bookMeta, gameMeta, mediaItem, movieMeta, podcastMeta, seriesMeta, user } from './schema';
 import type {
 	MediaStatus,
 	MediaType,
@@ -203,4 +203,48 @@ export async function reorderMediaItems(
 				.where(and(eq(mediaItem.id, id), eq(mediaItem.userId, userId)));
 		}
 	});
+}
+
+// ---------------------------------------------------------------------------
+// User profile queries
+// ---------------------------------------------------------------------------
+
+/** Public user profile fields — no email, no sensitive data */
+export type PublicUser = {
+	id: string;
+	name: string;
+	username: string;
+	image: string | null;
+};
+
+/** Look up a public user by username. Returns null if not found or profile is private. */
+export async function getPublicUserByUsername(username: string): Promise<PublicUser | null> {
+	const row = await db.query.user.findFirst({
+		where: and(eq(user.username, username), eq(user.profilePublic, true)),
+		columns: { id: true, name: true, username: true, image: true }
+	});
+	if (!row?.username) return null;
+	return { id: row.id, name: row.name, username: row.username, image: row.image };
+}
+
+/** Get a user's own profile fields for the settings page */
+export async function getUserProfile(userId: string) {
+	return db.query.user.findFirst({
+		where: eq(user.id, userId),
+		columns: { id: true, name: true, email: true, username: true, profilePublic: true }
+	});
+}
+
+/** Update user profile fields (name, username, profilePublic) */
+export async function updateUserProfile(
+	userId: string,
+	fields: Partial<{ name: string; username: string | null; profilePublic: boolean }>
+) {
+	const [updated] = await db.update(user).set(fields).where(eq(user.id, userId)).returning({
+		id: user.id,
+		name: user.name,
+		username: user.username,
+		profilePublic: user.profilePublic
+	});
+	return updated;
 }

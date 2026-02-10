@@ -43,6 +43,13 @@
       "when": 1770704830021,
       "tag": "0005_series_meta_enhancements",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1770718158107,
+      "tag": "0006_add-username-profile-public",
+      "breakpoints": true
     }
   ]
 }

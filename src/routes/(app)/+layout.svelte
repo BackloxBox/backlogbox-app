@@ -14,6 +14,9 @@
 	import Moon from '@lucide/svelte/icons/moon';
 	import Menu from '@lucide/svelte/icons/menu';
 	import LogOut from '@lucide/svelte/icons/log-out';
+	import Settings from '@lucide/svelte/icons/settings';
+	import Link from '@lucide/svelte/icons/link';
+	import Check from '@lucide/svelte/icons/check';
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Film from '@lucide/svelte/icons/film';
 	import Tv from '@lucide/svelte/icons/tv';
@@ -43,6 +46,20 @@
 	});
 
 	let sidebarOpen = $state(false);
+	let copied = $state(false);
+
+	const shareUrl = $derived(
+		data.profile?.username && data.profile.profilePublic
+			? `${page.url.origin}/@${data.profile.username}`
+			: null
+	);
+
+	function copyShareLink() {
+		if (!shareUrl) return;
+		navigator.clipboard.writeText(shareUrl);
+		copied = true;
+		setTimeout(() => (copied = false), 2000);
+	}
 
 	/** User initials for avatar */
 	const initials = $derived(
@@ -111,6 +128,39 @@
 					{item.label}
 				</a>
 			{/each}
+		</div>
+
+		<!-- Bottom nav -->
+		<div class="space-y-0.5 p-2">
+			{#if shareUrl}
+				<button
+					class="flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium text-sidebar-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+					onclick={copyShareLink}
+				>
+					{#if copied}
+						<Check class="size-4 shrink-0 text-green-500" />
+						<span class="text-green-500">Copied!</span>
+					{:else}
+						<Link class="size-4 shrink-0 text-muted-foreground" />
+						Share profile
+					{/if}
+				</button>
+			{/if}
+			<a
+				href="/settings"
+				class="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+				{page.url.pathname === '/settings'
+					? 'bg-sidebar-accent text-sidebar-accent-foreground'
+					: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+				onclick={() => (sidebarOpen = false)}
+			>
+				<Settings
+					class="size-4 shrink-0 {page.url.pathname === '/settings'
+						? 'text-foreground'
+						: 'text-muted-foreground'}"
+				/>
+				Settings
+			</a>
 		</div>
 
 		<Separator />

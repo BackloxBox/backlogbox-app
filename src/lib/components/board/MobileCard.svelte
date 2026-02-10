@@ -10,14 +10,20 @@
 	let { item, onclick }: Props = $props();
 </script>
 
-<div
-	role="button"
-	tabindex="0"
-	class="cursor-pointer rounded-lg border border-border bg-card p-2.5 transition hover:bg-accent"
-	onclick={() => onclick?.(item)}
-	onkeydown={(e) => {
-		if (e.key === 'Enter' || e.key === ' ') onclick?.(item);
-	}}
->
-	<CardBody {item} />
-</div>
+{#if onclick}
+	<div
+		role="button"
+		tabindex="0"
+		class="cursor-pointer rounded-lg border border-border bg-card p-2.5 transition hover:bg-accent"
+		onclick={() => onclick(item)}
+		onkeydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ') onclick(item);
+		}}
+	>
+		<CardBody {item} />
+	</div>
+{:else}
+	<div class="rounded-lg border border-border bg-card p-2.5">
+		<CardBody {item} />
+	</div>
+{/if}

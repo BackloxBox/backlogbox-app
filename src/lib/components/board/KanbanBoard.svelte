@@ -20,13 +20,21 @@
 		groupedItems: Record<MediaStatus, MediaItemWithMeta[]>;
 		statusLabels: Record<MediaStatus, string>;
 		slug: string;
-		onReorder: (
+		readonly?: boolean;
+		onReorder?: (
 			updates: Array<{ id: string; status: MediaStatus; sortOrder: number }>
 		) => Promise<void>;
 		onCardClick?: (item: MediaItemWithMeta) => void;
 	};
 
-	let { groupedItems, statusLabels, slug, onReorder, onCardClick }: Props = $props();
+	let {
+		groupedItems,
+		statusLabels,
+		slug,
+		readonly = false,
+		onReorder,
+		onCardClick
+	}: Props = $props();
 
 	/** Local mutable copy for optimistic DnD updates */
 	let columns = $state<Record<string, MediaItemWithMeta[]>>(structuredClone(groupedItems));
@@ -56,7 +64,7 @@
 		}
 
 		if (updates.length > 0) {
-			await onReorder(updates);
+			await onReorder?.(updates);
 		}
 	}
 
@@ -82,7 +90,7 @@
 
 <!-- Desktop: horizontal Kanban columns (client-only due to DnD context) -->
 <div class="hidden flex-1 lg:block">
-	{#if browser}
+	{#if browser && !readonly}
 		<DragDropProvider
 			sensors={[PointerSensor, KeyboardSensor]}
 			onDragOver={(event) => {
@@ -136,7 +144,7 @@
 					</div>
 					<div class="flex flex-1 flex-col gap-1.5 overflow-y-auto p-2">
 						{#each items as item (item.id)}
-							<MobileCard {item} onclick={onCardClick} />
+							<MobileCard {item} onclick={readonly ? undefined : onCardClick} />
 						{/each}
 						{#if items.length === 0}
 							<div class="py-8 text-center text-xs text-muted-foreground">No items</div>
@@ -175,7 +183,7 @@
 			<CollapsibleContent>
 				<div class="mt-1.5 space-y-1.5 px-0.5">
 					{#each items as item (item.id)}
-						<MobileCard {item} onclick={onCardClick} />
+						<MobileCard {item} onclick={readonly ? undefined : onCardClick} />
 					{/each}
 					{#if items.length === 0}
 						<p class="py-4 text-center text-xs text-muted-foreground">No items</p>
