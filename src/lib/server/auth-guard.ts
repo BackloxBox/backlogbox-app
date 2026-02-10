@@ -13,3 +13,18 @@ export function requireUserId(): string {
 	}
 	return user.id;
 }
+
+/**
+ * Requires both authentication and an active subscription.
+ * Throws 401 if not authenticated, 403 if not subscribed.
+ */
+export function requireSubscription(): string {
+	const { locals } = getRequestEvent();
+	if (!locals.user) {
+		error(401, 'Not authenticated');
+	}
+	if (!locals.subscribed) {
+		error(403, 'Subscription required');
+	}
+	return locals.user.id;
+}

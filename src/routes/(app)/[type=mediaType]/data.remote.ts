@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
 import { command, query } from '$app/server';
-import { requireUserId } from '$lib/server/auth-guard';
+import { requireSubscription } from '$lib/server/auth-guard';
 import {
 	createMediaItem,
 	deleteMediaItem,
@@ -245,13 +245,13 @@ function pick<T extends Record<string, unknown>, K extends keyof T>(
 // --- Remote functions ---
 
 export const getBoardItems = query(v.string(), async (slug) => {
-	const userId = requireUserId();
+	const userId = requireSubscription();
 	const type = resolveType(slug);
 	return getItemsByTypeAndUser(userId, type);
 });
 
 export const addItem = command(addItemSchema, async (data) => {
-	const userId = requireUserId();
+	const userId = requireSubscription();
 	const type = resolveType(data.slug);
 
 	const meta = extractMeta(type, data);
@@ -274,7 +274,7 @@ export const addItem = command(addItemSchema, async (data) => {
 });
 
 export const updateItem = command(updateItemSchema, async (data) => {
-	const userId = requireUserId();
+	const userId = requireSubscription();
 	const type = resolveType(data.slug);
 
 	if (data.fields && Object.keys(data.fields).length > 0) {
@@ -287,14 +287,14 @@ export const updateItem = command(updateItemSchema, async (data) => {
 });
 
 export const deleteItem = command(deleteItemSchema, async (data) => {
-	const userId = requireUserId();
+	const userId = requireSubscription();
 	resolveType(data.slug);
 	const deleted = await deleteMediaItem(data.id, userId);
 	if (!deleted) error(404, 'Item not found');
 });
 
 export const reorderItems = command(reorderSchema, async (data) => {
-	const userId = requireUserId();
+	const userId = requireSubscription();
 	resolveType(data.slug);
 	await reorderMediaItems(userId, data.updates);
 });

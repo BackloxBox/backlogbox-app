@@ -12,6 +12,7 @@ declare global {
 		interface Locals {
 			user?: User;
 			session?: Session;
+			subscribed: boolean;
 		}
 
 		// interface PageData {}

@@ -6,8 +6,10 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { Switch } from '$lib/components/ui/switch/index.js';
+	import { authClient } from '$lib/auth-client';
 	import Link from '@lucide/svelte/icons/link';
 	import Check from '@lucide/svelte/icons/check';
+	import CreditCard from '@lucide/svelte/icons/credit-card';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -15,6 +17,7 @@
 	let profilePublic = $state(data.profile?.profilePublic ?? false);
 	let username = $state(data.profile?.username ?? '');
 	let copied = $state(false);
+	let portalLoading = $state(false);
 
 	const shareUrl = $derived(username && profilePublic ? `${page.url.origin}/@${username}` : null);
 
@@ -23,6 +26,15 @@
 		navigator.clipboard.writeText(shareUrl);
 		copied = true;
 		setTimeout(() => (copied = false), 2000);
+	}
+
+	async function openPortal() {
+		portalLoading = true;
+		try {
+			await authClient.customer.portal();
+		} finally {
+			portalLoading = false;
+		}
 	}
 </script>
 
@@ -86,6 +98,20 @@
 
 		<Button type="submit">Save profile</Button>
 	</form>
+
+	<Separator class="my-8" />
+
+	<!-- Subscription section -->
+	<div class="space-y-4">
+		<h2 class="text-sm font-medium text-foreground">Subscription</h2>
+		<p class="text-xs text-muted-foreground">
+			Manage your billing, update payment method, or cancel.
+		</p>
+		<Button variant="outline" class="gap-2" disabled={portalLoading} onclick={openPortal}>
+			<CreditCard class="size-3.5" />
+			{portalLoading ? 'Opening...' : 'Manage Subscription'}
+		</Button>
+	</div>
 
 	<Separator class="my-8" />
 

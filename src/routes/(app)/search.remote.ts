@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { query } from '$app/server';
-import { requireUserId } from '$lib/server/auth-guard';
+import { requireSubscription } from '$lib/server/auth-guard';
 import { getSearchProvider, type SearchResult } from '$lib/server/search';
 import { fetchBookDescription } from '$lib/server/search/openlibrary';
 import {
@@ -23,7 +23,7 @@ const searchSchema = v.object({
  * Returns normalized results regardless of provider.
  */
 export const searchMedia = query(searchSchema, async (input): Promise<SearchResult[]> => {
-	requireUserId(); // must be authenticated
+	requireSubscription();
 
 	const type = slugToMediaType(input.slug);
 	if (!type) error(400, `Invalid media type slug: ${input.slug}`);
@@ -42,7 +42,7 @@ export const searchMedia = query(searchSchema, async (input): Promise<SearchResu
 export const getSeriesDetails = query(
 	v.number(),
 	async (tmdbId): Promise<TmdbSeriesDetailsResult | null> => {
-		requireUserId();
+		requireSubscription();
 		try {
 			return await fetchTmdbSeriesDetails(tmdbId);
 		} catch (err) {
@@ -56,7 +56,7 @@ export const getSeriesDetails = query(
 export const getMovieDetails = query(
 	v.number(),
 	async (tmdbId): Promise<TmdbMovieDetailsResult | null> => {
-		requireUserId();
+		requireSubscription();
 		try {
 			return await fetchTmdbMovieDetails(tmdbId);
 		} catch (err) {
@@ -68,7 +68,7 @@ export const getMovieDetails = query(
 
 /** Fetch book description from OpenLibrary works endpoint */
 export const getBookDescription = query(v.string(), async (workKey): Promise<string | null> => {
-	requireUserId();
+	requireSubscription();
 	try {
 		return await fetchBookDescription(workKey);
 	} catch (err) {

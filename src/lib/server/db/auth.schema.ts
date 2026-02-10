@@ -9,6 +9,8 @@ export const user = pgTable('user', {
 	image: text('image'),
 	username: text('username').unique(),
 	profilePublic: boolean('profile_public').default(false).notNull(),
+	subscribed: boolean('subscribed').default(false).notNull(),
+	freeAccess: boolean('free_access').default(false).notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()

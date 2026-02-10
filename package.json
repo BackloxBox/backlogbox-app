@@ -64,6 +64,8 @@
 		"@dnd-kit-svelte/svelte": "^0.1.6",
 		"@dnd-kit/abstract": "^0.2.4",
 		"@dnd-kit/helpers": "^0.2.4",
+		"@polar-sh/better-auth": "^1.8.0",
+		"@polar-sh/sdk": "^0.42.5",
 		"clsx": "^2.1.1",
 		"geist": "^1.7.0",
 		"mode-watcher": "^1.1.0",

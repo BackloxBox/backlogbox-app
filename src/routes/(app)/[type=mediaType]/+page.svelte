@@ -27,6 +27,7 @@
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 	import type { SearchResult } from '$lib/server/search';
 	import { toast } from 'svelte-sonner';
+	import { handleSubscriptionError } from '$lib/subscription-guard';
 
 	/** Param matcher guarantees this is a valid slug — narrow the type */
 	function asSlug(s: string): MediaTypeSlug {
@@ -78,6 +79,7 @@
 			cachedSeriesDetails[tmdbId] = details;
 			return details?.totalSeasons ?? null;
 		} catch (err) {
+			if (handleSubscriptionError(err)) return null;
 			console.error('fetch seasons failed', { slug, tmdbId, err });
 			toast.error('Could not load season info');
 			return null;
@@ -144,6 +146,7 @@
 			});
 			getBoardItems(slug).refresh();
 		} catch (err) {
+			if (handleSubscriptionError(err)) return;
 			console.error('add item failed', { slug, title: result.title, err });
 			toast.error('Failed to add item');
 			throw err; // re-throw so modal can react (reset adding state)
@@ -155,6 +158,7 @@
 			await addItem({ slug, status: 'backlog', ...data } as Parameters<typeof addItem>[0]);
 			getBoardItems(slug).refresh();
 		} catch (err) {
+			if (handleSubscriptionError(err)) return;
 			console.error('manual add failed', { slug, title: data.title, err });
 			toast.error('Failed to add item');
 			throw err;
@@ -186,6 +190,7 @@
 			>[0]);
 			getBoardItems(slug).refresh();
 		} catch (err) {
+			if (handleSubscriptionError(err)) return;
 			console.error('update item failed', {
 				slug,
 				itemId: selectedItem.id,
@@ -205,6 +210,7 @@
 			selectedItem = null;
 			getBoardItems(slug).refresh();
 		} catch (err) {
+			if (handleSubscriptionError(err)) return;
 			console.error('delete item failed', { slug, itemId: selectedItem?.id, err });
 			toast.error('Failed to delete item');
 		}
@@ -225,6 +231,7 @@
 	{#if statusLabels && slug}
 		<svelte:boundary
 			onerror={(err) => {
+				if (handleSubscriptionError(err)) return;
 				console.error('board render error', { slug, err });
 				toast.error('Something went wrong loading the board');
 			}}
@@ -239,6 +246,7 @@
 					try {
 						await reorderItems({ slug, updates });
 					} catch (err) {
+						if (handleSubscriptionError(err)) return;
 						console.error('reorder failed', { slug, count: updates.length, err });
 						toast.error('Failed to save new order');
 						getBoardItems(slug).refresh();

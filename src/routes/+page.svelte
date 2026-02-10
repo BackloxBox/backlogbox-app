@@ -61,6 +61,7 @@
 			{#if user}
 				<Button variant="outline" size="sm" href="/dashboard">Dashboard</Button>
 			{:else}
+				<Button variant="ghost" size="sm" href="/subscribe">Pricing</Button>
 				<Button variant="ghost" size="sm" href="/login">Sign in</Button>
 				<Button size="sm" href="/register">Get Started</Button>
 			{/if}

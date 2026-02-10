@@ -231,8 +231,21 @@ export async function getPublicUserByUsername(username: string): Promise<PublicU
 export async function getUserProfile(userId: string) {
 	return db.query.user.findFirst({
 		where: eq(user.id, userId),
-		columns: { id: true, name: true, email: true, username: true, profilePublic: true }
+		columns: {
+			id: true,
+			name: true,
+			email: true,
+			username: true,
+			profilePublic: true,
+			subscribed: true,
+			freeAccess: true
+		}
 	});
+}
+
+/** Set user subscription status (called from Polar webhooks) */
+export async function setUserSubscribed(userId: string, subscribed: boolean) {
+	await db.update(user).set({ subscribed }).where(eq(user.id, userId));
 }
 
 /** Update user profile fields (name, username, profilePublic) */

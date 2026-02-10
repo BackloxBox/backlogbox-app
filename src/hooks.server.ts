@@ -5,6 +5,7 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { log } from '$lib/server/logger';
+import { getUserProfile } from '$lib/server/db/queries';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -18,9 +19,14 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
 	const session = await auth.api.getSession({ headers: event.request.headers });
 
+	event.locals.subscribed = false;
+
 	if (session) {
 		event.locals.session = session.session;
 		event.locals.user = session.user;
+
+		const profile = await getUserProfile(session.user.id);
+		event.locals.subscribed = profile?.subscribed === true || profile?.freeAccess === true;
 	}
 
 	return svelteKitHandler({ event, resolve, auth, building });
@@ -31,7 +37,15 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 // ---------------------------------------------------------------------------
 
 /** Paths to skip (static assets, internal SvelteKit routes) */
-const SKIP_PREFIXES = ['/_app/', '/favicon', '/@', '/__data', '/node_modules'];
+const SKIP_PREFIXES = [
+	'/_app/',
+	'/favicon',
+	'/@fs/',
+	'/@vite/',
+	'/@id/',
+	'/__data',
+	'/node_modules'
+];
 
 const handleRequestLog: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
