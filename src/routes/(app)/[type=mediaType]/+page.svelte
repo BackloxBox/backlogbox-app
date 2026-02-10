@@ -78,7 +78,7 @@
 			cachedSeriesDetails[tmdbId] = details;
 			return details?.totalSeasons ?? null;
 		} catch (err) {
-			console.error('Failed to fetch seasons:', err);
+			console.error('fetch seasons failed', { slug, tmdbId, err });
 			toast.error('Could not load season info');
 			return null;
 		}
@@ -144,7 +144,7 @@
 			});
 			getBoardItems(slug).refresh();
 		} catch (err) {
-			console.error('Failed to add item:', err);
+			console.error('add item failed', { slug, title: result.title, err });
 			toast.error('Failed to add item');
 			throw err; // re-throw so modal can react (reset adding state)
 		}
@@ -155,7 +155,7 @@
 			await addItem({ slug, status: 'backlog', ...data } as Parameters<typeof addItem>[0]);
 			getBoardItems(slug).refresh();
 		} catch (err) {
-			console.error('Failed to add item:', err);
+			console.error('manual add failed', { slug, title: data.title, err });
 			toast.error('Failed to add item');
 			throw err;
 		}
@@ -186,7 +186,12 @@
 			>[0]);
 			getBoardItems(slug).refresh();
 		} catch (err) {
-			console.error('Failed to update item:', err);
+			console.error('update item failed', {
+				slug,
+				itemId: selectedItem.id,
+				fields: Object.keys(fields),
+				err
+			});
 			toast.error('Failed to save changes');
 			// Rollback optimistic update
 			selectedItem = previous;
@@ -200,7 +205,7 @@
 			selectedItem = null;
 			getBoardItems(slug).refresh();
 		} catch (err) {
-			console.error('Failed to delete item:', err);
+			console.error('delete item failed', { slug, itemId: selectedItem?.id, err });
 			toast.error('Failed to delete item');
 		}
 	}
@@ -220,7 +225,7 @@
 	{#if statusLabels && slug}
 		<svelte:boundary
 			onerror={(err) => {
-				console.error('Board error:', err);
+				console.error('board render error', { slug, err });
 				toast.error('Something went wrong loading the board');
 			}}
 		>
@@ -234,7 +239,7 @@
 					try {
 						await reorderItems({ slug, updates });
 					} catch (err) {
-						console.error('Failed to reorder:', err);
+						console.error('reorder failed', { slug, count: updates.length, err });
 						toast.error('Failed to save new order');
 						getBoardItems(slug).refresh();
 					}

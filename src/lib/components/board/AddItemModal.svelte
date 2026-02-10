@@ -118,7 +118,7 @@
 				await onAdd(result);
 				handleClose();
 			} catch (err) {
-				console.error('Failed to add item:', err);
+				console.error('add from search failed', { slug, title: result.title, err });
 			} finally {
 				adding = false;
 			}
@@ -190,7 +190,12 @@
 			}
 			handleClose();
 		} catch (err) {
-			console.error('Failed to add item:', err);
+			console.error('add seasons failed', {
+				slug,
+				title: pendingResult?.title,
+				seasons: [...selectedSeasons],
+				err
+			});
 		} finally {
 			adding = false;
 		}
@@ -253,7 +258,7 @@
 			await onManualAdd(collectManualData());
 			handleClose();
 		} catch (err) {
-			console.error('Failed to add item:', err);
+			console.error('manual add failed', { slug, title: manualTitle, err });
 		} finally {
 			adding = false;
 		}

@@ -11,6 +11,7 @@ import {
 } from '$lib/server/search/tmdb';
 import { slugToMediaType } from '$lib/types';
 import { error } from '@sveltejs/kit';
+import { log } from '$lib/server/logger';
 
 const searchSchema = v.object({
 	slug: v.string(),
@@ -32,7 +33,7 @@ export const searchMedia = query(searchSchema, async (input): Promise<SearchResu
 	try {
 		return await provider.search(input.query);
 	} catch (err) {
-		console.error(`Search failed for ${type}:`, err);
+		log.error({ err, mediaType: type, query: input.query }, 'search provider failed');
 		return [];
 	}
 });
@@ -45,7 +46,7 @@ export const getSeriesDetails = query(
 		try {
 			return await fetchTmdbSeriesDetails(tmdbId);
 		} catch (err) {
-			console.error(`Failed to fetch TMDB series details for ${tmdbId}:`, err);
+			log.error({ err, tmdbId, provider: 'tmdb' }, 'series details fetch failed');
 			return null;
 		}
 	}
@@ -59,7 +60,7 @@ export const getMovieDetails = query(
 		try {
 			return await fetchTmdbMovieDetails(tmdbId);
 		} catch (err) {
-			console.error(`Failed to fetch TMDB movie details for ${tmdbId}:`, err);
+			log.error({ err, tmdbId, provider: 'tmdb' }, 'movie details fetch failed');
 			return null;
 		}
 	}
@@ -71,7 +72,7 @@ export const getBookDescription = query(v.string(), async (workKey): Promise<str
 	try {
 		return await fetchBookDescription(workKey);
 	} catch (err) {
-		console.error(`Failed to fetch book description for ${workKey}:`, err);
+		log.error({ err, workKey, provider: 'openlibrary' }, 'book description fetch failed');
 		return null;
 	}
 });

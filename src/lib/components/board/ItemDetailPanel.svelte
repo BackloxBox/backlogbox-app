@@ -61,7 +61,7 @@
 		try {
 			await onUpdate({ status: value });
 		} catch (err) {
-			console.error('Failed to update status:', err);
+			console.error('update status failed', { itemId: item?.id, mediaType, status: value, err });
 			toast.error('Failed to update status');
 		} finally {
 			saving = false;
@@ -73,7 +73,7 @@
 		try {
 			await onUpdate({}, { currentSeason: season });
 		} catch (err) {
-			console.error('Failed to update season:', err);
+			console.error('update season failed', { itemId: item?.id, season, err });
 			toast.error('Failed to update season');
 		} finally {
 			saving = false;
@@ -85,7 +85,7 @@
 		try {
 			await onUpdate({}, { watchingOn: value || null });
 		} catch (err) {
-			console.error('Failed to update platform:', err);
+			console.error('update watchingOn failed', { itemId: item?.id, value, err });
 			toast.error('Failed to update platform');
 		} finally {
 			saving = false;
@@ -97,7 +97,7 @@
 		try {
 			await onUpdate({ rating });
 		} catch (err) {
-			console.error('Failed to update rating:', err);
+			console.error('update rating failed', { itemId: item?.id, rating, err });
 			toast.error('Failed to save rating');
 		} finally {
 			saving = false;
@@ -119,7 +119,7 @@
 			try {
 				await onUpdate({ notes: notes || null });
 			} catch (err) {
-				console.error('Failed to save notes:', err);
+				console.error('save notes failed', { itemId: item?.id, err });
 				toast.error('Failed to save notes');
 			} finally {
 				saving = false;
@@ -133,7 +133,7 @@
 			await onDelete();
 			onClose();
 		} catch (err) {
-			console.error('Failed to delete item:', err);
+			console.error('delete item failed', { itemId: item?.id, title: item?.title, err });
 			toast.error('Failed to delete item');
 		} finally {
 			deleting = false;
