@@ -9,10 +9,12 @@
 	import {
 		slugToMediaType,
 		MEDIA_TYPE_LABELS,
+		MEDIA_TYPE_SLUGS,
 		MEDIA_STATUSES,
 		STATUS_LABELS,
 		type MediaStatus,
-		type MediaType
+		type MediaType,
+		type MediaTypeSlug
 	} from '$lib/types';
 	import { getBoardItems, addItem, updateItem, deleteItem, reorderItems } from './data.remote';
 	import {
@@ -24,9 +26,15 @@
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 	import type { SearchResult } from '$lib/server/search';
 
-	/** Param matcher guarantees this exists and is a valid media type slug */
-	const slug = $derived(page.params.type ?? '');
-	const mediaType = $derived(slugToMediaType(slug) as MediaType);
+	/** Param matcher guarantees this is a valid slug — narrow the type */
+	function asSlug(s: string): MediaTypeSlug {
+		if (MEDIA_TYPE_SLUGS.includes(s as MediaTypeSlug)) return s as MediaTypeSlug;
+		// Fallback shouldn't happen due to param matcher, but satisfies TS
+		return 'books';
+	}
+
+	const slug = $derived(asSlug(page.params.type ?? ''));
+	const mediaType = $derived(slugToMediaType(slug));
 	const typeLabel = $derived(mediaType ? MEDIA_TYPE_LABELS[mediaType].plural : '');
 	const statusLabels = $derived(mediaType ? STATUS_LABELS[mediaType] : null);
 
@@ -35,13 +43,17 @@
 
 	/** Group items by status */
 	function groupByStatus(allItems: MediaItemWithMeta[]): Record<MediaStatus, MediaItemWithMeta[]> {
-		const grouped = Object.fromEntries(
-			MEDIA_STATUSES.map((s) => [s, [] as MediaItemWithMeta[]])
-		) as Record<MediaStatus, MediaItemWithMeta[]>;
+		const grouped: Record<MediaStatus, MediaItemWithMeta[]> = {
+			wishlist: [],
+			backlog: [],
+			in_progress: [],
+			on_hold: [],
+			completed: [],
+			abandoned: []
+		};
 
 		for (const item of allItems) {
-			const status = item.status as MediaStatus;
-			grouped[status].push(item);
+			grouped[item.status].push(item);
 		}
 
 		for (const status of MEDIA_STATUSES) {
@@ -74,8 +86,9 @@
 		}
 
 		// Fetch movie details (director, description, runtime, cast) from TMDB
-		if (mediaType === 'movie' && meta.tmdbId) {
-			const details = await getMovieDetails(meta.tmdbId as number);
+		const movieTmdbId = typeof meta.tmdbId === 'number' ? meta.tmdbId : null;
+		if (mediaType === 'movie' && movieTmdbId) {
+			const details = await getMovieDetails(movieTmdbId);
 			if (details) {
 				if (details.director) meta.director = details.director;
 				if (details.description) meta.description = details.description;
@@ -85,9 +98,9 @@
 		}
 
 		// Enrich series with details (use cache from season picker if available)
-		if (mediaType === 'series' && meta.tmdbId) {
-			const tmdbId = meta.tmdbId as number;
-			const details = cachedSeriesDetails[tmdbId] ?? (await getSeriesDetails(tmdbId));
+		const seriesTmdbId = typeof meta.tmdbId === 'number' ? meta.tmdbId : null;
+		if (mediaType === 'series' && seriesTmdbId) {
+			const details = cachedSeriesDetails[seriesTmdbId] ?? (await getSeriesDetails(seriesTmdbId));
 			if (details) {
 				if (details.description) meta.description = details.description;
 				if (details.creator) meta.creator = details.creator;
@@ -96,7 +109,7 @@
 				if (details.seriesStatus) meta.seriesStatus = details.seriesStatus;
 				if (details.totalSeasons) meta.totalSeasons = details.totalSeasons;
 			}
-			delete cachedSeriesDetails[tmdbId];
+			delete cachedSeriesDetails[seriesTmdbId];
 		}
 
 		await addItem({
@@ -116,22 +129,24 @@
 	}
 
 	async function handleUpdateItem(fields: Record<string, unknown>, meta?: Record<string, unknown>) {
-		if (!selectedItem) return;
+		if (!selectedItem || !mediaType) return;
 
 		// Optimistically update top-level fields
-		let updated = { ...selectedItem, ...fields };
+		let updated: MediaItemWithMeta = { ...selectedItem, ...fields };
 
 		// Optimistically update nested meta for the current media type
-		if (meta && mediaType) {
-			const metaKey = `${mediaType}Meta` as keyof MediaItemWithMeta;
+		if (meta) {
+			const metaKey = `${mediaType}Meta` as const;
 			const existing = updated[metaKey];
 			if (existing && typeof existing === 'object') {
 				updated = { ...updated, [metaKey]: { ...existing, ...meta } };
 			}
 		}
 
-		selectedItem = updated as MediaItemWithMeta;
-		await updateItem({ id: selectedItem.id, slug, fields, meta });
+		selectedItem = updated;
+		await updateItem({ id: selectedItem.id, slug, fields, meta } as Parameters<
+			typeof updateItem
+		>[0]);
 		getBoardItems(slug).refresh();
 	}
 

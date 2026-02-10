@@ -1,6 +1,49 @@
+import type { bookMeta, movieMeta, seriesMeta, gameMeta, podcastMeta } from '$lib/server/db/schema';
+
+// ---------------------------------------------------------------------------
+// Media types
+// ---------------------------------------------------------------------------
+
 /** All supported media types */
 export const MEDIA_TYPES = ['book', 'movie', 'series', 'game', 'podcast'] as const;
 export type MediaType = (typeof MEDIA_TYPES)[number];
+
+// ---------------------------------------------------------------------------
+// Per-type metadata — derived from Drizzle schema to stay in sync
+// ---------------------------------------------------------------------------
+
+/** Meta fields for a single media type, excluding the `mediaItemId` PK */
+type MetaInsert<T extends { $inferInsert: Record<string, unknown> }> = Omit<
+	T['$inferInsert'],
+	'mediaItemId'
+>;
+
+export type BookMetaFields = MetaInsert<typeof bookMeta>;
+export type MovieMetaFields = MetaInsert<typeof movieMeta>;
+export type SeriesMetaFields = MetaInsert<typeof seriesMeta>;
+export type GameMetaFields = MetaInsert<typeof gameMeta>;
+export type PodcastMetaFields = MetaInsert<typeof podcastMeta>;
+
+/** Map from MediaType to its corresponding meta fields */
+export type MetaFieldsFor<T extends MediaType> = T extends 'book'
+	? BookMetaFields
+	: T extends 'movie'
+		? MovieMetaFields
+		: T extends 'series'
+			? SeriesMetaFields
+			: T extends 'game'
+				? GameMetaFields
+				: T extends 'podcast'
+					? PodcastMetaFields
+					: never;
+
+/** Discriminated union of all meta shapes, keyed by type */
+export type TypedMeta =
+	| { type: 'book'; meta: BookMetaFields }
+	| { type: 'movie'; meta: MovieMetaFields }
+	| { type: 'series'; meta: SeriesMetaFields }
+	| { type: 'game'; meta: GameMetaFields }
+	| { type: 'podcast'; meta: PodcastMetaFields };
 
 /** All statuses a media item can be in (Kanban columns) */
 export const MEDIA_STATUSES = [
@@ -103,3 +146,21 @@ export function slugToMediaType(slug: string): MediaType | undefined {
 export function mediaTypeToSlug(type: MediaType): MediaTypeSlug {
 	return TYPE_TO_SLUG[type];
 }
+
+// ---------------------------------------------------------------------------
+// Shared constants
+// ---------------------------------------------------------------------------
+
+/** Streaming platforms for the "Watching on" selector */
+export const STREAMING_PLATFORMS = [
+	'Netflix',
+	'Disney+',
+	'HBO Max',
+	'Prime Video',
+	'Apple TV+',
+	'Hulu',
+	'Paramount+',
+	'Peacock',
+	'Crunchyroll',
+	'YouTube'
+] as const;

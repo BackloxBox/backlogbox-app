@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import type { SearchProvider, SearchResult } from './types';
+import type { SearchProvider, TypedSearchResult } from './types';
 
 interface IGDBGame {
 	id: number;
@@ -68,10 +68,10 @@ function yearFromTimestamp(ts: number | undefined): number | null {
 	return new Date(ts * 1000).getFullYear();
 }
 
-export const igdbProvider: SearchProvider = {
+export const igdbProvider: SearchProvider<'game'> = {
 	mediaType: 'game',
 
-	async search(query: string): Promise<SearchResult[]> {
+	async search(query: string): Promise<TypedSearchResult<'game'>[]> {
 		const { clientId, accessToken } = await getAccessToken();
 
 		// Escape double quotes in query for IGDB query language

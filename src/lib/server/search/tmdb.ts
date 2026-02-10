@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import type { SearchProvider, SearchResult } from './types';
+import type { SearchProvider, TypedSearchResult } from './types';
 
 interface TMDBMovieResult {
 	id: number;
@@ -123,10 +123,10 @@ function getApiKey(): string {
 	return key;
 }
 
-export const tmdbMovieProvider: SearchProvider = {
+export const tmdbMovieProvider: SearchProvider<'movie'> = {
 	mediaType: 'movie',
 
-	async search(query: string): Promise<SearchResult[]> {
+	async search(query: string): Promise<TypedSearchResult<'movie'>[]> {
 		const params = new URLSearchParams({
 			api_key: getApiKey(),
 			query,
@@ -152,10 +152,10 @@ export const tmdbMovieProvider: SearchProvider = {
 	}
 };
 
-export const tmdbSeriesProvider: SearchProvider = {
+export const tmdbSeriesProvider: SearchProvider<'series'> = {
 	mediaType: 'series',
 
-	async search(query: string): Promise<SearchResult[]> {
+	async search(query: string): Promise<TypedSearchResult<'series'>[]> {
 		const params = new URLSearchParams({
 			api_key: getApiKey(),
 			query,

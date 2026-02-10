@@ -7,19 +7,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import MediaCover from './MediaCover.svelte';
 	import type { SearchResult } from '$lib/server/search';
-
-	const STREAMING_PLATFORMS = [
-		'Netflix',
-		'Disney+',
-		'HBO Max',
-		'Prime Video',
-		'Apple TV+',
-		'Hulu',
-		'Paramount+',
-		'Peacock',
-		'Crunchyroll',
-		'YouTube'
-	] as const;
+	import { STREAMING_PLATFORMS } from '$lib/types';
 
 	type Props = {
 		slug: string;
@@ -137,7 +125,7 @@
 		selectedSeasons = new Set();
 		pendingTotalSeasons = 0;
 
-		const tmdbId = result.meta.tmdbId as number | null;
+		const tmdbId = typeof result.meta.tmdbId === 'number' ? result.meta.tmdbId : null;
 		if (tmdbId && onFetchSeasons) {
 			loadingSeasons = true;
 			try {
@@ -206,18 +194,17 @@
 	/** Build a subtitle string from search result metadata */
 	function resultDetail(result: SearchResult): string {
 		const parts: string[] = [];
-		const genre = result.meta.genre as string | null;
+		const m = result.meta;
+
+		const genre = typeof m.genre === 'string' ? m.genre : null;
 		if (genre) parts.push(genre);
 
-		const detail = (result.meta.author ??
-			result.meta.director ??
-			result.meta.host ??
-			result.meta.platform ??
-			'') as string;
+		const detail = [m.author, m.director, m.host, m.platform].find(
+			(v): v is string => typeof v === 'string' && v.length > 0
+		);
 		if (detail) parts.push(detail);
 
-		const year = result.releaseYear ? String(result.releaseYear) : '';
-		if (year) parts.push(year);
+		if (result.releaseYear) parts.push(String(result.releaseYear));
 
 		return parts.join(' \u00b7 ');
 	}

@@ -8,7 +8,13 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import MediaCover from './MediaCover.svelte';
 	import StarRating from './StarRating.svelte';
-	import { MEDIA_STATUSES, STATUS_LABELS, type MediaStatus, type MediaType } from '$lib/types';
+	import {
+		MEDIA_STATUSES,
+		STATUS_LABELS,
+		STREAMING_PLATFORMS,
+		type MediaStatus,
+		type MediaType
+	} from '$lib/types';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 
 	/** Human-friendly descriptions for TMDB series status values */
@@ -19,19 +25,6 @@
 		'In Production': 'Not yet aired, in production',
 		Planned: 'Announced but not yet in production'
 	};
-
-	const STREAMING_PLATFORMS = [
-		'Netflix',
-		'Disney+',
-		'HBO Max',
-		'Prime Video',
-		'Apple TV+',
-		'Hulu',
-		'Paramount+',
-		'Peacock',
-		'Crunchyroll',
-		'YouTube'
-	] as const;
 
 	type Props = {
 		item: MediaItemWithMeta | null;
@@ -264,7 +257,7 @@
 						disabled={saving}
 					>
 						<Select.Trigger class="w-full">
-							{labels[item.status as MediaStatus]}
+							{labels[item.status]}
 						</Select.Trigger>
 						<Select.Content>
 							{#each MEDIA_STATUSES as status}

@@ -10,9 +10,21 @@ import {
 	updateMediaItemFields,
 	updateMediaItemMeta
 } from '$lib/server/db/queries';
-import { slugToMediaType, type MediaStatus, type MediaType } from '$lib/types';
+import {
+	slugToMediaType,
+	type MediaType,
+	type BookMetaFields,
+	type MovieMetaFields,
+	type SeriesMetaFields,
+	type GameMetaFields,
+	type PodcastMetaFields,
+	type MetaFieldsFor
+} from '$lib/types';
 
-// --- Validation schemas ---
+// --- Reusable field schemas ---
+
+const optStr = v.optional(v.nullable(v.string()));
+const optNum = v.optional(v.nullable(v.number()));
 
 const mediaStatusSchema = v.picklist([
 	'wishlist',
@@ -23,55 +35,118 @@ const mediaStatusSchema = v.picklist([
 	'abandoned'
 ]);
 
-const addItemSchema = v.object({
-	slug: v.string(),
+/** Shared base fields present in every add-item variant */
+const addItemBase = {
 	title: v.pipe(v.string(), v.nonEmpty()),
-	coverUrl: v.optional(v.nullable(v.string())),
-	releaseYear: v.optional(v.nullable(v.number())),
-	status: v.optional(mediaStatusSchema, 'backlog'),
-	// Type-specific metadata (all optional)
-	author: v.optional(v.nullable(v.string())),
-	description: v.optional(v.nullable(v.string())),
-	pageCount: v.optional(v.nullable(v.number())),
-	isbn: v.optional(v.nullable(v.string())),
-	language: v.optional(v.nullable(v.string())),
-	publisher: v.optional(v.nullable(v.string())),
-	director: v.optional(v.nullable(v.string())),
-	creator: v.optional(v.nullable(v.string())),
-	cast: v.optional(v.nullable(v.string())),
-	genre: v.optional(v.nullable(v.string())),
-	network: v.optional(v.nullable(v.string())),
-	seriesStatus: v.optional(v.nullable(v.string())),
-	watchingOn: v.optional(v.nullable(v.string())),
-	runtime: v.optional(v.nullable(v.number())),
-	tmdbId: v.optional(v.nullable(v.number())),
-	totalSeasons: v.optional(v.nullable(v.number())),
-	currentSeason: v.optional(v.nullable(v.number())),
-	platform: v.optional(v.nullable(v.string())),
-	playtimeMinutes: v.optional(v.nullable(v.number())),
-	igdbId: v.optional(v.nullable(v.number())),
-	host: v.optional(v.nullable(v.string())),
-	totalEpisodes: v.optional(v.nullable(v.number())),
-	currentEpisode: v.optional(v.nullable(v.number())),
-	applePodcastId: v.optional(v.nullable(v.string()))
+	coverUrl: optStr,
+	releaseYear: optNum,
+	status: v.optional(mediaStatusSchema, 'backlog' as const)
+};
+
+// --- Per-type meta field schemas ---
+
+const bookMetaSchema = v.object({
+	author: optStr,
+	genre: optStr,
+	description: optStr,
+	pageCount: optNum,
+	isbn: optStr,
+	language: optStr,
+	publisher: optStr
 });
 
-const updateItemSchema = v.object({
-	id: v.pipe(v.string(), v.nonEmpty()),
-	slug: v.string(),
-	fields: v.optional(
-		v.object({
-			title: v.optional(v.string()),
-			status: v.optional(mediaStatusSchema),
-			sortOrder: v.optional(v.number()),
-			rating: v.optional(v.nullable(v.number())),
-			notes: v.optional(v.nullable(v.string())),
-			coverUrl: v.optional(v.nullable(v.string())),
-			releaseYear: v.optional(v.nullable(v.number()))
-		})
-	),
-	meta: v.optional(v.record(v.string(), v.unknown()))
+const movieMetaSchema = v.object({
+	director: optStr,
+	genre: optStr,
+	description: optStr,
+	cast: optStr,
+	runtime: optNum,
+	tmdbId: optNum
 });
+
+const seriesMetaSchema = v.object({
+	genre: optStr,
+	description: optStr,
+	creator: optStr,
+	cast: optStr,
+	network: optStr,
+	seriesStatus: optStr,
+	watchingOn: optStr,
+	totalSeasons: optNum,
+	currentSeason: optNum,
+	tmdbId: optNum
+});
+
+const gameMetaSchema = v.object({
+	platform: optStr,
+	genre: optStr,
+	playtimeMinutes: optNum,
+	igdbId: optNum
+});
+
+const podcastMetaSchema = v.object({
+	host: optStr,
+	totalEpisodes: optNum,
+	currentEpisode: optNum,
+	applePodcastId: optStr
+});
+
+// --- Add-item discriminated union (keyed on `slug`) ---
+
+const addItemSchema = v.variant('slug', [
+	v.object({ slug: v.literal('books'), ...addItemBase, ...bookMetaSchema.entries }),
+	v.object({ slug: v.literal('movies'), ...addItemBase, ...movieMetaSchema.entries }),
+	v.object({ slug: v.literal('series'), ...addItemBase, ...seriesMetaSchema.entries }),
+	v.object({ slug: v.literal('games'), ...addItemBase, ...gameMetaSchema.entries }),
+	v.object({ slug: v.literal('podcasts'), ...addItemBase, ...podcastMetaSchema.entries })
+]);
+
+type AddItemInput = v.InferOutput<typeof addItemSchema>;
+
+// --- Update-item discriminated union (keyed on `slug`) ---
+
+const updateFieldsSchema = v.object({
+	title: v.optional(v.string()),
+	status: v.optional(mediaStatusSchema),
+	sortOrder: v.optional(v.number()),
+	rating: v.optional(v.nullable(v.number())),
+	notes: v.optional(v.nullable(v.string())),
+	coverUrl: v.optional(v.nullable(v.string())),
+	releaseYear: v.optional(v.nullable(v.number()))
+});
+
+const updateItemSchema = v.variant('slug', [
+	v.object({
+		id: v.pipe(v.string(), v.nonEmpty()),
+		slug: v.literal('books'),
+		fields: v.optional(updateFieldsSchema),
+		meta: v.optional(bookMetaSchema)
+	}),
+	v.object({
+		id: v.pipe(v.string(), v.nonEmpty()),
+		slug: v.literal('movies'),
+		fields: v.optional(updateFieldsSchema),
+		meta: v.optional(movieMetaSchema)
+	}),
+	v.object({
+		id: v.pipe(v.string(), v.nonEmpty()),
+		slug: v.literal('series'),
+		fields: v.optional(updateFieldsSchema),
+		meta: v.optional(seriesMetaSchema)
+	}),
+	v.object({
+		id: v.pipe(v.string(), v.nonEmpty()),
+		slug: v.literal('games'),
+		fields: v.optional(updateFieldsSchema),
+		meta: v.optional(gameMetaSchema)
+	}),
+	v.object({
+		id: v.pipe(v.string(), v.nonEmpty()),
+		slug: v.literal('podcasts'),
+		fields: v.optional(updateFieldsSchema),
+		meta: v.optional(podcastMetaSchema)
+	})
+]);
 
 const deleteItemSchema = v.object({
 	id: v.pipe(v.string(), v.nonEmpty()),
@@ -97,35 +172,74 @@ function resolveType(slug: string): MediaType {
 	return type;
 }
 
-/** Extract metadata fields for a given type from flat input */
-function extractMeta(type: MediaType, data: Record<string, unknown>): Record<string, unknown> {
-	const metaFields: Record<MediaType, string[]> = {
-		book: ['author', 'genre', 'description', 'pageCount', 'isbn', 'language', 'publisher'],
-		movie: ['director', 'genre', 'description', 'cast', 'runtime', 'tmdbId'],
-		series: [
-			'genre',
-			'description',
-			'creator',
-			'cast',
-			'network',
-			'seriesStatus',
-			'watchingOn',
-			'totalSeasons',
-			'currentSeason',
-			'tmdbId'
-		],
-		game: ['platform', 'genre', 'playtimeMinutes', 'igdbId'],
-		podcast: ['host', 'totalEpisodes', 'currentEpisode', 'applePodcastId']
-	};
+/**
+ * Extract typed metadata from a flat add-item input.
+ * Each branch picks only the fields belonging to that media type,
+ * excluding undefined values so we don't insert empty columns.
+ */
+function extractMeta(type: MediaType, data: AddItemInput): MetaFieldsFor<MediaType> {
+	switch (type) {
+		case 'book':
+			return pick(data as v.InferOutput<(typeof addItemSchema.options)[0]>, [
+				'author',
+				'genre',
+				'description',
+				'pageCount',
+				'isbn',
+				'language',
+				'publisher'
+			]) satisfies BookMetaFields;
+		case 'movie':
+			return pick(data as v.InferOutput<(typeof addItemSchema.options)[1]>, [
+				'director',
+				'genre',
+				'description',
+				'cast',
+				'runtime',
+				'tmdbId'
+			]) satisfies MovieMetaFields;
+		case 'series':
+			return pick(data as v.InferOutput<(typeof addItemSchema.options)[2]>, [
+				'genre',
+				'description',
+				'creator',
+				'cast',
+				'network',
+				'seriesStatus',
+				'watchingOn',
+				'totalSeasons',
+				'currentSeason',
+				'tmdbId'
+			]) satisfies SeriesMetaFields;
+		case 'game':
+			return pick(data as v.InferOutput<(typeof addItemSchema.options)[3]>, [
+				'platform',
+				'genre',
+				'playtimeMinutes',
+				'igdbId'
+			]) satisfies GameMetaFields;
+		case 'podcast':
+			return pick(data as v.InferOutput<(typeof addItemSchema.options)[4]>, [
+				'host',
+				'totalEpisodes',
+				'currentEpisode',
+				'applePodcastId'
+			]) satisfies PodcastMetaFields;
+	}
+}
 
-	const fields = metaFields[type];
-	const meta: Record<string, unknown> = {};
-	for (const field of fields) {
-		if (data[field] !== undefined) {
-			meta[field] = data[field];
+/** Pick defined keys from an object, omitting undefined values */
+function pick<T extends Record<string, unknown>, K extends keyof T>(
+	obj: T,
+	keys: readonly K[]
+): Pick<T, K> {
+	const result = {} as Pick<T, K>;
+	for (const key of keys) {
+		if (obj[key] !== undefined) {
+			result[key] = obj[key];
 		}
 	}
-	return meta;
+	return result;
 }
 
 // --- Remote functions ---
@@ -149,7 +263,7 @@ export const addItem = command(addItemSchema, async (data) => {
 			title: data.title,
 			coverUrl: data.coverUrl ?? null,
 			releaseYear: data.releaseYear ?? null,
-			status: (data.status ?? 'backlog') as MediaStatus,
+			status: data.status ?? 'backlog',
 			sortOrder: 0
 		},
 		meta,

@@ -5,7 +5,7 @@ import { tmdbMovieProvider, tmdbSeriesProvider } from './tmdb';
 import { igdbProvider } from './igdb';
 import { applePodcastsProvider } from './apple-podcasts';
 
-export type { SearchResult } from './types';
+export type { SearchResult, TypedSearchResult, SearchProvider } from './types';
 
 const providers: Record<MediaType, SearchProvider> = {
 	book: openLibraryProvider,

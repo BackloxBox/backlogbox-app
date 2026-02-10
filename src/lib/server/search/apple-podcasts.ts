@@ -1,4 +1,4 @@
-import type { SearchProvider, SearchResult } from './types';
+import type { SearchProvider, TypedSearchResult } from './types';
 
 interface ApplePodcast {
 	collectionId: number;
@@ -21,10 +21,10 @@ function yearFromDate(dateStr: string | undefined): number | null {
 	return Number.isNaN(year) ? null : year;
 }
 
-export const applePodcastsProvider: SearchProvider = {
+export const applePodcastsProvider: SearchProvider<'podcast'> = {
 	mediaType: 'podcast',
 
-	async search(query: string): Promise<SearchResult[]> {
+	async search(query: string): Promise<TypedSearchResult<'podcast'>[]> {
 		const params = new URLSearchParams({
 			term: query,
 			media: 'podcast',

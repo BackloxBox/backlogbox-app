@@ -1,4 +1,4 @@
-import type { SearchProvider, SearchResult } from './types';
+import type { SearchProvider, TypedSearchResult } from './types';
 
 interface OpenLibraryDoc {
 	key: string;
@@ -83,10 +83,10 @@ function extractGenres(subjects: string[] | undefined, max = 2): string | null {
 	return clean.length > 0 ? clean.join(', ') : null;
 }
 
-export const openLibraryProvider: SearchProvider = {
+export const openLibraryProvider: SearchProvider<'book'> = {
 	mediaType: 'book',
 
-	async search(query: string): Promise<SearchResult[]> {
+	async search(query: string): Promise<TypedSearchResult<'book'>[]> {
 		const params = new URLSearchParams({
 			q: query,
 			fields:
