@@ -2,7 +2,7 @@
 	import * as Chart from '$lib/components/ui/chart/index.js';
 	import { BarChart } from 'layerchart';
 	import { scaleBand } from 'd3-scale';
-	import { MEDIA_TYPE_LABELS, type MediaType } from '$lib/types';
+	import { MEDIA_TYPE_LABELS, MEDIA_TYPE_COLORS, type MediaType } from '$lib/types';
 
 	type GenreEntry = { genre: string; type: MediaType; count: number };
 
@@ -12,14 +12,7 @@
 
 	let { genres }: Props = $props();
 
-	/** Color per media type — matches dashboard TYPE_COLORS */
-	const TYPE_COLORS: Record<MediaType, string> = {
-		book: '#3B82F6',
-		movie: '#22C55E',
-		series: '#F59E0B',
-		game: '#F97316',
-		podcast: '#EF4444'
-	};
+	const TYPE_COLORS = MEDIA_TYPE_COLORS;
 
 	const chartData = $derived(
 		genres.map((g) => ({

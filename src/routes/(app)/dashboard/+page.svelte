@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { MEDIA_TYPES, MEDIA_TYPE_LABELS, mediaTypeToSlug, type MediaType } from '$lib/types';
+	import {
+		MEDIA_TYPES,
+		MEDIA_TYPE_LABELS,
+		MEDIA_TYPE_COLORS,
+		mediaTypeToSlug,
+		type MediaType
+	} from '$lib/types';
 	import * as Chart from '$lib/components/ui/chart/index.js';
 	import { AreaChart } from 'layerchart';
 	import { curveMonotoneX } from 'd3-shape';
@@ -28,13 +34,7 @@
 		podcast: Podcast
 	};
 
-	const TYPE_COLORS: Record<MediaType, string> = {
-		book: '#3B82F6',
-		movie: '#22C55E',
-		series: '#F59E0B',
-		game: '#F97316',
-		podcast: '#EF4444'
-	};
+	const TYPE_COLORS = MEDIA_TYPE_COLORS;
 
 	const typeCards = MEDIA_TYPES.map((type) => ({
 		type,

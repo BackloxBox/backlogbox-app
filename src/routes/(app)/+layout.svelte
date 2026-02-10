@@ -4,6 +4,7 @@
 	import {
 		MEDIA_TYPE_SLUGS,
 		MEDIA_TYPE_LABELS,
+		MEDIA_TYPE_COLORS,
 		slugToMediaType,
 		type MediaTypeSlug
 	} from '$lib/types';
@@ -41,7 +42,8 @@
 			href: `/${slug}`,
 			slug,
 			label: type ? MEDIA_TYPE_LABELS[type].plural : slug,
-			icon: SLUG_ICONS[slug]
+			icon: SLUG_ICONS[slug],
+			color: type ? MEDIA_TYPE_COLORS[type] : undefined
 		};
 	});
 
@@ -116,15 +118,21 @@
 				{@const active = page.url.pathname === item.href}
 				<a
 					href={item.href}
-					class="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-					{active
+					class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+				{active
 						? 'bg-sidebar-accent text-sidebar-accent-foreground'
 						: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
 					onclick={() => (sidebarOpen = false)}
 				>
-					<item.icon
-						class="size-4 shrink-0 {active ? 'text-foreground' : 'text-muted-foreground'}"
-					/>
+					<span
+						class="shrink-0 transition-colors {active
+							? ''
+							: 'text-muted-foreground group-hover:text-[var(--icon-color)]'}"
+						style:color={active ? item.color : undefined}
+						style:--icon-color={item.color}
+					>
+						<item.icon class="size-4" />
+					</span>
 					{item.label}
 				</a>
 			{/each}

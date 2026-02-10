@@ -110,6 +110,15 @@ export const STATUS_COLORS: Record<MediaStatus, string> = {
 	abandoned: '#EF4444'
 };
 
+/** Brand color for each media type — used in dashboard, charts, and sidebar icons */
+export const MEDIA_TYPE_COLORS: Record<MediaType, string> = {
+	book: '#3B82F6',
+	movie: '#22C55E',
+	series: '#F59E0B',
+	game: '#F97316',
+	podcast: '#EF4444'
+};
+
 /** Display name for each media type (singular/plural) */
 export const MEDIA_TYPE_LABELS: Record<MediaType, { singular: string; plural: string }> = {
 	book: { singular: 'Book', plural: 'Books' },
