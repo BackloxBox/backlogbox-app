@@ -27,7 +27,9 @@
 	</div>
 	<div class="min-w-0 flex-1">
 		<p class="flex items-center gap-1 truncate text-sm font-medium text-foreground">
-			{#if item.pinned}<Pin class="size-3 shrink-0 text-muted-foreground" />{/if}
+			{#if item.pinned}<Pin
+					class="size-3 shrink-0 fill-muted-foreground text-muted-foreground"
+				/>{/if}
 			<span class="truncate">{item.title}</span>
 		</p>
 		{#if sub}

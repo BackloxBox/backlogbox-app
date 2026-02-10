@@ -305,7 +305,7 @@
 						aria-label={item.pinned ? 'Unpin item' : 'Pin item'}
 					>
 						{#if item.pinned}
-							<PinOff class="size-4 text-foreground" />
+							<PinOff class="size-4 fill-foreground text-foreground" />
 						{:else}
 							<Pin class="size-4 text-muted-foreground" />
 						{/if}
