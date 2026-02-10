@@ -98,6 +98,8 @@
 			if (i.bookMeta.genre) entries.push({ label: 'Genre', value: i.bookMeta.genre });
 			if (i.bookMeta.pageCount)
 				entries.push({ label: 'Pages', value: String(i.bookMeta.pageCount) });
+			if (i.bookMeta.publisher) entries.push({ label: 'Publisher', value: i.bookMeta.publisher });
+			if (i.bookMeta.language) entries.push({ label: 'Language', value: i.bookMeta.language });
 			if (i.bookMeta.isbn) entries.push({ label: 'ISBN', value: i.bookMeta.isbn });
 		}
 		if (i.movieMeta) {

@@ -60,7 +60,9 @@ export const bookMeta = pgTable('book_meta', {
 	genre: text('genre'),
 	description: text('description'),
 	pageCount: integer('page_count'),
-	isbn: text('isbn')
+	isbn: text('isbn'),
+	language: text('language'),
+	publisher: text('publisher')
 });
 
 export const movieMeta = pgTable('movie_meta', {

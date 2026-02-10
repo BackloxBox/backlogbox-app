@@ -35,6 +35,7 @@
 	let manualHost = $state('');
 	let manualYear = $state('');
 	let manualPageCount = $state('');
+	let manualIsbn = $state('');
 	let manualRuntime = $state('');
 	let manualTotalSeasons = $state('');
 
@@ -62,6 +63,7 @@
 		manualHost = '';
 		manualYear = '';
 		manualPageCount = '';
+		manualIsbn = '';
 		manualRuntime = '';
 		manualTotalSeasons = '';
 		pendingResult = null;
@@ -212,6 +214,7 @@
 			if (manualGenre.trim()) data.genre = manualGenre.trim();
 			const pages = parseInt(manualPageCount);
 			if (!isNaN(pages)) data.pageCount = pages;
+			if (manualIsbn.trim()) data.isbn = manualIsbn.trim();
 		} else if (slug === 'movies') {
 			if (manualDirector.trim()) data.director = manualDirector.trim();
 			if (manualGenre.trim()) data.genre = manualGenre.trim();
@@ -403,6 +406,10 @@
 										bind:value={manualYear}
 									/>
 								</div>
+							</div>
+							<div class="space-y-1.5">
+								<Label for="manual-isbn">ISBN</Label>
+								<Input id="manual-isbn" placeholder="978-0-00-000000-0" bind:value={manualIsbn} />
 							</div>
 						{:else if slug === 'movies'}
 							<div class="space-y-1.5">

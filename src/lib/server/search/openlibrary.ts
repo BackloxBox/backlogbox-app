@@ -9,6 +9,8 @@ interface OpenLibraryDoc {
 	isbn?: string[];
 	cover_i?: number;
 	subject?: string[];
+	language?: string[];
+	publisher?: string[];
 }
 
 interface OpenLibraryResponse {
@@ -17,6 +19,44 @@ interface OpenLibraryResponse {
 
 interface OpenLibraryWork {
 	description?: string | { value: string };
+}
+
+/** Map common ISO 639-2/3 language codes to human-readable names */
+const LANGUAGE_NAMES: Record<string, string> = {
+	eng: 'English',
+	spa: 'Spanish',
+	fre: 'French',
+	ger: 'German',
+	ita: 'Italian',
+	por: 'Portuguese',
+	rus: 'Russian',
+	jpn: 'Japanese',
+	chi: 'Chinese',
+	kor: 'Korean',
+	ara: 'Arabic',
+	hin: 'Hindi',
+	dut: 'Dutch',
+	pol: 'Polish',
+	swe: 'Swedish',
+	nor: 'Norwegian',
+	dan: 'Danish',
+	fin: 'Finnish',
+	tur: 'Turkish',
+	gre: 'Greek',
+	heb: 'Hebrew',
+	tha: 'Thai',
+	vie: 'Vietnamese',
+	ind: 'Indonesian',
+	cat: 'Catalan',
+	ces: 'Czech',
+	hun: 'Hungarian',
+	rom: 'Romanian',
+	ukr: 'Ukrainian'
+};
+
+function languageName(code: string | undefined): string | null {
+	if (!code) return null;
+	return LANGUAGE_NAMES[code] ?? code;
 }
 
 function coverUrl(coverId: number | undefined, size: 'M' | 'L' = 'L'): string | null {
@@ -50,7 +90,7 @@ export const openLibraryProvider: SearchProvider = {
 		const params = new URLSearchParams({
 			q: query,
 			fields:
-				'key,title,author_name,first_publish_year,number_of_pages_median,isbn,cover_i,subject',
+				'key,title,author_name,first_publish_year,number_of_pages_median,isbn,cover_i,subject,language,publisher',
 			limit: '20'
 		});
 
@@ -68,7 +108,9 @@ export const openLibraryProvider: SearchProvider = {
 				author: doc.author_name?.[0] ?? null,
 				genre: extractGenres(doc.subject),
 				pageCount: doc.number_of_pages_median ?? null,
-				isbn: doc.isbn?.[0] ?? null
+				isbn: doc.isbn?.[0] ?? null,
+				language: languageName(doc.language?.[0]),
+				publisher: doc.publisher?.[0] ?? null
 			}
 		}));
 	}
