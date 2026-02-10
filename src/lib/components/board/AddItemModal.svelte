@@ -350,7 +350,7 @@
 		if (!v) handleClose();
 	}}
 >
-	<Dialog.Content class="max-w-[calc(100%-2rem)] sm:max-w-lg">
+	<Dialog.Content class="max-h-[85vh] overflow-x-hidden overflow-y-auto">
 		<Dialog.Header>
 			<Dialog.Title>Add item</Dialog.Title>
 			<Dialog.Description class="sr-only">Search or manually add an item</Dialog.Description>
@@ -528,6 +528,29 @@
 					bind:value={searchQuery}
 					oninput={handleInput}
 				/>
+
+				<!-- Provider attribution -->
+				{#if results.length > 0}
+					{#if slug === 'movies' || slug === 'series'}
+						<p class="text-right text-[10px] text-muted-foreground/60">
+							Data by <a
+								href="https://www.themoviedb.org"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="underline hover:text-muted-foreground">TMDB</a
+							>
+						</p>
+					{:else if slug === 'games'}
+						<p class="text-right text-[10px] text-muted-foreground/60">
+							Data by <a
+								href="https://www.igdb.com"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="underline hover:text-muted-foreground">IGDB</a
+							>
+						</p>
+					{/if}
+				{/if}
 
 				<!-- Results list -->
 				<div class="max-h-72 overflow-y-auto">

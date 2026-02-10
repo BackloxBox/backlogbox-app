@@ -74,8 +74,8 @@ export function getSubtitle(item: MediaItemWithMeta): string {
 		return parts.join(' \u00b7 ');
 	}
 	if (item.podcastMeta) {
-		const parts = [item.podcastMeta.host, item.podcastMeta.genre].filter(Boolean);
-		return parts.join(' \u00b7 ');
+		const parts = [item.podcastMeta.host, item.podcastMeta.listeningOn].filter(Boolean);
+		return parts.join(' · ');
 	}
 	return '';
 }
