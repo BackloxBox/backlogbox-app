@@ -37,7 +37,8 @@ export const mediaItem = pgTable(
 		updatedAt: timestamp('updated_at')
 			.defaultNow()
 			.$onUpdate(() => new Date())
-			.notNull()
+			.notNull(),
+		completedAt: timestamp('completed_at')
 	},
 	(table) => [
 		index('media_item_user_type_status_idx').on(table.userId, table.type, table.status),

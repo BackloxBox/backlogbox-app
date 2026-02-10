@@ -1,15 +1,17 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, sql } from 'drizzle-orm';
 import { db } from './index';
 import { bookMeta, gameMeta, mediaItem, movieMeta, podcastMeta, seriesMeta, user } from './schema';
-import type {
-	MediaStatus,
-	MediaType,
-	BookMetaFields,
-	MovieMetaFields,
-	SeriesMetaFields,
-	GameMetaFields,
-	PodcastMetaFields,
-	MetaFieldsFor
+import {
+	MEDIA_TYPES,
+	MEDIA_STATUSES,
+	type MediaStatus,
+	type MediaType,
+	type BookMetaFields,
+	type MovieMetaFields,
+	type SeriesMetaFields,
+	type GameMetaFields,
+	type PodcastMetaFields,
+	type MetaFieldsFor
 } from '$lib/types';
 
 // ---------------------------------------------------------------------------
@@ -117,9 +119,14 @@ export async function updateMediaItemFields(
 		releaseYear: number | null;
 	}>
 ) {
+	// Auto-manage completedAt on status transitions
+	const completedAt =
+		fields.status === 'completed' ? new Date() : fields.status !== undefined ? null : undefined;
+	const setFields = completedAt !== undefined ? { ...fields, completedAt } : fields;
+
 	const [updated] = await db
 		.update(mediaItem)
-		.set(fields)
+		.set(setFields)
 		.where(and(eq(mediaItem.id, itemId), eq(mediaItem.userId, userId)))
 		.returning();
 
@@ -197,9 +204,10 @@ export async function reorderMediaItems(
 ) {
 	await db.transaction(async (tx) => {
 		for (const { id, status, sortOrder } of updates) {
+			const completedAt = status === 'completed' ? new Date() : null;
 			await tx
 				.update(mediaItem)
-				.set({ status, sortOrder })
+				.set({ status, sortOrder, completedAt })
 				.where(and(eq(mediaItem.id, id), eq(mediaItem.userId, userId)));
 		}
 	});
@@ -246,6 +254,184 @@ export async function getUserProfile(userId: string) {
 /** Set user subscription status (called from Polar webhooks) */
 export async function setUserSubscribed(userId: string, subscribed: boolean) {
 	await db.update(user).set({ subscribed }).where(eq(user.id, userId));
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard stats
+// ---------------------------------------------------------------------------
+
+export type DashboardStats = {
+	typeCounts: Record<MediaType, { total: number; completed: number }>;
+	statusCounts: Array<{ status: MediaStatus; count: number }>;
+	topGenres: Array<{ genre: string; type: MediaType; count: number }>;
+	addedActivity: Array<{ date: string; count: number }>;
+	completedActivity: Array<{ date: string; count: number }>;
+	monthlyCompletions: Array<{ month: string } & Record<MediaType, number>>;
+	recentItems: Array<{
+		title: string;
+		type: MediaType;
+		status: MediaStatus;
+		createdAt: Date;
+		coverUrl: string | null;
+	}>;
+	totalItems: number;
+	totalCompleted: number;
+};
+
+/** Aggregate dashboard statistics for a user */
+export async function getDashboardStats(userId: string): Promise<DashboardStats> {
+	const oneYearAgo = new Date();
+	oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+	const sixMonthsAgo = new Date();
+	sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+	const [typeStatusRows, addedRows, completedRows, monthlyRows, recentRows, genreRows] =
+		await Promise.all([
+			// 1. Type + status group counts
+			db
+				.select({
+					type: mediaItem.type,
+					status: mediaItem.status,
+					count: count()
+				})
+				.from(mediaItem)
+				.where(eq(mediaItem.userId, userId))
+				.groupBy(mediaItem.type, mediaItem.status),
+
+			// 2. Added activity (365 days)
+			db
+				.select({
+					date: sql<string>`date(${mediaItem.createdAt})`,
+					count: count()
+				})
+				.from(mediaItem)
+				.where(and(eq(mediaItem.userId, userId), gte(mediaItem.createdAt, oneYearAgo)))
+				.groupBy(sql`date(${mediaItem.createdAt})`),
+
+			// 3. Completed activity (365 days)
+			db
+				.select({
+					date: sql<string>`date(${mediaItem.completedAt})`,
+					count: count()
+				})
+				.from(mediaItem)
+				.where(and(eq(mediaItem.userId, userId), gte(mediaItem.completedAt, oneYearAgo)))
+				.groupBy(sql`date(${mediaItem.completedAt})`),
+
+			// 4. Monthly completions by type (6 months)
+			db
+				.select({
+					month: sql<string>`to_char(date_trunc('month', ${mediaItem.completedAt}), 'YYYY-MM')`,
+					type: mediaItem.type,
+					count: count()
+				})
+				.from(mediaItem)
+				.where(and(eq(mediaItem.userId, userId), gte(mediaItem.completedAt, sixMonthsAgo)))
+				.groupBy(sql`date_trunc('month', ${mediaItem.completedAt})`, mediaItem.type),
+
+			// 5. Recent items (last 5)
+			db
+				.select({
+					title: mediaItem.title,
+					type: mediaItem.type,
+					status: mediaItem.status,
+					createdAt: mediaItem.createdAt,
+					coverUrl: mediaItem.coverUrl
+				})
+				.from(mediaItem)
+				.where(eq(mediaItem.userId, userId))
+				.orderBy(desc(mediaItem.createdAt))
+				.limit(5),
+
+			// 6. Top genres with media type (union across all meta tables with genre column)
+			db.execute<{ genre: string; type: MediaType; count: string }>(sql`
+				SELECT genre, type, COUNT(*) as count FROM (
+					SELECT ${bookMeta.genre} as genre, ${mediaItem.type} as type FROM ${bookMeta}
+						JOIN ${mediaItem} ON ${mediaItem.id} = ${bookMeta.mediaItemId}
+						WHERE ${mediaItem.userId} = ${userId} AND ${bookMeta.genre} IS NOT NULL
+					UNION ALL
+					SELECT ${movieMeta.genre}, ${mediaItem.type} FROM ${movieMeta}
+						JOIN ${mediaItem} ON ${mediaItem.id} = ${movieMeta.mediaItemId}
+						WHERE ${mediaItem.userId} = ${userId} AND ${movieMeta.genre} IS NOT NULL
+					UNION ALL
+					SELECT ${seriesMeta.genre}, ${mediaItem.type} FROM ${seriesMeta}
+						JOIN ${mediaItem} ON ${mediaItem.id} = ${seriesMeta.mediaItemId}
+						WHERE ${mediaItem.userId} = ${userId} AND ${seriesMeta.genre} IS NOT NULL
+					UNION ALL
+					SELECT ${gameMeta.genre}, ${mediaItem.type} FROM ${gameMeta}
+						JOIN ${mediaItem} ON ${mediaItem.id} = ${gameMeta.mediaItemId}
+						WHERE ${mediaItem.userId} = ${userId} AND ${gameMeta.genre} IS NOT NULL
+				) AS genres
+				GROUP BY genre, type ORDER BY count DESC LIMIT 8
+			`)
+		]);
+
+	// Build typeCounts
+	const typeCounts = Object.fromEntries(
+		MEDIA_TYPES.map((t) => [t, { total: 0, completed: 0 }])
+	) as Record<MediaType, { total: number; completed: number }>;
+
+	let totalItems = 0;
+	let totalCompleted = 0;
+
+	for (const row of typeStatusRows) {
+		const c = Number(row.count);
+		typeCounts[row.type].total += c;
+		totalItems += c;
+		if (row.status === 'completed') {
+			typeCounts[row.type].completed += c;
+			totalCompleted += c;
+		}
+	}
+
+	// Build monthly completions — pivot type rows into { month, book, movie, ... }
+	const monthlyMap = new Map<string, Record<MediaType, number>>();
+	for (const row of monthlyRows) {
+		const month = row.month;
+		if (!monthlyMap.has(month)) {
+			monthlyMap.set(
+				month,
+				Object.fromEntries(MEDIA_TYPES.map((t) => [t, 0])) as Record<MediaType, number>
+			);
+		}
+		const entry = monthlyMap.get(month);
+		if (entry) entry[row.type] = Number(row.count);
+	}
+
+	const monthlyCompletions = [...monthlyMap.entries()]
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([month, counts]) => ({ month, ...counts }));
+
+	// Build status distribution from typeStatusRows (already have the data)
+	const statusMap = new Map<MediaStatus, number>();
+	for (const row of typeStatusRows) {
+		const prev = statusMap.get(row.status) ?? 0;
+		statusMap.set(row.status, prev + Number(row.count));
+	}
+	const statusCounts = MEDIA_STATUSES.filter((s) => statusMap.has(s)).map((s) => ({
+		status: s,
+		count: statusMap.get(s) ?? 0
+	}));
+
+	// Build top genres from raw SQL result
+	const topGenres = [...genreRows].map((r) => ({
+		genre: r.genre,
+		type: r.type,
+		count: Number(r.count)
+	}));
+
+	return {
+		typeCounts,
+		statusCounts,
+		topGenres,
+		addedActivity: addedRows.map((r) => ({ date: r.date, count: Number(r.count) })),
+		completedActivity: completedRows.map((r) => ({ date: r.date, count: Number(r.count) })),
+		monthlyCompletions,
+		recentItems: recentRows,
+		totalItems,
+		totalCompleted
+	};
 }
 
 /** Update user profile fields (name, username, profilePublic) */

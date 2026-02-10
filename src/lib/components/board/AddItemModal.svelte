@@ -6,15 +6,12 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import MediaCover from './MediaCover.svelte';
-	import { searchResultExternalKey } from './card-utils';
 	import type { SearchResult } from '$lib/server/search';
 	import { STREAMING_PLATFORMS } from '$lib/types';
-	import Check from '@lucide/svelte/icons/check';
 
 	type Props = {
 		slug: string;
 		open: boolean;
-		existingExternalIds?: Set<string>;
 		onClose: () => void;
 		onSearch: (query: string) => Promise<SearchResult[]>;
 		onAdd: (result: SearchResult) => Promise<void>;
@@ -22,22 +19,7 @@
 		onFetchSeasons?: (tmdbId: number) => Promise<number | null>;
 	};
 
-	let {
-		slug,
-		open,
-		existingExternalIds,
-		onClose,
-		onSearch,
-		onAdd,
-		onManualAdd,
-		onFetchSeasons
-	}: Props = $props();
-
-	function isAlreadyAdded(result: SearchResult): boolean {
-		if (!existingExternalIds?.size) return false;
-		const key = searchResultExternalKey(result);
-		return key !== null && existingExternalIds.has(key);
-	}
+	let { slug, open, onClose, onSearch, onAdd, onManualAdd, onFetchSeasons }: Props = $props();
 
 	let searchQuery = $state('');
 	let results = $state<SearchResult[]>([]);
@@ -388,7 +370,6 @@
 					{:else if results.length > 0}
 						<div class="divide-y divide-border">
 							{#each results as result (result.externalId)}
-								{@const alreadyAdded = isAlreadyAdded(result)}
 								<button
 									class="flex w-full items-center gap-3 px-1 py-2.5 text-left transition hover:bg-accent disabled:opacity-50"
 									onclick={() => handleSelect(result)}
@@ -403,14 +384,6 @@
 											</p>
 										{/if}
 									</div>
-									{#if alreadyAdded}
-										<span
-											class="inline-flex shrink-0 items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
-										>
-											<Check class="size-2.5" />
-											Added
-										</span>
-									{/if}
 								</button>
 							{/each}
 						</div>

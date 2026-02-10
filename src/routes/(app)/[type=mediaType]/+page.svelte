@@ -28,7 +28,6 @@
 	import type { SearchResult } from '$lib/server/search';
 	import { toast } from 'svelte-sonner';
 	import { handleSubscriptionError } from '$lib/subscription-guard';
-	import { extractExternalIds } from '$lib/components/board/card-utils';
 
 	/** Param matcher guarantees this is a valid slug — narrow the type */
 	function asSlug(s: string): MediaTypeSlug {
@@ -44,7 +43,6 @@
 
 	let addModalOpen = $state(false);
 	let selectedItem = $state<MediaItemWithMeta | null>(null);
-	let existingExternalIds = $state<Set<string>>(new Set());
 
 	/** Group items by status */
 	function groupByStatus(allItems: MediaItemWithMeta[]): Record<MediaStatus, MediaItemWithMeta[]> {
@@ -239,7 +237,6 @@
 			}}
 		>
 			{@const allItems = await getBoardItems(slug)}
-			{@const _ = existingExternalIds = extractExternalIds(allItems)}
 			{@const groupedItems = groupByStatus(allItems)}
 			<KanbanBoard
 				{groupedItems}
@@ -277,7 +274,6 @@
 <AddItemModal
 	{slug}
 	open={addModalOpen}
-	{existingExternalIds}
 	onClose={() => (addModalOpen = false)}
 	onSearch={handleSearch}
 	onAdd={handleAddFromSearch}
