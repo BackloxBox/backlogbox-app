@@ -39,6 +39,11 @@ export function getBadge(item: MediaItemWithMeta): string | null {
 	return getSeasonBadge(item) ?? getRuntimeBadge(item) ?? getYearBadge(item);
 }
 
+/** Lowercased searchable text: title + subtitle fields (author/director/genre/etc.) */
+export function getSearchableText(item: MediaItemWithMeta): string {
+	return [item.title, getSubtitle(item)].join(' ').toLowerCase();
+}
+
 /** Subtitle string based on media type metadata */
 export function getSubtitle(item: MediaItemWithMeta): string {
 	if (item.bookMeta) {

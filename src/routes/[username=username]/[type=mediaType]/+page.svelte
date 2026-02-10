@@ -1,5 +1,7 @@
 <script lang="ts">
 	import KanbanBoard from '$lib/components/board/KanbanBoard.svelte';
+	import BoardSearch from '$lib/components/board/BoardSearch.svelte';
+	import { getSearchableText } from '$lib/components/board/card-utils';
 	import {
 		MEDIA_STATUSES,
 		STATUS_LABELS,
@@ -17,6 +19,14 @@
 	const statusLabels = $derived(type ? STATUS_LABELS[type] : STATUS_LABELS.book);
 	const typeLabel = $derived(type ? MEDIA_TYPE_LABELS[type].plural : data.slug);
 
+	let searchQuery = $state('');
+
+	// Reset search when switching media types
+	$effect(() => {
+		data.slug;
+		searchQuery = '';
+	});
+
 	function groupByStatus(items: MediaItemWithMeta[]): Record<MediaStatus, MediaItemWithMeta[]> {
 		const grouped = Object.fromEntries(
 			MEDIA_STATUSES.map((s) => [s, [] as MediaItemWithMeta[]])
@@ -27,7 +37,13 @@
 		return grouped;
 	}
 
-	const groupedItems = $derived(groupByStatus(data.items));
+	const filteredItems = $derived.by(() => {
+		const needle = searchQuery.trim().toLowerCase();
+		return needle
+			? data.items.filter((item) => getSearchableText(item).includes(needle))
+			: data.items;
+	});
+	const groupedItems = $derived(groupByStatus(filteredItems));
 
 	/** Nav links for switching media types within this profile */
 	const profileNav = $derived(
@@ -56,7 +72,10 @@
 			<span class="text-muted-foreground">/</span>
 			<h1 class="text-sm font-medium text-foreground">{typeLabel}</h1>
 		</div>
-		<a href="/" class="text-xs text-muted-foreground hover:text-foreground">BacklogBox</a>
+		<div class="flex items-center gap-2">
+			<BoardSearch bind:value={searchQuery} />
+			<a href="/" class="text-xs text-muted-foreground hover:text-foreground">BacklogBox</a>
+		</div>
 	</header>
 
 	<!-- Media type tabs -->

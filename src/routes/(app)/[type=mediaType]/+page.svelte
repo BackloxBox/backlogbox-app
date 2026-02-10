@@ -3,6 +3,8 @@
 	import KanbanBoard from '$lib/components/board/KanbanBoard.svelte';
 	import AddItemModal from '$lib/components/board/AddItemModal.svelte';
 	import ItemDetailPanel from '$lib/components/board/ItemDetailPanel.svelte';
+	import BoardSearch from '$lib/components/board/BoardSearch.svelte';
+	import { getSearchableText } from '$lib/components/board/card-utils';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -43,6 +45,13 @@
 
 	let addModalOpen = $state(false);
 	let selectedItem = $state<MediaItemWithMeta | null>(null);
+	let searchQuery = $state('');
+
+	// Reset search when switching media types
+	$effect(() => {
+		slug;
+		searchQuery = '';
+	});
 
 	/** Group items by status */
 	function groupByStatus(allItems: MediaItemWithMeta[]): Record<MediaStatus, MediaItemWithMeta[]> {
@@ -220,10 +229,13 @@
 <div class="flex h-full flex-col">
 	<header class="flex items-center justify-between px-6 py-3 pl-14 lg:pl-6">
 		<h1 class="text-lg font-semibold tracking-tight text-foreground">{typeLabel}</h1>
-		<Button size="sm" onclick={() => (addModalOpen = true)}>
-			<Plus class="size-4" />
-			Add
-		</Button>
+		<div class="flex items-center gap-2">
+			<BoardSearch bind:value={searchQuery} />
+			<Button size="sm" onclick={() => (addModalOpen = true)}>
+				<Plus class="size-4" />
+				Add
+			</Button>
+		</div>
 	</header>
 
 	<Separator />
@@ -237,7 +249,11 @@
 			}}
 		>
 			{@const allItems = await getBoardItems(slug)}
-			{@const groupedItems = groupByStatus(allItems)}
+			{@const needle = searchQuery.trim().toLowerCase()}
+			{@const filtered = needle
+				? allItems.filter((item) => getSearchableText(item).includes(needle))
+				: allItems}
+			{@const groupedItems = groupByStatus(filtered)}
 			<KanbanBoard
 				{groupedItems}
 				{statusLabels}
