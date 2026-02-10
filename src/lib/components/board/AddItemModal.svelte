@@ -37,6 +37,7 @@
 	let manualPageCount = $state('');
 	let manualIsbn = $state('');
 	let manualRuntime = $state('');
+	let manualCreator = $state('');
 	let manualTotalSeasons = $state('');
 
 	// Season picker state for series
@@ -65,6 +66,7 @@
 		manualPageCount = '';
 		manualIsbn = '';
 		manualRuntime = '';
+		manualCreator = '';
 		manualTotalSeasons = '';
 		pendingResult = null;
 		pendingTotalSeasons = 0;
@@ -221,6 +223,7 @@
 			const rt = parseInt(manualRuntime);
 			if (!isNaN(rt)) data.runtime = rt;
 		} else if (slug === 'series') {
+			if (manualCreator.trim()) data.creator = manualCreator.trim();
 			if (manualGenre.trim()) data.genre = manualGenre.trim();
 			const ts = parseInt(manualTotalSeasons);
 			if (!isNaN(ts)) data.totalSeasons = ts;
@@ -441,6 +444,10 @@
 								</div>
 							</div>
 						{:else if slug === 'series'}
+							<div class="space-y-1.5">
+								<Label for="manual-creator">Creator</Label>
+								<Input id="manual-creator" placeholder="Creator" bind:value={manualCreator} />
+							</div>
 							<div class="space-y-1.5">
 								<Label for="manual-genre">Genre</Label>
 								<Input id="manual-genre" placeholder="Genre" bind:value={manualGenre} />

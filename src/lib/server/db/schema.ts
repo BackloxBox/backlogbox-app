@@ -82,6 +82,12 @@ export const seriesMeta = pgTable('series_meta', {
 		.primaryKey()
 		.references(() => mediaItem.id, { onDelete: 'cascade' }),
 	genre: text('genre'),
+	description: text('description'),
+	creator: text('creator'),
+	cast: text('cast'),
+	network: text('network'),
+	seriesStatus: text('series_status'),
+	watchingOn: text('watching_on'),
 	totalSeasons: integer('total_seasons'),
 	currentSeason: integer('current_season'),
 	tmdbId: integer('tmdb_id')

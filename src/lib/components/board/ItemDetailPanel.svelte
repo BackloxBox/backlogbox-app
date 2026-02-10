@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { NativeSelect, NativeSelectOption } from '$lib/components/ui/native-select/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
@@ -9,6 +10,28 @@
 	import StarRating from './StarRating.svelte';
 	import { MEDIA_STATUSES, STATUS_LABELS, type MediaStatus, type MediaType } from '$lib/types';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
+
+	/** Human-friendly descriptions for TMDB series status values */
+	const SERIES_STATUS_DESCRIPTIONS: Record<string, string> = {
+		'Returning Series': 'New seasons in production',
+		Ended: 'Concluded, no more seasons',
+		Canceled: 'Cancelled before intended ending',
+		'In Production': 'Not yet aired, in production',
+		Planned: 'Announced but not yet in production'
+	};
+
+	const STREAMING_PLATFORMS = [
+		'Netflix',
+		'Disney+',
+		'HBO Max',
+		'Prime Video',
+		'Apple TV+',
+		'Hulu',
+		'Paramount+',
+		'Peacock',
+		'Crunchyroll',
+		'YouTube'
+	] as const;
 
 	type Props = {
 		item: MediaItemWithMeta | null;
@@ -52,6 +75,16 @@
 		saving = true;
 		try {
 			await onUpdate({}, { currentSeason: season });
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleWatchingOnChange(e: Event) {
+		const target = e.target as HTMLSelectElement;
+		saving = true;
+		try {
+			await onUpdate({}, { watchingOn: target.value || null });
 		} finally {
 			saving = false;
 		}
@@ -114,7 +147,10 @@
 			}
 		}
 		if (i.seriesMeta) {
+			if (i.seriesMeta.creator) entries.push({ label: 'Creator', value: i.seriesMeta.creator });
 			if (i.seriesMeta.genre) entries.push({ label: 'Genre', value: i.seriesMeta.genre });
+			if (i.seriesMeta.cast) entries.push({ label: 'Cast', value: i.seriesMeta.cast });
+			if (i.seriesMeta.network) entries.push({ label: 'Network', value: i.seriesMeta.network });
 		}
 		if (i.gameMeta) {
 			if (i.gameMeta.platform) entries.push({ label: 'Platform', value: i.gameMeta.platform });
@@ -175,6 +211,26 @@
 								<p class="text-sm text-foreground">{entry.value}</p>
 							</div>
 						{/each}
+						{#if item.seriesMeta?.seriesStatus}
+							<div>
+								<span class="text-xs text-muted-foreground">Status</span>
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										<p
+											class="text-sm text-foreground underline decoration-dotted underline-offset-2"
+										>
+											{item.seriesMeta.seriesStatus}
+										</p>
+									</Tooltip.Trigger>
+									<Tooltip.Content>
+										<p>
+											{SERIES_STATUS_DESCRIPTIONS[item.seriesMeta.seriesStatus] ??
+												item.seriesMeta.seriesStatus}
+										</p>
+									</Tooltip.Content>
+								</Tooltip.Root>
+							</div>
+						{/if}
 					</div>
 				</div>
 
@@ -187,6 +243,11 @@
 				{#if item.movieMeta?.description}
 					<p class="mt-4 text-sm leading-relaxed text-muted-foreground">
 						{item.movieMeta.description}
+					</p>
+				{/if}
+				{#if item.seriesMeta?.description}
+					<p class="mt-4 text-sm leading-relaxed text-muted-foreground">
+						{item.seriesMeta.description}
 					</p>
 				{/if}
 
@@ -216,7 +277,7 @@
 						<div class="flex flex-wrap gap-1.5">
 							<button
 								class="rounded border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50
-								{currentSeason === 0
+							{currentSeason === 0
 									? 'border-primary bg-primary text-primary-foreground'
 									: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
 								disabled={saving}
@@ -229,7 +290,7 @@
 									{@const season = i + 1}
 									<button
 										class="rounded border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50
-										{currentSeason === season
+									{currentSeason === season
 											? 'border-primary bg-primary text-primary-foreground'
 											: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
 										disabled={saving}
@@ -240,6 +301,23 @@
 								{/each}
 							{/if}
 						</div>
+					</div>
+
+					<!-- Watching on -->
+					<div class="mt-5 space-y-1.5">
+						<Label for="watching-on-select">Watching on</Label>
+						<NativeSelect
+							id="watching-on-select"
+							class="w-full"
+							value={item.seriesMeta.watchingOn ?? ''}
+							onchange={handleWatchingOnChange}
+							disabled={saving}
+						>
+							<NativeSelectOption value="">Not set</NativeSelectOption>
+							{#each STREAMING_PLATFORMS as platform}
+								<NativeSelectOption value={platform}>{platform}</NativeSelectOption>
+							{/each}
+						</NativeSelect>
 					</div>
 				{/if}
 

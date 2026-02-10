@@ -40,7 +40,10 @@ export function getSubtitle(item: MediaItemWithMeta): string {
 		);
 		return parts.join(' \u00b7 ');
 	}
-	if (item.seriesMeta) return item.seriesMeta.genre ?? '';
+	if (item.seriesMeta) {
+		const parts = [item.seriesMeta.watchingOn, item.seriesMeta.genre].filter(Boolean);
+		return parts.join(' \u00b7 ');
+	}
 	if (item.gameMeta) return item.gameMeta.genre ?? item.gameMeta.platform ?? '';
 	if (item.podcastMeta?.host) return item.podcastMeta.host;
 	return '';

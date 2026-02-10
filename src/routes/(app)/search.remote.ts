@@ -4,9 +4,10 @@ import { requireUserId } from '$lib/server/auth-guard';
 import { getSearchProvider, type SearchResult } from '$lib/server/search';
 import { fetchBookDescription } from '$lib/server/search/openlibrary';
 import {
-	fetchTmdbSeriesSeasons,
+	fetchTmdbSeriesDetails,
 	fetchTmdbMovieDetails,
-	type TmdbMovieDetailsResult
+	type TmdbMovieDetailsResult,
+	type TmdbSeriesDetailsResult
 } from '$lib/server/search/tmdb';
 import { slugToMediaType } from '$lib/types';
 import { error } from '@sveltejs/kit';
@@ -36,11 +37,14 @@ export const searchMedia = query(searchSchema, async (input): Promise<SearchResu
 	}
 });
 
-/** Fetch total season count for a TMDB series by its tmdbId */
-export const getSeriesSeasons = query(v.number(), async (tmdbId): Promise<number | null> => {
-	requireUserId();
-	return fetchTmdbSeriesSeasons(tmdbId);
-});
+/** Fetch series details (description, creator, cast, network, status, totalSeasons) from TMDB */
+export const getSeriesDetails = query(
+	v.number(),
+	async (tmdbId): Promise<TmdbSeriesDetailsResult | null> => {
+		requireUserId();
+		return fetchTmdbSeriesDetails(tmdbId);
+	}
+);
 
 /** Fetch movie details (director, description, runtime, cast) from TMDB */
 export const getMovieDetails = query(

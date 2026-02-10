@@ -22,6 +22,13 @@ interface TMDBTVResult {
 interface TMDBTVDetails {
 	id: number;
 	number_of_seasons: number;
+	overview?: string;
+	status?: string;
+	created_by?: Array<{ id: number; name: string }>;
+	networks?: Array<{ id: number; name: string }>;
+	aggregate_credits?: {
+		cast: Array<{ name: string; order: number }>;
+	};
 }
 
 interface TMDBMovieDetails {
@@ -39,6 +46,15 @@ export interface TmdbMovieDetailsResult {
 	description: string | null;
 	runtime: number | null;
 	cast: string | null;
+}
+
+export interface TmdbSeriesDetailsResult {
+	description: string | null;
+	creator: string | null;
+	cast: string | null;
+	network: string | null;
+	seriesStatus: string | null;
+	totalSeasons: number | null;
 }
 
 interface TMDBSearchResponse<T> {
@@ -166,14 +182,34 @@ export const tmdbSeriesProvider: SearchProvider = {
 	}
 };
 
-/** Fetch season count for a specific TV show from TMDB details endpoint */
-export async function fetchTmdbSeriesSeasons(tmdbId: number): Promise<number | null> {
+/** Fetch series details (description, creator, cast, network, status, totalSeasons) from TMDB */
+export async function fetchTmdbSeriesDetails(
+	tmdbId: number
+): Promise<TmdbSeriesDetailsResult | null> {
 	try {
-		const params = new URLSearchParams({ api_key: getApiKey() });
+		const params = new URLSearchParams({
+			api_key: getApiKey(),
+			append_to_response: 'aggregate_credits'
+		});
 		const response = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?${params}`);
 		if (!response.ok) return null;
 		const data: TMDBTVDetails = await response.json();
-		return data.number_of_seasons ?? null;
+
+		const cast =
+			data.aggregate_credits?.cast
+				.sort((a, b) => a.order - b.order)
+				.slice(0, 3)
+				.map((c) => c.name)
+				.join(', ') || null;
+
+		return {
+			description: data.overview || null,
+			creator: data.created_by?.[0]?.name ?? null,
+			cast,
+			network: data.networks?.[0]?.name ?? null,
+			seriesStatus: data.status || null,
+			totalSeasons: data.number_of_seasons ?? null
+		};
 	} catch {
 		return null;
 	}

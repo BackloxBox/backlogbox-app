@@ -17,7 +17,7 @@
 	import { getBoardItems, addItem, updateItem, deleteItem, reorderItems } from './data.remote';
 	import {
 		searchMedia,
-		getSeriesSeasons,
+		getSeriesDetails,
 		getBookDescription,
 		getMovieDetails
 	} from '../search.remote';
@@ -55,8 +55,13 @@
 		return searchMedia({ slug, query });
 	}
 
+	/** Cache series details to avoid double-fetching (season picker + add enrichment) */
+	let cachedSeriesDetails: Record<number, Awaited<ReturnType<typeof getSeriesDetails>>> = {};
+
 	async function handleFetchSeasons(tmdbId: number) {
-		return getSeriesSeasons(tmdbId);
+		const details = await getSeriesDetails(tmdbId);
+		cachedSeriesDetails[tmdbId] = details;
+		return details?.totalSeasons ?? null;
 	}
 
 	async function handleAddFromSearch(result: SearchResult) {
@@ -77,6 +82,21 @@
 				if (details.runtime) meta.runtime = details.runtime;
 				if (details.cast) meta.cast = details.cast;
 			}
+		}
+
+		// Enrich series with details (use cache from season picker if available)
+		if (mediaType === 'series' && meta.tmdbId) {
+			const tmdbId = meta.tmdbId as number;
+			const details = cachedSeriesDetails[tmdbId] ?? (await getSeriesDetails(tmdbId));
+			if (details) {
+				if (details.description) meta.description = details.description;
+				if (details.creator) meta.creator = details.creator;
+				if (details.cast) meta.cast = details.cast;
+				if (details.network) meta.network = details.network;
+				if (details.seriesStatus) meta.seriesStatus = details.seriesStatus;
+				if (details.totalSeasons) meta.totalSeasons = details.totalSeasons;
+			}
+			delete cachedSeriesDetails[tmdbId];
 		}
 
 		await addItem({

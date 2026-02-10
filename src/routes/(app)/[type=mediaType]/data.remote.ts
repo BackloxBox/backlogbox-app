@@ -37,8 +37,12 @@ const addItemSchema = v.object({
 	language: v.optional(v.nullable(v.string())),
 	publisher: v.optional(v.nullable(v.string())),
 	director: v.optional(v.nullable(v.string())),
+	creator: v.optional(v.nullable(v.string())),
 	cast: v.optional(v.nullable(v.string())),
 	genre: v.optional(v.nullable(v.string())),
+	network: v.optional(v.nullable(v.string())),
+	seriesStatus: v.optional(v.nullable(v.string())),
+	watchingOn: v.optional(v.nullable(v.string())),
 	runtime: v.optional(v.nullable(v.number())),
 	tmdbId: v.optional(v.nullable(v.number())),
 	totalSeasons: v.optional(v.nullable(v.number())),
@@ -98,7 +102,18 @@ function extractMeta(type: MediaType, data: Record<string, unknown>): Record<str
 	const metaFields: Record<MediaType, string[]> = {
 		book: ['author', 'genre', 'description', 'pageCount', 'isbn', 'language', 'publisher'],
 		movie: ['director', 'genre', 'description', 'cast', 'runtime', 'tmdbId'],
-		series: ['genre', 'totalSeasons', 'currentSeason', 'tmdbId'],
+		series: [
+			'genre',
+			'description',
+			'creator',
+			'cast',
+			'network',
+			'seriesStatus',
+			'watchingOn',
+			'totalSeasons',
+			'currentSeason',
+			'tmdbId'
+		],
 		game: ['platform', 'genre', 'playtimeMinutes', 'igdbId'],
 		podcast: ['host', 'totalEpisodes', 'currentEpisode', 'applePodcastId']
 	};
