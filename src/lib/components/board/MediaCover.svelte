@@ -14,6 +14,8 @@
 
 	/** Track the URL that failed so we auto-reset when coverUrl changes */
 	let failedUrl = $state<string | null>(null);
+	/** Track the URL that finished loading — auto-resets when coverUrl changes */
+	let loadedUrl = $state<string | null>(null);
 
 	/** Deterministic hue from title string for consistent placeholder colors */
 	function titleToHue(t: string): number {
@@ -27,6 +29,7 @@
 	const initial = $derived(title.trim().charAt(0).toUpperCase() || '?');
 	const hue = $derived(titleToHue(title));
 	const showImage = $derived(coverUrl && coverUrl !== failedUrl);
+	const imageLoaded = $derived(coverUrl !== null && coverUrl === loadedUrl);
 
 	const SIZE_CLASSES: Record<Size, string> = {
 		sm: 'h-12 w-9 text-xs rounded-sm',
@@ -36,13 +39,23 @@
 </script>
 
 {#if showImage}
-	<img
-		src={coverUrl}
-		alt={title}
-		loading="lazy"
-		onerror={() => (failedUrl = coverUrl)}
-		class={cn('shrink-0 object-cover', SIZE_CLASSES[size], className)}
-	/>
+	<div class={cn('relative shrink-0', SIZE_CLASSES[size], className)}>
+		<img
+			src={coverUrl}
+			alt={title}
+			loading="lazy"
+			onload={() => (loadedUrl = coverUrl)}
+			onerror={() => (failedUrl = coverUrl)}
+			class={cn(
+				'absolute inset-0 h-full w-full object-cover transition-opacity duration-200',
+				SIZE_CLASSES[size],
+				imageLoaded ? 'opacity-100' : 'opacity-0'
+			)}
+		/>
+		{#if !imageLoaded}
+			<div class={cn('absolute inset-0 animate-pulse bg-muted', SIZE_CLASSES[size])}></div>
+		{/if}
+	</div>
 {:else}
 	<div
 		class={cn(

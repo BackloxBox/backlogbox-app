@@ -41,10 +41,12 @@
 	let notes = $state('');
 	let saving = $state(false);
 	let deleting = $state(false);
+	let scrollRef = $state<HTMLDivElement | null>(null);
 
-	// Sync notes from item
+	// Sync notes + reset scroll when item changes
 	$effect(() => {
 		notes = item?.notes ?? '';
+		scrollRef?.scrollTo(0, 0);
 	});
 
 	const seasonLabel = $derived(item ? getSeasonBadge(item) : null);
@@ -209,7 +211,7 @@
 			</Sheet.Header>
 
 			<!-- Scrollable content -->
-			<div class="flex-1 overflow-y-auto px-5 py-4">
+			<div bind:this={scrollRef} class="flex-1 overflow-y-auto px-5 py-4">
 				<!-- Cover + basic info -->
 				<div class="flex gap-4">
 					<MediaCover title={item.title} coverUrl={item.coverUrl} size="lg" />
