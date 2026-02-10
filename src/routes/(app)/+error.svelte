@@ -22,6 +22,6 @@
 
 	<div class="flex gap-3">
 		<Button variant="outline" onclick={() => history.back()}>Go back</Button>
-		<Button href="/books">Home</Button>
+		<Button href="/dashboard">Home</Button>
 	</div>
 </div>

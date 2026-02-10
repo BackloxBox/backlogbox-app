@@ -25,7 +25,7 @@
 
 		<div class="flex justify-center gap-3">
 			<Button variant="outline" href="/login">Go to login</Button>
-			<Button href="/">Home</Button>
+			<Button href="/dashboard">Home</Button>
 		</div>
 	</div>
 </div>

@@ -85,7 +85,7 @@
 	>
 		<!-- Logo -->
 		<div class="flex h-14 items-center gap-2 px-4">
-			<a href="/" class="flex items-center gap-2 text-foreground">
+			<a href="/dashboard" class="flex items-center gap-2 text-foreground">
 				<LayoutDashboard class="size-4 text-muted-foreground" />
 				<span class="text-sm font-semibold tracking-tight">BacklogBox</span>
 			</a>

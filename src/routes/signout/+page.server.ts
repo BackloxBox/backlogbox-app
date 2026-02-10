@@ -5,6 +5,6 @@ import { auth } from '$lib/server/auth';
 export const actions: Actions = {
 	default: async (event) => {
 		await auth.api.signOut({ headers: event.request.headers });
-		redirect(302, '/login');
+		redirect(302, '/');
 	}
 };

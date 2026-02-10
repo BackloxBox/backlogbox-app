@@ -13,11 +13,15 @@
 <div class="flex min-h-screen items-center justify-center bg-background px-4">
 	<div class="w-full max-w-sm space-y-6">
 		<div class="text-center">
-			<h1 class="text-2xl font-semibold tracking-tight text-foreground">Sign in</h1>
-			<p class="mt-1 text-sm text-muted-foreground">Welcome back to BacklogBox</p>
+			<h1 class="text-2xl font-semibold tracking-tight text-foreground">Create an account</h1>
+			<p class="mt-1 text-sm text-muted-foreground">Start tracking your media backlog</p>
 		</div>
 
-		<form method="post" action="?/signInEmail" use:enhance class="space-y-4">
+		<form method="post" action="?/signUpEmail" use:enhance class="space-y-4">
+			<div class="space-y-1.5">
+				<Label for="name">Name</Label>
+				<Input id="name" name="name" required />
+			</div>
 			<div class="space-y-1.5">
 				<Label for="email">Email</Label>
 				<Input id="email" type="email" name="email" required />
@@ -27,7 +31,7 @@
 				<Input id="password" type="password" name="password" required />
 			</div>
 
-			<Button type="submit" class="w-full">Sign in</Button>
+			<Button type="submit" class="w-full">Create account</Button>
 		</form>
 
 		{#if form?.message}
@@ -45,15 +49,14 @@
 			<input type="hidden" name="provider" value="github" />
 			<Button variant="outline" class="w-full gap-2">
 				<Github class="size-4" />
-				Sign in with GitHub
+				Sign up with GitHub
 			</Button>
 		</form>
 
 		<p class="text-center text-sm text-muted-foreground">
-			Don't have an account?
-			<a
-				href="/register"
-				class="text-foreground underline underline-offset-4 hover:text-foreground/80">Register</a
+			Already have an account?
+			<a href="/login" class="text-foreground underline underline-offset-4 hover:text-foreground/80"
+				>Sign in</a
 			>
 		</p>
 	</div>
