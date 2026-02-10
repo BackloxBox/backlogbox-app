@@ -274,7 +274,7 @@
 		if (!v) handleClose();
 	}}
 >
-	<Dialog.Content class="max-w-lg">
+	<Dialog.Content class="max-w-[calc(100%-2rem)] sm:max-w-lg">
 		<Dialog.Header>
 			<Dialog.Title>Add item</Dialog.Title>
 			<Dialog.Description class="sr-only">Search or manually add an item</Dialog.Description>

@@ -144,7 +144,7 @@
 </script>
 
 <div class="flex h-full flex-col">
-	<header class="flex items-center justify-between px-6 py-3">
+	<header class="flex items-center justify-between px-6 py-3 pl-14 lg:pl-6">
 		<h1 class="text-lg font-semibold tracking-tight text-foreground">{typeLabel}</h1>
 		<Button size="sm" onclick={() => (addModalOpen = true)}>
 			<Plus class="size-4" />
