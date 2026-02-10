@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
-	import { NativeSelect, NativeSelectOption } from '$lib/components/ui/native-select/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -61,11 +61,11 @@
 
 	const labels = $derived(STATUS_LABELS[mediaType]);
 
-	async function handleStatusChange(e: Event) {
-		const target = e.target as HTMLSelectElement;
+	async function handleStatusChange(value: string | undefined) {
+		if (!value) return;
 		saving = true;
 		try {
-			await onUpdate({ status: target.value });
+			await onUpdate({ status: value });
 		} finally {
 			saving = false;
 		}
@@ -80,11 +80,10 @@
 		}
 	}
 
-	async function handleWatchingOnChange(e: Event) {
-		const target = e.target as HTMLSelectElement;
+	async function handleWatchingOnChange(value: string | undefined) {
 		saving = true;
 		try {
-			await onUpdate({}, { watchingOn: target.value || null });
+			await onUpdate({}, { watchingOn: value || null });
 		} finally {
 			saving = false;
 		}
@@ -257,18 +256,22 @@
 
 				<!-- Status -->
 				<div class="space-y-1.5">
-					<Label for="status-select">Status</Label>
-					<NativeSelect
-						id="status-select"
-						class="w-full"
+					<Label>Status</Label>
+					<Select.Root
+						type="single"
 						value={item.status}
-						onchange={handleStatusChange}
+						onValueChange={handleStatusChange}
 						disabled={saving}
 					>
-						{#each MEDIA_STATUSES as status}
-							<NativeSelectOption value={status}>{labels[status]}</NativeSelectOption>
-						{/each}
-					</NativeSelect>
+						<Select.Trigger class="w-full">
+							{labels[item.status as MediaStatus]}
+						</Select.Trigger>
+						<Select.Content>
+							{#each MEDIA_STATUSES as status}
+								<Select.Item value={status}>{labels[status]}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				</div>
 
 				<!-- Season selector (series only) -->
@@ -307,19 +310,22 @@
 
 					<!-- Watching on -->
 					<div class="mt-5 space-y-1.5">
-						<Label for="watching-on-select">Watching on</Label>
-						<NativeSelect
-							id="watching-on-select"
-							class="w-full"
-							value={item.seriesMeta.watchingOn ?? ''}
-							onchange={handleWatchingOnChange}
+						<Label>Watching on</Label>
+						<Select.Root
+							type="single"
+							value={item.seriesMeta.watchingOn ?? undefined}
+							onValueChange={handleWatchingOnChange}
 							disabled={saving}
 						>
-							<NativeSelectOption value="">Not set</NativeSelectOption>
-							{#each STREAMING_PLATFORMS as platform}
-								<NativeSelectOption value={platform}>{platform}</NativeSelectOption>
-							{/each}
-						</NativeSelect>
+							<Select.Trigger class="w-full">
+								{item.seriesMeta.watchingOn ?? 'Select platform...'}
+							</Select.Trigger>
+							<Select.Content>
+								{#each STREAMING_PLATFORMS as platform}
+									<Select.Item value={platform}>{platform}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
 					</div>
 				{/if}
 

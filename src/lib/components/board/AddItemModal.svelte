@@ -1,11 +1,25 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import MediaCover from './MediaCover.svelte';
 	import type { SearchResult } from '$lib/server/search';
+
+	const STREAMING_PLATFORMS = [
+		'Netflix',
+		'Disney+',
+		'HBO Max',
+		'Prime Video',
+		'Apple TV+',
+		'Hulu',
+		'Paramount+',
+		'Peacock',
+		'Crunchyroll',
+		'YouTube'
+	] as const;
 
 	type Props = {
 		slug: string;
@@ -46,6 +60,7 @@
 	let pendingTotalSeasons = $state(0);
 	let selectedSeasons = $state<Set<number>>(new Set());
 	let loadingSeasons = $state(false);
+	let pendingWatchingOn = $state<string | undefined>(undefined);
 
 	const isSeries = $derived(slug === 'series');
 	const allSeasonsSelected = $derived(selectedSeasons.has(0));
@@ -72,6 +87,7 @@
 		pendingTotalSeasons = 0;
 		selectedSeasons = new Set();
 		loadingSeasons = false;
+		pendingWatchingOn = undefined;
 	}
 
 	function handleClose() {
@@ -163,7 +179,8 @@
 		try {
 			const baseMeta = {
 				...pendingResult.meta,
-				totalSeasons: pendingTotalSeasons > 0 ? pendingTotalSeasons : null
+				totalSeasons: pendingTotalSeasons > 0 ? pendingTotalSeasons : null,
+				...(pendingWatchingOn ? { watchingOn: pendingWatchingOn } : {})
 			};
 			if (selectedSeasons.has(0)) {
 				// "All seasons" — add without currentSeason
@@ -303,6 +320,21 @@
 							{/each}
 						</div>
 					{/if}
+
+					<!-- Watching on -->
+					<div class="space-y-1.5">
+						<Label>Watching on</Label>
+						<Select.Root type="single" bind:value={pendingWatchingOn}>
+							<Select.Trigger class="w-full">
+								{pendingWatchingOn ?? 'Select platform...'}
+							</Select.Trigger>
+							<Select.Content>
+								{#each STREAMING_PLATFORMS as platform}
+									<Select.Item value={platform}>{platform}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					</div>
 
 					<div class="flex gap-2">
 						<Button
