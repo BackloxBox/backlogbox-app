@@ -8,7 +8,10 @@ import {
 	getItemsByTypeAndUser,
 	reorderMediaItems,
 	updateMediaItemFields,
-	updateMediaItemMeta
+	updateMediaItemMeta,
+	getNotesByItem,
+	createNote,
+	deleteNoteById
 } from '$lib/server/db/queries';
 import {
 	slugToMediaType,
@@ -309,4 +312,31 @@ export const reorderItems = command(reorderSchema, async (data) => {
 	const userId = requireSubscription();
 	resolveType(data.slug);
 	await reorderMediaItems(userId, data.updates);
+});
+
+// --- Notes ---
+
+export const getItemNotes = query(v.pipe(v.string(), v.nonEmpty()), async (mediaItemId) => {
+	requireSubscription();
+	return getNotesByItem(mediaItemId);
+});
+
+const addNoteSchema = v.object({
+	mediaItemId: v.pipe(v.string(), v.nonEmpty()),
+	content: v.pipe(v.string(), v.nonEmpty())
+});
+
+export const addNote = command(addNoteSchema, async (data) => {
+	requireSubscription();
+	return createNote(data.mediaItemId, data.content);
+});
+
+const deleteNoteSchema = v.object({
+	noteId: v.pipe(v.string(), v.nonEmpty())
+});
+
+export const removeNote = command(deleteNoteSchema, async (data) => {
+	requireSubscription();
+	const deleted = await deleteNoteById(data.noteId);
+	if (!deleted) error(404, 'Note not found');
 });

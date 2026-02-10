@@ -1,6 +1,15 @@
 import { and, asc, count, desc, eq, gte, sql } from 'drizzle-orm';
 import { db } from './index';
-import { bookMeta, gameMeta, mediaItem, movieMeta, podcastMeta, seriesMeta, user } from './schema';
+import {
+	bookMeta,
+	gameMeta,
+	mediaItem,
+	mediaNote,
+	movieMeta,
+	podcastMeta,
+	seriesMeta,
+	user
+} from './schema';
 import {
 	MEDIA_TYPES,
 	MEDIA_STATUSES,
@@ -211,6 +220,32 @@ export async function reorderMediaItems(
 				.where(and(eq(mediaItem.id, id), eq(mediaItem.userId, userId)));
 		}
 	});
+}
+
+// ---------------------------------------------------------------------------
+// Notes
+// ---------------------------------------------------------------------------
+
+export type MediaNoteRow = typeof mediaNote.$inferSelect;
+
+/** Get all notes for a media item, newest first */
+export async function getNotesByItem(mediaItemId: string): Promise<MediaNoteRow[]> {
+	return db.query.mediaNote.findMany({
+		where: eq(mediaNote.mediaItemId, mediaItemId),
+		orderBy: [desc(mediaNote.createdAt)]
+	});
+}
+
+/** Add a note to a media item */
+export async function createNote(mediaItemId: string, content: string): Promise<MediaNoteRow> {
+	const [note] = await db.insert(mediaNote).values({ mediaItemId, content }).returning();
+	return note;
+}
+
+/** Delete a note by id */
+export async function deleteNoteById(noteId: string): Promise<boolean> {
+	const [deleted] = await db.delete(mediaNote).where(eq(mediaNote.id, noteId)).returning();
+	return !!deleted;
 }
 
 // ---------------------------------------------------------------------------

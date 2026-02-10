@@ -6,6 +6,8 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
+	import X from '@lucide/svelte/icons/x';
+	import Send from '@lucide/svelte/icons/send';
 	import MediaCover from './MediaCover.svelte';
 	import StarRating from './StarRating.svelte';
 	import { getSeasonBadge, formatRuntime } from './card-utils';
@@ -16,7 +18,12 @@
 		type MediaStatus,
 		type MediaType
 	} from '$lib/types';
-	import type { MediaItemWithMeta } from '$lib/server/db/queries';
+	import type { MediaItemWithMeta, MediaNoteRow } from '$lib/server/db/queries';
+	import {
+		getItemNotes,
+		addNote,
+		removeNote
+	} from '../../../routes/(app)/[type=mediaType]/data.remote';
 	import { toast } from 'svelte-sonner';
 
 	/** Human-friendly descriptions for TMDB series status values */
@@ -38,15 +45,37 @@
 
 	let { item, mediaType, onClose, onUpdate, onDelete }: Props = $props();
 
-	let notes = $state('');
 	let saving = $state(false);
 	let deleting = $state(false);
 	let scrollRef = $state<HTMLDivElement | null>(null);
 
-	// Sync notes + reset scroll when item changes
+	// --- Notes timeline ---
+	let timelineNotes = $state<MediaNoteRow[]>([]);
+	let notesLoading = $state(false);
+	let newNoteText = $state('');
+	let addingNote = $state(false);
+
+	// Load notes when item changes
 	$effect(() => {
-		notes = item?.notes ?? '';
+		const currentItem = item;
+		timelineNotes = [];
+		newNoteText = '';
 		scrollRef?.scrollTo(0, 0);
+
+		if (!currentItem) return;
+
+		notesLoading = true;
+		getItemNotes(currentItem.id)
+			.then((notes) => {
+				// Guard: only apply if still viewing the same item
+				if (item?.id === currentItem.id) timelineNotes = notes;
+			})
+			.catch(() => {
+				// Silently fail — notes are non-critical
+			})
+			.finally(() => {
+				if (item?.id === currentItem.id) notesLoading = false;
+			});
 	});
 
 	const seasonLabel = $derived(item ? getSeasonBadge(item) : null);
@@ -125,27 +154,48 @@
 		}
 	}
 
-	let notesTimer: ReturnType<typeof setTimeout> | undefined;
+	function formatRelativeTime(date: Date): string {
+		const now = Date.now();
+		const diff = now - date.getTime();
+		const seconds = Math.floor(diff / 1000);
+		if (seconds < 60) return 'just now';
+		const minutes = Math.floor(seconds / 60);
+		if (minutes < 60) return `${minutes}m ago`;
+		const hours = Math.floor(minutes / 60);
+		if (hours < 24) return `${hours}h ago`;
+		const days = Math.floor(hours / 24);
+		if (days < 30) return `${days}d ago`;
+		const months = Math.floor(days / 30);
+		if (months < 12) return `${months}mo ago`;
+		return `${Math.floor(months / 12)}y ago`;
+	}
 
-	// Clear pending notes timer when panel closes or item changes
-	$effect(() => {
-		item; // track item reactively
-		return () => clearTimeout(notesTimer);
-	});
+	async function handleAddNote() {
+		const content = newNoteText.trim();
+		if (!content || !item) return;
+		addingNote = true;
+		try {
+			const note = await addNote({ mediaItemId: item.id, content });
+			timelineNotes = [note, ...timelineNotes];
+			newNoteText = '';
+		} catch (err) {
+			console.error('add note failed', { itemId: item?.id, err });
+			toast.error('Failed to add note');
+		} finally {
+			addingNote = false;
+		}
+	}
 
-	function handleNotesInput() {
-		clearTimeout(notesTimer);
-		notesTimer = setTimeout(async () => {
-			saving = true;
-			try {
-				await onUpdate({ notes: notes || null });
-			} catch (err) {
-				console.error('save notes failed', { itemId: item?.id, err });
-				toast.error('Failed to save notes');
-			} finally {
-				saving = false;
-			}
-		}, 800);
+	async function handleDeleteNote(noteId: string) {
+		const prev = timelineNotes;
+		timelineNotes = timelineNotes.filter((n) => n.id !== noteId);
+		try {
+			await removeNote({ noteId });
+		} catch (err) {
+			console.error('delete note failed', { noteId, err });
+			toast.error('Failed to delete note');
+			timelineNotes = prev;
+		}
 	}
 
 	async function handleDelete() {
@@ -395,18 +445,64 @@
 					<StarRating value={item.rating} onRate={handleRate} />
 				</div>
 
-				<!-- Notes -->
-				<div class="mt-5 space-y-1.5">
-					<Label for="notes-textarea">Notes</Label>
-					<Textarea
-						id="notes-textarea"
-						rows={4}
-						placeholder="Your thoughts..."
-						bind:value={notes}
-						oninput={handleNotesInput}
-					/>
-					{#if saving}
-						<p class="text-xs text-muted-foreground">Saving...</p>
+				<!-- Notes timeline -->
+				<div class="mt-5 space-y-3">
+					<Label>Notes</Label>
+
+					<!-- Add note form -->
+					<div class="flex gap-2">
+						<Textarea
+							rows={2}
+							placeholder="Add a note..."
+							bind:value={newNoteText}
+							onkeydown={(e: KeyboardEvent) => {
+								if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddNote();
+							}}
+						/>
+						<Button
+							variant="ghost"
+							size="icon"
+							class="shrink-0 self-end"
+							onclick={handleAddNote}
+							disabled={addingNote || !newNoteText.trim()}
+						>
+							<Send class="size-4" />
+						</Button>
+					</div>
+
+					<!-- Timeline -->
+					{#if notesLoading}
+						<p class="text-xs text-muted-foreground">Loading notes...</p>
+					{:else if timelineNotes.length === 0 && !item.notes}
+						<p class="text-xs text-muted-foreground">No notes yet.</p>
+					{:else}
+						<div class="space-y-2">
+							{#each timelineNotes as note (note.id)}
+								<div class="group flex items-start gap-2 rounded-md border border-border p-2.5">
+									<div class="min-w-0 flex-1">
+										<p class="text-sm whitespace-pre-wrap text-foreground">{note.content}</p>
+										<p class="mt-1 text-xs text-muted-foreground">
+											{formatRelativeTime(new Date(note.createdAt))}
+										</p>
+									</div>
+									<button
+										class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+										onclick={() => handleDeleteNote(note.id)}
+										aria-label="Delete note"
+									>
+										<X class="size-3.5 text-muted-foreground hover:text-destructive" />
+									</button>
+								</div>
+							{/each}
+						</div>
+
+						<!-- Legacy notes (old single-field) -->
+						{#if item.notes}
+							<div class="rounded-md border border-dashed border-border p-2.5">
+								<p class="mb-1 text-xs font-medium text-muted-foreground">Previous notes</p>
+								<p class="text-sm whitespace-pre-wrap text-foreground">{item.notes}</p>
+							</div>
+						{/if}
 					{/if}
 				</div>
 			</div>

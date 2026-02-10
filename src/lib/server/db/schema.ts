@@ -120,15 +120,31 @@ export const podcastMeta = pgTable('podcast_meta', {
 	applePodcastId: text('apple_podcast_id')
 });
 
+// --- Notes ---
+
+export const mediaNote = pgTable(
+	'media_note',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		mediaItemId: uuid('media_item_id')
+			.notNull()
+			.references(() => mediaItem.id, { onDelete: 'cascade' }),
+		content: text('content').notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull()
+	},
+	(table) => [index('media_note_item_idx').on(table.mediaItemId)]
+);
+
 // --- Relations ---
 
-export const mediaItemRelations = relations(mediaItem, ({ one }) => ({
+export const mediaItemRelations = relations(mediaItem, ({ one, many }) => ({
 	user: one(user, { fields: [mediaItem.userId], references: [user.id] }),
 	bookMeta: one(bookMeta),
 	movieMeta: one(movieMeta),
 	seriesMeta: one(seriesMeta),
 	gameMeta: one(gameMeta),
-	podcastMeta: one(podcastMeta)
+	podcastMeta: one(podcastMeta),
+	notes: many(mediaNote)
 }));
 
 export const bookMetaRelations = relations(bookMeta, ({ one }) => ({
@@ -149,6 +165,10 @@ export const gameMetaRelations = relations(gameMeta, ({ one }) => ({
 
 export const podcastMetaRelations = relations(podcastMeta, ({ one }) => ({
 	mediaItem: one(mediaItem, { fields: [podcastMeta.mediaItemId], references: [mediaItem.id] })
+}));
+
+export const mediaNoteRelations = relations(mediaNote, ({ one }) => ({
+	mediaItem: one(mediaItem, { fields: [mediaNote.mediaItemId], references: [mediaItem.id] })
 }));
 
 // Re-export auth schema
