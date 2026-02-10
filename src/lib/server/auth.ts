@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
+import { username } from 'better-auth/plugins/username';
 import { polar, checkout, portal, webhooks } from '@polar-sh/better-auth';
 import { Polar } from '@polar-sh/sdk';
 import { env } from '$env/dynamic/private';
@@ -30,6 +31,11 @@ export const auth = betterAuth({
 		}
 	},
 	plugins: [
+		username({
+			minUsernameLength: 1,
+			maxUsernameLength: 39,
+			usernameValidator: (u) => /^[a-z0-9]+$/.test(u)
+		}),
 		polar({
 			client: polarClient,
 			createCustomerOnSignUp: true,

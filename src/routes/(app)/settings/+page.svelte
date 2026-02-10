@@ -15,15 +15,14 @@
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let profilePublic = $state(false);
-	let username = $state('');
 
 	$effect.pre(() => {
 		profilePublic = data.profile?.profilePublic ?? false;
-		username = data.profile?.username ?? '';
 	});
 	let copied = $state(false);
 	let portalLoading = $state(false);
 
+	const username = $derived(data.profile?.username ?? '');
 	const shareUrl = $derived(username && profilePublic ? `${page.url.origin}/@${username}` : null);
 
 	function copyShareLink() {
@@ -56,22 +55,12 @@
 			<Input id="name" name="name" value={data.profile?.name ?? ''} required />
 		</div>
 
-		<div class="space-y-1.5">
-			<Label for="username">Username</Label>
-			<div class="flex items-center gap-2">
-				<span class="text-sm text-muted-foreground">@</span>
-				<Input
-					id="username"
-					name="username"
-					value={username}
-					placeholder="yourname"
-					oninput={(e) => (username = e.currentTarget.value)}
-				/>
+		{#if username}
+			<div class="space-y-1.5">
+				<Label>Username</Label>
+				<p class="text-sm text-foreground">@{username}</p>
 			</div>
-			<p class="text-xs text-muted-foreground">
-				Lowercase letters and numbers only. Used for your public profile URL.
-			</p>
-		</div>
+		{/if}
 
 		<div class="flex items-center justify-between">
 			<div>

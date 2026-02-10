@@ -15,10 +15,15 @@ export const actions: Actions = {
 		const email = formData.get('email')?.toString() ?? '';
 		const password = formData.get('password')?.toString() ?? '';
 		const name = formData.get('name')?.toString() ?? '';
+		const username = formData.get('username')?.toString().trim().toLowerCase() ?? '';
+
+		if (!username) {
+			return fail(400, { message: 'Username is required' });
+		}
 
 		try {
 			await auth.api.signUpEmail({
-				body: { email, password, name, callbackURL: '/dashboard' }
+				body: { email, password, name, username, callbackURL: '/dashboard' }
 			});
 		} catch (error) {
 			if (error instanceof APIError) {

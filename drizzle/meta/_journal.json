@@ -64,6 +64,34 @@
       "when": 1770729380140,
       "tag": "0008_add-completed-at",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1770729500000,
+      "tag": "0009_game_meta_enhancements",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1770731400000,
+      "tag": "0010_media_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1770733200000,
+      "tag": "0011_add_pinned",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1770751578918,
+      "tag": "0012_add-display-username",
+      "breakpoints": true
     }
   ]
 }

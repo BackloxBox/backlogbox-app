@@ -3,8 +3,6 @@ import type { Actions, PageServerLoad } from './$types';
 import { getUserProfile, updateUserProfile } from '$lib/server/db/queries';
 import { auth } from '$lib/server/auth';
 
-const USERNAME_RE = /^[a-z0-9]{1,39}$/;
-
 export const load: PageServerLoad = async ({ parent }) => {
 	const { user } = await parent();
 	const profile = await getUserProfile(user.id);
@@ -18,40 +16,24 @@ export const actions: Actions = {
 
 		const formData = await event.request.formData();
 		const name = formData.get('name')?.toString().trim() ?? '';
-		const username = formData.get('username')?.toString().trim().toLowerCase() ?? '';
 		const profilePublic = formData.get('profilePublic') === 'on';
 
 		if (!name) {
 			return fail(400, { profileMessage: 'Name is required' });
 		}
 
-		if (username && !USERNAME_RE.test(username)) {
-			return fail(400, {
-				profileMessage: 'Username must be lowercase alphanumeric, 1-39 characters'
-			});
-		}
+		const profile = await getUserProfile(user.id);
+		const hasUsername = !!profile?.username;
 
 		try {
 			await updateUserProfile(user.id, {
 				name,
-				username: username || null,
-				profilePublic: username ? profilePublic : false
+				profilePublic: hasUsername ? profilePublic : false
 			});
-		} catch (err) {
-			const msg = err instanceof Error ? err.message : '';
-			const code =
-				typeof err === 'object' && err !== null && 'code' in err
-					? (err as { code: string }).code
-					: '';
-			if (msg.includes('unique') || msg.includes('duplicate') || code === '23505') {
-				return fail(400, {
-					profileMessage: `Username "@${username}" is already taken. Please choose another.`
-				});
-			}
+		} catch {
 			return fail(500, { profileMessage: 'Failed to update profile' });
 		}
 
-		// Also update name in BetterAuth's user record
 		try {
 			await auth.api.updateUser({ body: { name }, headers: event.request.headers });
 		} catch {

@@ -5,9 +5,73 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import Github from '@lucide/svelte/icons/github';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
+	import CircleX from '@lucide/svelte/icons/circle-x';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import { authClient } from '$lib/auth-client';
+	import { toast } from 'svelte-sonner';
 	import type { ActionData } from './$types';
 
+	const USERNAME_RE = /^[a-z0-9]{1,39}$/;
+
 	let { form }: { form: ActionData } = $props();
+
+	let username = $state('');
+	let usernameStatus = $state<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function onUsernameInput(e: Event & { currentTarget: HTMLInputElement }) {
+		const raw = e.currentTarget.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+		e.currentTarget.value = raw;
+		username = raw;
+
+		clearTimeout(debounceTimer);
+
+		if (!raw) {
+			usernameStatus = 'idle';
+			return;
+		}
+
+		if (!USERNAME_RE.test(raw)) {
+			usernameStatus = 'invalid';
+			return;
+		}
+
+		usernameStatus = 'checking';
+		debounceTimer = setTimeout(() => void checkAvailability(raw), 400);
+	}
+
+	async function checkAvailability(value: string) {
+		// bail if username changed since we scheduled
+		if (value !== username) return;
+		try {
+			const { data } = await authClient.isUsernameAvailable({ username: value });
+			// bail if username changed during fetch
+			if (value !== username) return;
+			usernameStatus = data?.available ? 'available' : 'taken';
+		} catch {
+			if (value !== username) return;
+			usernameStatus = 'idle';
+		}
+	}
+
+	const usernameHint = $derived.by(() => {
+		switch (usernameStatus) {
+			case 'checking':
+				return { text: 'Checking availability...', class: 'text-muted-foreground' } as const;
+			case 'available':
+				return { text: 'Username is available', class: 'text-green-500' } as const;
+			case 'taken':
+				return { text: 'Username is already taken', class: 'text-destructive' } as const;
+			case 'invalid':
+				return {
+					text: 'Lowercase letters and numbers only, 1-39 chars',
+					class: 'text-destructive'
+				} as const;
+			default:
+				return null;
+		}
+	});
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-background px-4">
@@ -17,10 +81,56 @@
 			<p class="mt-1 text-sm text-muted-foreground">Start tracking your media backlog</p>
 		</div>
 
-		<form method="post" action="?/signUpEmail" use:enhance class="space-y-4">
+		<form
+			method="post"
+			action="?/signUpEmail"
+			use:enhance={() =>
+				({ result, update }) => {
+					if (result.type === 'failure' && typeof result.data?.message === 'string') {
+						toast.error(result.data.message);
+					}
+					update();
+				}}
+			class="space-y-4"
+		>
 			<div class="space-y-1.5">
 				<Label for="name">Name</Label>
 				<Input id="name" name="name" required />
+			</div>
+			<div class="space-y-1.5">
+				<Label for="username">Username</Label>
+				<div class="relative">
+					<span
+						class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground"
+						>@</span
+					>
+					<Input
+						id="username"
+						name="username"
+						value={username}
+						oninput={onUsernameInput}
+						required
+						autocomplete="username"
+						class="pl-7"
+						placeholder="yourname"
+					/>
+					{#if usernameStatus === 'checking'}
+						<LoaderCircle
+							class="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin text-muted-foreground"
+						/>
+					{:else if usernameStatus === 'available'}
+						<CircleCheck class="absolute top-1/2 right-3 size-4 -translate-y-1/2 text-green-500" />
+					{:else if usernameStatus === 'taken'}
+						<CircleX class="absolute top-1/2 right-3 size-4 -translate-y-1/2 text-destructive" />
+					{/if}
+				</div>
+				{#if usernameHint}
+					<p class="text-xs {usernameHint.class}">{usernameHint.text}</p>
+				{:else}
+					<p class="text-xs text-muted-foreground">
+						Lowercase letters and numbers only. Used for your public profile URL.
+					</p>
+				{/if}
 			</div>
 			<div class="space-y-1.5">
 				<Label for="email">Email</Label>
@@ -31,7 +141,9 @@
 				<Input id="password" type="password" name="password" required />
 			</div>
 
-			<Button type="submit" class="w-full">Create account</Button>
+			<Button type="submit" class="w-full" disabled={usernameStatus === 'taken'}>
+				Create account
+			</Button>
 		</form>
 
 		{#if form?.message}
