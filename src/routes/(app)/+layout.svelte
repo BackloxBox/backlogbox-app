@@ -201,7 +201,7 @@
 	</nav>
 
 	<!-- Main content -->
-	<main class="flex-1 overflow-auto">
+	<main class="min-h-0 flex-1 overflow-auto">
 		{@render children()}
 	</main>
 </div>

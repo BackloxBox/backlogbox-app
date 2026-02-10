@@ -27,7 +27,7 @@
 </script>
 
 <div
-	class="flex min-w-0 flex-1 flex-col rounded-lg border border-border bg-muted/40 transition-colors
+	class="flex min-h-0 min-w-0 flex-1 flex-col rounded-lg border border-border bg-muted/40 transition-colors
 	{isDropTarget.current ? 'ring-2 ring-ring' : ''}"
 >
 	<div
@@ -40,7 +40,7 @@
 		<Badge variant="secondary" class="bg-muted-foreground/15 text-[10px]">{items.length}</Badge>
 	</div>
 
-	<ScrollArea class="flex-1">
+	<ScrollArea class="min-h-0 flex-1" scrollbarYClasses="hidden">
 		<div {@attach ref} class="flex flex-col gap-1.5 p-2" data-group={status}>
 			{#each items as item, index (item.id)}
 				<KanbanCard {item} {index} group={status} onclick={onCardClick} />

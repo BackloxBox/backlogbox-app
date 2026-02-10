@@ -89,7 +89,7 @@
 </script>
 
 <!-- Desktop: horizontal Kanban columns (client-only due to DnD context) -->
-<div class="hidden flex-1 lg:block">
+<div class="hidden min-h-0 flex-1 lg:flex lg:flex-col">
 	{#if browser && !readonly}
 		<DragDropProvider
 			sensors={[PointerSensor, KeyboardSensor]}
@@ -125,7 +125,9 @@
 		<div class="flex h-full gap-3 overflow-x-auto p-4">
 			{#each MEDIA_STATUSES as status}
 				{@const items = columns[status] ?? []}
-				<div class="flex min-w-0 flex-1 flex-col rounded-lg border border-border bg-muted/40">
+				<div
+					class="flex min-h-0 min-w-0 flex-1 flex-col rounded-lg border border-border bg-muted/40"
+				>
 					<div
 						class="flex items-center justify-between rounded-t-lg border-b border-border bg-muted/60 px-3 py-2"
 					>
@@ -142,7 +144,7 @@
 							>{items.length}</Badge
 						>
 					</div>
-					<div class="flex flex-1 flex-col gap-1.5 overflow-y-auto p-2">
+					<div class="scrollbar-none flex flex-1 flex-col gap-1.5 overflow-y-auto p-2">
 						{#each items as item (item.id)}
 							<MobileCard {item} onclick={readonly ? undefined : onCardClick} />
 						{/each}

@@ -129,6 +129,13 @@
 	--color-amber-400: oklch(0.828 0.189 84.429);
 }
 
+@utility scrollbar-none {
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
 @layer base {
 	* {
 		@apply border-border outline-ring/50;
