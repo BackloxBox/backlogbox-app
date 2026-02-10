@@ -41,13 +41,13 @@
 </script>
 
 {#if statusCounts.length > 0}
-	<Chart.Container config={chartConfig} class="mx-auto aspect-square max-h-[180px]">
+	<Chart.Container config={chartConfig} class="mx-auto aspect-square max-h-[220px]">
 		<PieChart
 			data={chartData}
 			key="name"
 			value="count"
 			c="color"
-			innerRadius={50}
+			innerRadius={55}
 			padding={20}
 			props={{ pie: { motion: 'tween' } }}
 		>
@@ -56,15 +56,15 @@
 					value={String(totalItems)}
 					textAnchor="middle"
 					verticalAnchor="middle"
-					class="fill-foreground text-2xl! font-bold"
-					dy={-2}
+					class="fill-foreground text-3xl! font-bold"
+					dy={-4}
 				/>
 				<Text
 					value="items"
 					textAnchor="middle"
 					verticalAnchor="middle"
-					class="fill-muted-foreground! text-xs! text-muted-foreground"
-					dy={16}
+					class="fill-muted-foreground! text-xs!"
+					dy={18}
 				/>
 			{/snippet}
 			{#snippet tooltip()}
@@ -73,7 +73,7 @@
 		</PieChart>
 	</Chart.Container>
 {:else}
-	<div class="flex h-[180px] items-center justify-center text-sm text-muted-foreground">
+	<div class="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
 		No items yet
 	</div>
 {/if}

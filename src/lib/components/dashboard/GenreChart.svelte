@@ -37,7 +37,7 @@
 </script>
 
 {#if genres.length > 0}
-	<Chart.Container config={chartConfig} class="h-[180px] w-full">
+	<Chart.Container config={chartConfig} class="h-[220px] w-full">
 		<BarChart
 			data={chartData}
 			xScale={scaleBand().padding(0.3)}
@@ -48,12 +48,12 @@
 				bars: {
 					stroke: 'none',
 					rounded: 'all',
-					radius: 4,
+					radius: 5,
 					initialHeight: 0
 				},
 				highlight: { area: { fill: 'none' } },
 				xAxis: {
-					format: (d: string) => (d.length > 8 ? d.slice(0, 7) + '\u2026' : d)
+					format: (d: string) => (d.length > 10 ? d.slice(0, 9) + '\u2026' : d)
 				}
 			}}
 		>
@@ -63,7 +63,7 @@
 		</BarChart>
 	</Chart.Container>
 {:else}
-	<div class="flex h-[180px] items-center justify-center text-sm text-muted-foreground">
+	<div class="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
 		No genre data yet
 	</div>
 {/if}

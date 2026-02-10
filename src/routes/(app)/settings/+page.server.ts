@@ -38,8 +38,15 @@ export const actions: Actions = {
 				profilePublic: username ? profilePublic : false
 			});
 		} catch (err) {
-			if (err instanceof Error && err.message.includes('unique')) {
-				return fail(400, { profileMessage: 'Username is already taken' });
+			const msg = err instanceof Error ? err.message : '';
+			const code =
+				typeof err === 'object' && err !== null && 'code' in err
+					? (err as { code: string }).code
+					: '';
+			if (msg.includes('unique') || msg.includes('duplicate') || code === '23505') {
+				return fail(400, {
+					profileMessage: `Username "@${username}" is already taken. Please choose another.`
+				});
 			}
 			return fail(500, { profileMessage: 'Failed to update profile' });
 		}

@@ -202,7 +202,7 @@
 
 	.heatmap-cell {
 		aspect-ratio: 1;
-		border-radius: 2px;
+		border-radius: 3px;
 		min-width: 0;
 	}
 

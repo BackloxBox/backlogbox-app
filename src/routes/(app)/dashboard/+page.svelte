@@ -18,11 +18,13 @@
 	import Tv from '@lucide/svelte/icons/tv';
 	import Gamepad2 from '@lucide/svelte/icons/gamepad-2';
 	import Podcast from '@lucide/svelte/icons/podcast';
+	import TrendingUp from '@lucide/svelte/icons/trending-up';
+	import Flame from '@lucide/svelte/icons/flame';
 	import type { Component } from 'svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const { stats } = data;
+	const stats = $derived(data.stats);
 
 	// --- Media type cards config ---
 
@@ -36,15 +38,17 @@
 
 	const TYPE_COLORS = MEDIA_TYPE_COLORS;
 
-	const typeCards = MEDIA_TYPES.map((type) => ({
-		type,
-		slug: mediaTypeToSlug(type),
-		label: MEDIA_TYPE_LABELS[type].plural,
-		icon: TYPE_ICONS[type],
-		color: TYPE_COLORS[type],
-		total: stats.typeCounts[type].total,
-		completed: stats.typeCounts[type].completed
-	}));
+	const typeCards = $derived(
+		MEDIA_TYPES.map((type) => ({
+			type,
+			slug: mediaTypeToSlug(type),
+			label: MEDIA_TYPE_LABELS[type].plural,
+			icon: TYPE_ICONS[type],
+			color: TYPE_COLORS[type],
+			total: stats.typeCounts[type].total,
+			completed: stats.typeCounts[type].completed
+		}))
+	);
 
 	// --- Area chart config ---
 
@@ -68,6 +72,19 @@
 			monthLabel: formatMonth(row.month)
 		}))
 	);
+
+	/** Completion rate as percentage */
+	const completionRate = $derived(
+		stats.totalItems > 0 ? Math.round((stats.totalCompleted / stats.totalItems) * 100) : 0
+	);
+
+	/** Items added in last 30 days */
+	const recentlyAddedCount = $derived.by(() => {
+		const thirtyDaysAgo = new Date();
+		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+		const cutoff = thirtyDaysAgo.toISOString().slice(0, 10);
+		return stats.addedActivity.filter((d) => d.date >= cutoff).reduce((sum, d) => sum + d.count, 0);
+	});
 
 	function formatMonth(yyyymm: string): string {
 		const [, month] = yyyymm.split('-');
@@ -105,47 +122,83 @@
 	}
 </script>
 
-<div class="space-y-4 p-4 lg:p-6">
-	<!-- Header -->
-	<div>
-		<h1 class="text-xl font-semibold tracking-tight text-foreground">Dashboard</h1>
-		<p class="mt-0.5 text-xs text-muted-foreground">
-			{stats.totalItems} item{stats.totalItems !== 1 ? 's' : ''} tracked &middot;
-			{stats.totalCompleted} completed
-		</p>
+<div class="space-y-6 p-4 lg:p-6">
+	<!-- Header row: title + summary stats -->
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+		<div>
+			<h1 class="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+			<p class="mt-0.5 text-sm text-muted-foreground">Your collection at a glance</p>
+		</div>
+		<div class="flex gap-6">
+			<div class="text-right">
+				<p class="text-2xl font-bold text-foreground tabular-nums">{stats.totalItems}</p>
+				<p class="text-xs text-muted-foreground">total items</p>
+			</div>
+			<div class="text-right">
+				<div class="flex items-center justify-end gap-1.5">
+					<TrendingUp class="size-3.5 text-emerald-500" />
+					<p class="text-2xl font-bold text-foreground tabular-nums">{completionRate}%</p>
+				</div>
+				<p class="text-xs text-muted-foreground">completed</p>
+			</div>
+			<div class="text-right">
+				<div class="flex items-center justify-end gap-1.5">
+					<Flame class="size-3.5 text-amber-500" />
+					<p class="text-2xl font-bold text-foreground tabular-nums">{recentlyAddedCount}</p>
+				</div>
+				<p class="text-xs text-muted-foreground">added (30d)</p>
+			</div>
+		</div>
 	</div>
 
 	<!-- Media type cards -->
-	<div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+	<div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
 		{#each typeCards as card (card.type)}
 			<a
 				href="/{card.slug}"
-				class="group relative overflow-hidden rounded-lg border border-border bg-card p-3 transition hover:border-transparent hover:shadow-md"
+				class="group relative overflow-hidden rounded-xl border border-border bg-card p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-transparent hover:shadow-lg"
 			>
+				<!-- Colored gradient background on hover -->
 				<div
-					class="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-[0.08] dark:group-hover:opacity-[0.12]"
-					style:background={card.color}
+					class="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+					style:background="linear-gradient(135deg, {card.color}08, {card.color}15)"
 				></div>
-				<div class="relative flex items-center gap-2.5">
-					<span style:color={card.color}>
-						<card.icon class="size-4" />
-					</span>
-					<div class="min-w-0">
-						<span class="text-xs font-medium text-foreground">{card.label}</span>
-						<div class="flex items-baseline gap-1.5">
-							<span class="text-base font-bold text-foreground tabular-nums">{card.total}</span>
-							<span class="text-[10px] text-muted-foreground">{card.completed} done</span>
+				<div class="relative">
+					<div class="flex items-center gap-2">
+						<div
+							class="flex size-8 items-center justify-center rounded-lg transition-colors duration-200"
+							style:background="{card.color}15"
+							style:color={card.color}
+						>
+							<card.icon class="size-4" />
 						</div>
+						<span class="text-xs font-medium text-muted-foreground">{card.label}</span>
 					</div>
+					<div class="mt-2.5 flex items-baseline gap-2">
+						<span class="text-xl font-bold text-foreground tabular-nums">{card.total}</span>
+						{#if card.completed > 0}
+							<span class="text-xs text-muted-foreground">{card.completed} done</span>
+						{/if}
+					</div>
+					{#if card.total > 0}
+						<!-- Mini progress bar -->
+						<div class="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+							<div
+								class="h-full rounded-full transition-all duration-500"
+								style:background={card.color}
+								style:width="{Math.round((card.completed / card.total) * 100)}%"
+							></div>
+						</div>
+					{/if}
 				</div>
 			</a>
 		{/each}
 	</div>
 
 	<!-- Activity heatmap -->
-	<div class="rounded-lg border border-border bg-card p-3 sm:p-4">
-		<h2 class="mb-2 text-xs font-medium text-foreground">Activity</h2>
-		<div class="overflow-x-auto">
+	<div class="rounded-xl border border-border bg-card p-4 sm:p-5">
+		<h2 class="mb-3 text-sm font-medium text-foreground">Activity</h2>
+		<div class="scrollbar-none overflow-x-auto">
 			<div class="min-w-[580px]">
 				<ActivityHeatmap
 					addedActivity={stats.addedActivity}
@@ -156,25 +209,21 @@
 		</div>
 	</div>
 
-	<!-- Middle row: status donut + genres + completions chart -->
-	<div class="grid gap-4 lg:grid-cols-6">
-		<!-- Status distribution -->
-		<div class="rounded-lg border border-border bg-card p-3 sm:p-4 lg:col-span-2">
-			<h2 class="mb-1 text-xs font-medium text-foreground">Status Distribution</h2>
+	<!-- Charts row: status + completions (wider) -->
+	<div class="grid gap-4 lg:grid-cols-5">
+		<!-- Status distribution — donut -->
+		<div class="rounded-xl border border-border bg-card p-4 sm:p-5 lg:col-span-2">
+			<h2 class="mb-1 text-sm font-medium text-foreground">Status Breakdown</h2>
+			<p class="mb-2 text-xs text-muted-foreground">Across all media types</p>
 			<StatusDonut statusCounts={stats.statusCounts} totalItems={stats.totalItems} />
 		</div>
 
-		<!-- Top genres -->
-		<div class="rounded-lg border border-border bg-card p-3 sm:p-4 lg:col-span-2">
-			<h2 class="mb-1 text-xs font-medium text-foreground">Top Genres</h2>
-			<GenreChart genres={stats.topGenres} />
-		</div>
-
-		<!-- Completions area chart -->
-		<div class="rounded-lg border border-border bg-card p-3 sm:p-4 lg:col-span-2">
-			<h2 class="mb-1 text-xs font-medium text-foreground">Completions</h2>
+		<!-- Completions over time — area chart -->
+		<div class="rounded-xl border border-border bg-card p-4 sm:p-5 lg:col-span-3">
+			<h2 class="mb-1 text-sm font-medium text-foreground">Completions</h2>
+			<p class="mb-2 text-xs text-muted-foreground">Last 6 months by media type</p>
 			{#if chartData.length > 0}
-				<Chart.Container config={chartConfig} class="h-[180px] w-full">
+				<Chart.Container config={chartConfig} class="h-[220px] w-full">
 					<AreaChart
 						data={chartData}
 						x="monthLabel"
@@ -184,7 +233,7 @@
 							area: {
 								curve: curveMonotoneX,
 								line: { class: 'stroke-1' },
-								'fill-opacity': 0.4
+								'fill-opacity': 0.35
 							}
 						}}
 					>
@@ -194,37 +243,52 @@
 					</AreaChart>
 				</Chart.Container>
 			{:else}
-				<div class="flex h-[180px] items-center justify-center text-sm text-muted-foreground">
+				<div class="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
 					No completions yet
 				</div>
 			{/if}
 		</div>
 	</div>
 
-	<!-- Bottom row: recently added -->
-	<div class="rounded-lg border border-border bg-card p-3 sm:p-4">
-		<h2 class="mb-2 text-xs font-medium text-foreground">Recently Added</h2>
-		{#if stats.recentItems.length > 0}
-			<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-				{#each stats.recentItems as item (item.title + item.createdAt)}
-					<div class="flex items-center gap-2.5 rounded-md p-1.5 transition hover:bg-accent">
-						<MediaCover title={item.title} coverUrl={item.coverUrl} size="sm" />
-						<div class="min-w-0 flex-1">
-							<p class="truncate text-xs font-medium text-foreground">{item.title}</p>
-							<p class="text-[10px] text-muted-foreground">
-								<span style:color={TYPE_COLORS[item.type]}>
-									{MEDIA_TYPE_LABELS[item.type].singular}
-								</span>
-								&middot; {timeAgo(item.createdAt)}
-							</p>
+	<!-- Genres row -->
+	<div class="grid gap-4 lg:grid-cols-5">
+		<!-- Top genres -->
+		<div class="rounded-xl border border-border bg-card p-4 sm:p-5 lg:col-span-3">
+			<h2 class="mb-1 text-sm font-medium text-foreground">Top Genres</h2>
+			<p class="mb-2 text-xs text-muted-foreground">Most tracked genres across your collection</p>
+			<GenreChart genres={stats.topGenres} />
+		</div>
+
+		<!-- Recently added -->
+		<div class="rounded-xl border border-border bg-card p-4 sm:p-5 lg:col-span-2">
+			<h2 class="mb-3 text-sm font-medium text-foreground">Recently Added</h2>
+			{#if stats.recentItems.length > 0}
+				<div class="space-y-1">
+					{#each stats.recentItems as item, i (item.title + item.createdAt)}
+						<div
+							class="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-accent/50"
+						>
+							<span class="w-4 text-center text-xs font-medium text-muted-foreground tabular-nums">
+								{i + 1}
+							</span>
+							<MediaCover title={item.title} coverUrl={item.coverUrl} size="sm" />
+							<div class="min-w-0 flex-1">
+								<p class="truncate text-sm font-medium text-foreground">{item.title}</p>
+								<p class="text-xs text-muted-foreground">
+									<span style:color={TYPE_COLORS[item.type]}>
+										{MEDIA_TYPE_LABELS[item.type].singular}
+									</span>
+									&middot; {timeAgo(item.createdAt)}
+								</p>
+							</div>
 						</div>
-					</div>
-				{/each}
-			</div>
-		{:else}
-			<div class="flex h-16 items-center justify-center text-sm text-muted-foreground">
-				No items yet
-			</div>
-		{/if}
+					{/each}
+				</div>
+			{:else}
+				<div class="flex h-32 items-center justify-center text-sm text-muted-foreground">
+					No items yet
+				</div>
+			{/if}
+		</div>
 	</div>
 </div>
