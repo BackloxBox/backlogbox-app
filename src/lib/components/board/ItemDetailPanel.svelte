@@ -214,21 +214,23 @@
 						{#if item.seriesMeta?.seriesStatus}
 							<div>
 								<span class="text-xs text-muted-foreground">Status</span>
-								<Tooltip.Root>
-									<Tooltip.Trigger>
-										<p
-											class="text-sm text-foreground underline decoration-dotted underline-offset-2"
-										>
-											{item.seriesMeta.seriesStatus}
-										</p>
-									</Tooltip.Trigger>
-									<Tooltip.Content>
-										<p>
-											{SERIES_STATUS_DESCRIPTIONS[item.seriesMeta.seriesStatus] ??
-												item.seriesMeta.seriesStatus}
-										</p>
-									</Tooltip.Content>
-								</Tooltip.Root>
+								<Tooltip.Provider>
+									<Tooltip.Root>
+										<Tooltip.Trigger>
+											<p
+												class="text-sm text-foreground underline decoration-dotted underline-offset-2"
+											>
+												{item.seriesMeta.seriesStatus}
+											</p>
+										</Tooltip.Trigger>
+										<Tooltip.Content>
+											<p>
+												{SERIES_STATUS_DESCRIPTIONS[item.seriesMeta.seriesStatus] ??
+													item.seriesMeta.seriesStatus}
+											</p>
+										</Tooltip.Content>
+									</Tooltip.Root>
+								</Tooltip.Provider>
 							</div>
 						{/if}
 					</div>
