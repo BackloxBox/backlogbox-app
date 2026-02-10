@@ -2,6 +2,8 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { toggleMode } from 'mode-watcher';
 	import { authClient } from '$lib/auth-client';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import Sun from '@lucide/svelte/icons/sun';
 	import Moon from '@lucide/svelte/icons/moon';
 	import Check from '@lucide/svelte/icons/check';
@@ -37,6 +39,10 @@
 	] as const;
 
 	async function subscribe(slug: 'monthly' | 'yearly') {
+		if (!page.data.user) {
+			goto(`/login?redirect=/subscribe`);
+			return;
+		}
 		loading = slug;
 		try {
 			await authClient.checkout({ slug });

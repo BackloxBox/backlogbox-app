@@ -5,9 +5,12 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import Github from '@lucide/svelte/icons/github';
+	import { page } from '$app/state';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
+
+	const redirectTo = $derived(page.url.searchParams.get('redirect') ?? '');
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-background px-4">
@@ -18,6 +21,7 @@
 		</div>
 
 		<form method="post" action="?/signInEmail" use:enhance class="space-y-4">
+			{#if redirectTo}<input type="hidden" name="redirect" value={redirectTo} />{/if}
 			<div class="space-y-1.5">
 				<Label for="email">Email</Label>
 				<Input id="email" type="email" name="email" required />
@@ -42,6 +46,7 @@
 		</div>
 
 		<form method="post" action="?/signInSocial" use:enhance>
+			{#if redirectTo}<input type="hidden" name="redirect" value={redirectTo} />{/if}
 			<input type="hidden" name="provider" value="github" />
 			<Button variant="outline" class="w-full gap-2">
 				<Github class="size-4" />
