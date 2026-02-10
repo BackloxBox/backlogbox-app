@@ -1,7 +1,31 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
 	import Check from '@lucide/svelte/icons/check';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+
+	let activated = $derived(page.data.subscribed === true);
+
+	// Poll until subscription webhook arrives
+	$effect(() => {
+		if (activated) return;
+
+		const id = setInterval(() => {
+			invalidateAll();
+		}, 2000);
+
+		return () => clearInterval(id);
+	});
+
+	// Auto-redirect once active
+	$effect(() => {
+		if (activated) {
+			const t = setTimeout(() => goto('/dashboard'), 1500);
+			return () => clearTimeout(t);
+		}
+	});
 </script>
 
 <div class="relative min-h-screen overflow-hidden bg-background">
@@ -31,14 +55,24 @@
 			<span class="success-gradient bg-clip-text text-transparent">BacklogBox!</span>
 		</h1>
 
-		<p class="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground sm:text-base">
-			Your subscription is active. Time to organize your media backlog.
-		</p>
+		{#if activated}
+			<p class="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground sm:text-base">
+				Your subscription is active. Redirecting to dashboard...
+			</p>
 
-		<Button size="lg" href="/dashboard" class="mt-8 gap-2">
-			Go to Dashboard
-			<ArrowRight class="size-4" />
-		</Button>
+			<Button size="lg" href="/dashboard" class="mt-8 gap-2">
+				Go to Dashboard
+				<ArrowRight class="size-4" />
+			</Button>
+		{:else}
+			<p class="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground sm:text-base">
+				Activating your subscription...
+			</p>
+
+			<div class="mt-8">
+				<LoaderCircle class="size-6 animate-spin text-muted-foreground" />
+			</div>
+		{/if}
 	</div>
 </div>
 
