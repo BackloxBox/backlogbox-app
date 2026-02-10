@@ -1,5 +1,6 @@
 <script lang="ts">
 	import MediaCover from './MediaCover.svelte';
+	import Pin from '@lucide/svelte/icons/pin';
 	import { formatStars, getBadge, getSubtitle } from './card-utils';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 
@@ -25,7 +26,10 @@
 		{/if}
 	</div>
 	<div class="min-w-0 flex-1">
-		<p class="truncate text-sm font-medium text-foreground">{item.title}</p>
+		<p class="flex items-center gap-1 truncate text-sm font-medium text-foreground">
+			{#if item.pinned}<Pin class="size-3 shrink-0 text-muted-foreground" />{/if}
+			<span class="truncate">{item.title}</span>
+		</p>
 		{#if sub}
 			<p class="truncate text-xs text-muted-foreground">{sub}</p>
 		{/if}

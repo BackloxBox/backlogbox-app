@@ -34,6 +34,11 @@
 		for (const item of items) {
 			grouped[item.status].push(item);
 		}
+		for (const status of MEDIA_STATUSES) {
+			grouped[status].sort(
+				(a, b) => Number(b.pinned) - Number(a.pinned) || a.sortOrder - b.sortOrder
+			);
+		}
 		return grouped;
 	}
 

@@ -1,5 +1,14 @@
 import { relations } from 'drizzle-orm';
-import { index, integer, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+	boolean,
+	index,
+	integer,
+	pgEnum,
+	pgTable,
+	text,
+	timestamp,
+	uuid
+} from 'drizzle-orm/pg-core';
 
 import { user } from './auth.schema';
 
@@ -38,7 +47,8 @@ export const mediaItem = pgTable(
 			.defaultNow()
 			.$onUpdate(() => new Date())
 			.notNull(),
-		completedAt: timestamp('completed_at')
+		completedAt: timestamp('completed_at'),
+		pinned: boolean('pinned').notNull().default(false)
 	},
 	(table) => [
 		index('media_item_user_type_status_idx').on(table.userId, table.type, table.status),

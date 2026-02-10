@@ -121,7 +121,8 @@ const updateFieldsSchema = v.object({
 	rating: v.optional(v.nullable(v.number())),
 	notes: v.optional(v.nullable(v.string())),
 	coverUrl: v.optional(v.nullable(v.string())),
-	releaseYear: v.optional(v.nullable(v.number()))
+	releaseYear: v.optional(v.nullable(v.number())),
+	pinned: v.optional(v.boolean())
 });
 
 const updateItemSchema = v.variant('slug', [

@@ -126,6 +126,7 @@ export async function updateMediaItemFields(
 		notes: string | null;
 		coverUrl: string | null;
 		releaseYear: number | null;
+		pinned: boolean;
 	}>
 ) {
 	// Auto-manage completedAt on status transitions

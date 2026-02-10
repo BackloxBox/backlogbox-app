@@ -8,6 +8,8 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import X from '@lucide/svelte/icons/x';
 	import Send from '@lucide/svelte/icons/send';
+	import Pin from '@lucide/svelte/icons/pin';
+	import PinOff from '@lucide/svelte/icons/pin-off';
 	import MediaCover from './MediaCover.svelte';
 	import StarRating from './StarRating.svelte';
 	import { getSeasonBadge, formatRuntime } from './card-utils';
@@ -154,6 +156,19 @@
 		}
 	}
 
+	async function handleTogglePin() {
+		if (!item) return;
+		saving = true;
+		try {
+			await onUpdate({ pinned: !item.pinned });
+		} catch (err) {
+			console.error('toggle pin failed', { itemId: item?.id, err });
+			toast.error('Failed to update pin');
+		} finally {
+			saving = false;
+		}
+	}
+
 	function formatRelativeTime(date: Date): string {
 		const now = Date.now();
 		const diff = now - date.getTime();
@@ -273,16 +288,29 @@
 	<Sheet.Content side="right" class="flex w-full max-w-md flex-col p-0">
 		{#if item}
 			<Sheet.Header class="px-5 pt-5 pb-0">
-				<Sheet.Title class="flex items-center gap-2 truncate">
-					{item.title}
-					{#if seasonLabel}
-						<span
-							class="shrink-0 rounded bg-primary px-1.5 py-0.5 text-xs leading-none font-bold text-primary-foreground"
-						>
-							{seasonLabel}
-						</span>
-					{/if}
-				</Sheet.Title>
+				<div class="flex items-center gap-2">
+					<Sheet.Title class="flex min-w-0 items-center gap-2 truncate">
+						{item.title}
+						{#if seasonLabel}
+							<span
+								class="shrink-0 rounded bg-primary px-1.5 py-0.5 text-xs leading-none font-bold text-primary-foreground"
+							>
+								{seasonLabel}
+							</span>
+						{/if}
+					</Sheet.Title>
+					<button
+						class="shrink-0 rounded p-1 transition-colors hover:bg-muted"
+						onclick={handleTogglePin}
+						aria-label={item.pinned ? 'Unpin item' : 'Pin item'}
+					>
+						{#if item.pinned}
+							<PinOff class="size-4 text-foreground" />
+						{:else}
+							<Pin class="size-4 text-muted-foreground" />
+						{/if}
+					</button>
+				</div>
 				<Sheet.Description class="sr-only">Item details</Sheet.Description>
 			</Sheet.Header>
 

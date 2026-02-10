@@ -69,7 +69,9 @@
 		}
 
 		for (const status of MEDIA_STATUSES) {
-			grouped[status].sort((a, b) => a.sortOrder - b.sortOrder);
+			grouped[status].sort(
+				(a, b) => Number(b.pinned) - Number(a.pinned) || a.sortOrder - b.sortOrder
+			);
 		}
 
 		return grouped;
