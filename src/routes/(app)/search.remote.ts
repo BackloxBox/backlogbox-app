@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import { query } from '$app/server';
 import { requireSubscription } from '$lib/server/auth-guard';
 import { getSearchProvider, type SearchResult } from '$lib/server/search';
+import { getCached, setCache } from '$lib/server/search/cache';
 import { fetchBookDescription } from '$lib/server/search/openlibrary';
 import {
 	fetchTmdbSeriesDetails,
@@ -28,10 +29,15 @@ export const searchMedia = query(searchSchema, async (input): Promise<SearchResu
 	const type = slugToMediaType(input.slug);
 	if (!type) error(400, `Invalid media type slug: ${input.slug}`);
 
+	const cached = getCached(type, input.query);
+	if (cached) return cached;
+
 	const provider = getSearchProvider(type);
 
 	try {
-		return await provider.search(input.query);
+		const results = await provider.search(input.query);
+		setCache(type, input.query, results);
+		return results;
 	} catch (err) {
 		log.error({ err, mediaType: type, query: input.query }, 'search provider failed');
 		return [];

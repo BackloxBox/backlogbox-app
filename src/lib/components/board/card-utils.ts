@@ -1,4 +1,5 @@
 import type { MediaItemWithMeta } from '$lib/server/db/queries';
+import type { SearchResult } from '$lib/server/search';
 
 /** Star rating display string (e.g. "★★★☆☆"), clamped to 0-5 */
 export function formatStars(rating: number | null): string {
@@ -58,4 +59,31 @@ export function getSubtitle(item: MediaItemWithMeta): string {
 	if (item.gameMeta) return item.gameMeta.genre ?? item.gameMeta.platform ?? '';
 	if (item.podcastMeta?.host) return item.podcastMeta.host;
 	return '';
+}
+
+/**
+ * Extract a set of external ID keys from board items for duplicate detection.
+ * Keys are prefixed by source: "tmdb:123", "isbn:978...", "igdb:456", "podcast:789"
+ */
+export function extractExternalIds(items: MediaItemWithMeta[]): Set<string> {
+	const ids = new Set<string>();
+	for (const item of items) {
+		if (item.movieMeta?.tmdbId != null) ids.add(`tmdb:${item.movieMeta.tmdbId}`);
+		if (item.seriesMeta?.tmdbId != null) ids.add(`tmdb:${item.seriesMeta.tmdbId}`);
+		if (item.bookMeta?.isbn) ids.add(`isbn:${item.bookMeta.isbn}`);
+		if (item.gameMeta?.igdbId != null) ids.add(`igdb:${item.gameMeta.igdbId}`);
+		if (item.podcastMeta?.applePodcastId) ids.add(`podcast:${item.podcastMeta.applePodcastId}`);
+	}
+	return ids;
+}
+
+/** Build the external ID key for a search result (matches extractExternalIds format) */
+export function searchResultExternalKey(result: SearchResult): string | null {
+	const m = result.meta;
+	if (typeof m.tmdbId === 'number') return `tmdb:${m.tmdbId}`;
+	if (typeof m.isbn === 'string' && m.isbn) return `isbn:${m.isbn}`;
+	if (typeof m.igdbId === 'number') return `igdb:${m.igdbId}`;
+	if (typeof m.applePodcastId === 'string' && m.applePodcastId)
+		return `podcast:${m.applePodcastId}`;
+	return null;
 }
