@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { useDroppable } from '@dnd-kit-svelte/svelte';
-	import { CollisionPriority } from '@dnd-kit/abstract';
 	import KanbanCard from './KanbanCard.svelte';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
@@ -21,13 +20,13 @@
 	const { ref, isDropTarget } = useDroppable({
 		id: () => status,
 		type: 'column',
-		accept: ['item'],
-		collisionPriority: CollisionPriority.Low
+		accept: ['item']
 	});
 </script>
 
 <div
-	class="flex min-h-0 min-w-0 flex-1 flex-col rounded-lg border border-border bg-muted/40 transition-colors
+	{@attach ref}
+	class="flex min-h-0 min-w-0 flex-1 flex-col rounded-lg border border-border bg-muted/40
 	{isDropTarget.current ? 'ring-2 ring-ring' : ''}"
 >
 	<div
@@ -41,7 +40,7 @@
 	</div>
 
 	<ScrollArea class="min-h-0 flex-1" scrollbarYClasses="hidden">
-		<div {@attach ref} class="flex flex-col gap-1.5 p-2" data-group={status}>
+		<div class="flex flex-col gap-1.5 p-2" data-group={status}>
 			{#each items as item, index (item.id)}
 				<KanbanCard {item} {index} group={status} onclick={onCardClick} />
 			{/each}
