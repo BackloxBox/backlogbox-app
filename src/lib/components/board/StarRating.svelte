@@ -21,6 +21,8 @@
 		{@const filled = (hovered ?? value ?? 0) >= star}
 		<button
 			type="button"
+			role="radio"
+			aria-checked={value === star}
 			class="text-lg transition {readonly ? 'cursor-default' : 'cursor-pointer'}
 			{filled ? 'text-amber-400' : 'text-muted-foreground/50'}"
 			onclick={() => handleClick(star)}

@@ -283,10 +283,11 @@
 					{@const currentSeason = item.seriesMeta.currentSeason ?? 0}
 					<div class="mt-5 space-y-1.5">
 						<Label>Season</Label>
-						<div class="flex flex-wrap gap-1.5">
+						<div class="flex flex-wrap gap-1.5" role="group" aria-label="Season">
 							<button
+								aria-pressed={currentSeason === 0}
 								class="rounded border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50
-							{currentSeason === 0
+						{currentSeason === 0
 									? 'border-primary bg-primary text-primary-foreground'
 									: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
 								disabled={saving}
@@ -298,8 +299,9 @@
 								{#each { length: item.seriesMeta.totalSeasons } as _, i}
 									{@const season = i + 1}
 									<button
+										aria-pressed={currentSeason === season}
 										class="rounded border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50
-									{currentSeason === season
+								{currentSeason === season
 											? 'border-primary bg-primary text-primary-foreground'
 											: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
 										disabled={saving}

@@ -1,9 +1,10 @@
 import type { MediaItemWithMeta } from '$lib/server/db/queries';
 
-/** Star rating display string (e.g. "★★★☆☆") */
+/** Star rating display string (e.g. "★★★☆☆"), clamped to 0-5 */
 export function formatStars(rating: number | null): string {
 	if (rating === null || rating === undefined) return '';
-	return '\u2605'.repeat(rating) + '\u2606'.repeat(5 - rating);
+	const clamped = Math.max(0, Math.min(5, Math.round(rating)));
+	return '\u2605'.repeat(clamped) + '\u2606'.repeat(5 - clamped);
 }
 
 /** Season badge label for series items (e.g. "S2" or "All") */

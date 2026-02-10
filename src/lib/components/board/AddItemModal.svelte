@@ -34,18 +34,25 @@
 
 	// Manual add form state
 	let showManualForm = $state(false);
-	let manualTitle = $state('');
-	let manualAuthor = $state('');
-	let manualDirector = $state('');
-	let manualGenre = $state('');
-	let manualPlatform = $state('');
-	let manualHost = $state('');
-	let manualYear = $state('');
-	let manualPageCount = $state('');
-	let manualIsbn = $state('');
-	let manualRuntime = $state('');
-	let manualCreator = $state('');
-	let manualTotalSeasons = $state('');
+
+	function emptyForm() {
+		return {
+			title: '',
+			author: '',
+			director: '',
+			genre: '',
+			platform: '',
+			host: '',
+			year: '',
+			pageCount: '',
+			isbn: '',
+			runtime: '',
+			creator: '',
+			totalSeasons: ''
+		};
+	}
+
+	let manual = $state(emptyForm());
 
 	// Season picker state for series
 	// Season 0 = "All seasons" (no specific season)
@@ -64,18 +71,7 @@
 		searching = false;
 		adding = false;
 		showManualForm = false;
-		manualTitle = '';
-		manualAuthor = '';
-		manualDirector = '';
-		manualGenre = '';
-		manualPlatform = '';
-		manualHost = '';
-		manualYear = '';
-		manualPageCount = '';
-		manualIsbn = '';
-		manualRuntime = '';
-		manualCreator = '';
-		manualTotalSeasons = '';
+		manual = emptyForm();
 		pendingResult = null;
 		pendingTotalSeasons = 0;
 		selectedSeasons = new Set();
@@ -221,44 +217,44 @@
 
 	/** Collect manual form fields into a flat data object for the add command */
 	function collectManualData(): Record<string, unknown> {
-		const data: Record<string, unknown> = { title: manualTitle.trim() };
-		const year = parseInt(manualYear);
+		const data: Record<string, unknown> = { title: manual.title.trim() };
+		const year = parseInt(manual.year);
 		if (!isNaN(year)) data.releaseYear = year;
 
 		if (slug === 'books') {
-			if (manualAuthor.trim()) data.author = manualAuthor.trim();
-			if (manualGenre.trim()) data.genre = manualGenre.trim();
-			const pages = parseInt(manualPageCount);
+			if (manual.author.trim()) data.author = manual.author.trim();
+			if (manual.genre.trim()) data.genre = manual.genre.trim();
+			const pages = parseInt(manual.pageCount);
 			if (!isNaN(pages)) data.pageCount = pages;
-			if (manualIsbn.trim()) data.isbn = manualIsbn.trim();
+			if (manual.isbn.trim()) data.isbn = manual.isbn.trim();
 		} else if (slug === 'movies') {
-			if (manualDirector.trim()) data.director = manualDirector.trim();
-			if (manualGenre.trim()) data.genre = manualGenre.trim();
-			const rt = parseInt(manualRuntime);
+			if (manual.director.trim()) data.director = manual.director.trim();
+			if (manual.genre.trim()) data.genre = manual.genre.trim();
+			const rt = parseInt(manual.runtime);
 			if (!isNaN(rt)) data.runtime = rt;
 		} else if (slug === 'series') {
-			if (manualCreator.trim()) data.creator = manualCreator.trim();
-			if (manualGenre.trim()) data.genre = manualGenre.trim();
-			const ts = parseInt(manualTotalSeasons);
+			if (manual.creator.trim()) data.creator = manual.creator.trim();
+			if (manual.genre.trim()) data.genre = manual.genre.trim();
+			const ts = parseInt(manual.totalSeasons);
 			if (!isNaN(ts)) data.totalSeasons = ts;
 		} else if (slug === 'games') {
-			if (manualPlatform.trim()) data.platform = manualPlatform.trim();
-			if (manualGenre.trim()) data.genre = manualGenre.trim();
+			if (manual.platform.trim()) data.platform = manual.platform.trim();
+			if (manual.genre.trim()) data.genre = manual.genre.trim();
 		} else if (slug === 'podcasts') {
-			if (manualHost.trim()) data.host = manualHost.trim();
+			if (manual.host.trim()) data.host = manual.host.trim();
 		}
 
 		return data;
 	}
 
 	async function handleManualAdd() {
-		if (!manualTitle.trim()) return;
+		if (!manual.title.trim()) return;
 		adding = true;
 		try {
 			await onManualAdd(collectManualData());
 			handleClose();
 		} catch (err) {
-			console.error('manual add failed', { slug, title: manualTitle, err });
+			console.error('manual add failed', { slug, title: manual.title, err });
 		} finally {
 			adding = false;
 		}
@@ -292,8 +288,9 @@
 					{#if loadingSeasons}
 						<p class="py-4 text-center text-sm text-muted-foreground">Loading seasons...</p>
 					{:else}
-						<div class="flex flex-wrap gap-1.5">
+						<div class="flex flex-wrap gap-1.5" role="group" aria-label="Seasons">
 							<button
+								aria-pressed={allSeasonsSelected}
 								class="rounded border px-2.5 py-1 text-xs font-medium transition
 								{allSeasonsSelected
 									? 'border-primary bg-primary text-primary-foreground'
@@ -306,6 +303,7 @@
 								{@const season = i + 1}
 								{@const selected = selectedSeasons.has(season)}
 								<button
+									aria-pressed={selected}
 									class="rounded border px-2.5 py-1 text-xs font-medium transition
 									{selected
 										? 'border-primary bg-primary text-primary-foreground'
@@ -407,17 +405,17 @@
 					<div class="space-y-3">
 						<div class="space-y-1.5">
 							<Label for="manual-title">Title *</Label>
-							<Input id="manual-title" placeholder="Title" bind:value={manualTitle} />
+							<Input id="manual-title" placeholder="Title" bind:value={manual.title} />
 						</div>
 
 						{#if slug === 'books'}
 							<div class="space-y-1.5">
 								<Label for="manual-author">Author</Label>
-								<Input id="manual-author" placeholder="Author" bind:value={manualAuthor} />
+								<Input id="manual-author" placeholder="Author" bind:value={manual.author} />
 							</div>
 							<div class="space-y-1.5">
 								<Label for="manual-genre">Genre</Label>
-								<Input id="manual-genre" placeholder="Genre" bind:value={manualGenre} />
+								<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
 							</div>
 							<div class="grid grid-cols-2 gap-3">
 								<div class="space-y-1.5">
@@ -426,7 +424,7 @@
 										id="manual-pages"
 										type="number"
 										placeholder="320"
-										bind:value={manualPageCount}
+										bind:value={manual.pageCount}
 									/>
 								</div>
 								<div class="space-y-1.5">
@@ -435,22 +433,22 @@
 										id="manual-year"
 										type="number"
 										placeholder="2024"
-										bind:value={manualYear}
+										bind:value={manual.year}
 									/>
 								</div>
 							</div>
 							<div class="space-y-1.5">
 								<Label for="manual-isbn">ISBN</Label>
-								<Input id="manual-isbn" placeholder="978-0-00-000000-0" bind:value={manualIsbn} />
+								<Input id="manual-isbn" placeholder="978-0-00-000000-0" bind:value={manual.isbn} />
 							</div>
 						{:else if slug === 'movies'}
 							<div class="space-y-1.5">
 								<Label for="manual-director">Director</Label>
-								<Input id="manual-director" placeholder="Director" bind:value={manualDirector} />
+								<Input id="manual-director" placeholder="Director" bind:value={manual.director} />
 							</div>
 							<div class="space-y-1.5">
 								<Label for="manual-genre">Genre</Label>
-								<Input id="manual-genre" placeholder="Genre" bind:value={manualGenre} />
+								<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
 							</div>
 							<div class="grid grid-cols-2 gap-3">
 								<div class="space-y-1.5">
@@ -459,7 +457,7 @@
 										id="manual-runtime"
 										type="number"
 										placeholder="120"
-										bind:value={manualRuntime}
+										bind:value={manual.runtime}
 									/>
 								</div>
 								<div class="space-y-1.5">
@@ -468,18 +466,18 @@
 										id="manual-year"
 										type="number"
 										placeholder="2024"
-										bind:value={manualYear}
+										bind:value={manual.year}
 									/>
 								</div>
 							</div>
 						{:else if slug === 'series'}
 							<div class="space-y-1.5">
 								<Label for="manual-creator">Creator</Label>
-								<Input id="manual-creator" placeholder="Creator" bind:value={manualCreator} />
+								<Input id="manual-creator" placeholder="Creator" bind:value={manual.creator} />
 							</div>
 							<div class="space-y-1.5">
 								<Label for="manual-genre">Genre</Label>
-								<Input id="manual-genre" placeholder="Genre" bind:value={manualGenre} />
+								<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
 							</div>
 							<div class="grid grid-cols-2 gap-3">
 								<div class="space-y-1.5">
@@ -488,7 +486,7 @@
 										id="manual-seasons"
 										type="number"
 										placeholder="3"
-										bind:value={manualTotalSeasons}
+										bind:value={manual.totalSeasons}
 									/>
 								</div>
 								<div class="space-y-1.5">
@@ -497,7 +495,7 @@
 										id="manual-year"
 										type="number"
 										placeholder="2024"
-										bind:value={manualYear}
+										bind:value={manual.year}
 									/>
 								</div>
 							</div>
@@ -507,13 +505,13 @@
 								<Input
 									id="manual-platform"
 									placeholder="PC, PS5, Switch..."
-									bind:value={manualPlatform}
+									bind:value={manual.platform}
 								/>
 							</div>
 							<div class="grid grid-cols-2 gap-3">
 								<div class="space-y-1.5">
 									<Label for="manual-genre">Genre</Label>
-									<Input id="manual-genre" placeholder="Genre" bind:value={manualGenre} />
+									<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
 								</div>
 								<div class="space-y-1.5">
 									<Label for="manual-year">Year</Label>
@@ -521,7 +519,7 @@
 										id="manual-year"
 										type="number"
 										placeholder="2024"
-										bind:value={manualYear}
+										bind:value={manual.year}
 									/>
 								</div>
 							</div>
@@ -529,7 +527,7 @@
 							<div class="grid grid-cols-2 gap-3">
 								<div class="space-y-1.5">
 									<Label for="manual-host">Host</Label>
-									<Input id="manual-host" placeholder="Host" bind:value={manualHost} />
+									<Input id="manual-host" placeholder="Host" bind:value={manual.host} />
 								</div>
 								<div class="space-y-1.5">
 									<Label for="manual-year">Year</Label>
@@ -537,7 +535,7 @@
 										id="manual-year"
 										type="number"
 										placeholder="2024"
-										bind:value={manualYear}
+										bind:value={manual.year}
 									/>
 								</div>
 							</div>
@@ -547,7 +545,7 @@
 							class="w-full"
 							size="sm"
 							onclick={handleManualAdd}
-							disabled={adding || !manualTitle.trim()}
+							disabled={adding || !manual.title.trim()}
 						>
 							{adding ? 'Adding...' : 'Add'}
 						</Button>
