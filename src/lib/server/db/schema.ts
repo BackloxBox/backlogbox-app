@@ -100,6 +100,12 @@ export const gameMeta = pgTable('game_meta', {
 		.references(() => mediaItem.id, { onDelete: 'cascade' }),
 	platform: text('platform'),
 	genre: text('genre'),
+	description: text('description'),
+	developer: text('developer'),
+	publisher: text('publisher'),
+	playingOn: text('playing_on'),
+	criticScore: integer('critic_score'),
+	userScore: integer('user_score'),
 	playtimeMinutes: integer('playtime_minutes'),
 	igdbId: integer('igdb_id')
 });

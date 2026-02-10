@@ -80,6 +80,12 @@ const seriesMetaSchema = v.object({
 const gameMetaSchema = v.object({
 	platform: optStr,
 	genre: optStr,
+	description: optStr,
+	developer: optStr,
+	publisher: optStr,
+	playingOn: optStr,
+	criticScore: optNum,
+	userScore: optNum,
 	playtimeMinutes: optNum,
 	igdbId: optNum
 });
@@ -215,6 +221,12 @@ function extractMeta(type: MediaType, data: AddItemInput): MetaFieldsFor<MediaTy
 			return pick(data as v.InferOutput<(typeof addItemSchema.options)[3]>, [
 				'platform',
 				'genre',
+				'description',
+				'developer',
+				'publisher',
+				'playingOn',
+				'criticScore',
+				'userScore',
 				'playtimeMinutes',
 				'igdbId'
 			]) satisfies GameMetaFields;

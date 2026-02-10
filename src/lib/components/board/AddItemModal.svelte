@@ -42,6 +42,8 @@
 			director: '',
 			genre: '',
 			platform: '',
+			developer: '',
+			publisher: '',
 			host: '',
 			year: '',
 			pageCount: '',
@@ -62,8 +64,20 @@
 	let loadingSeasons = $state(false);
 	let pendingWatchingOn = $state<string | undefined>(undefined);
 
+	// Game platform picker state
+	let pendingGame = $state<SearchResult | null>(null);
+	let pendingPlayingOn = $state<string | undefined>(undefined);
+
 	const isSeries = $derived(slug === 'series');
+	const isGame = $derived(slug === 'games');
 	const allSeasonsSelected = $derived(selectedSeasons.has(0));
+
+	/** Available platforms from a game search result's meta.platform (comma-separated) */
+	const pendingGamePlatforms = $derived(
+		typeof pendingGame?.meta.platform === 'string'
+			? pendingGame.meta.platform.split(', ').filter(Boolean)
+			: []
+	);
 
 	function reset() {
 		searchQuery = '';
@@ -77,6 +91,8 @@
 		selectedSeasons = new Set();
 		loadingSeasons = false;
 		pendingWatchingOn = undefined;
+		pendingGame = null;
+		pendingPlayingOn = undefined;
 	}
 
 	function handleClose() {
@@ -88,6 +104,7 @@
 		clearTimeout(debounceTimer);
 		showManualForm = false;
 		pendingResult = null;
+		pendingGame = null;
 
 		if (searchQuery.trim().length < 2) {
 			results = [];
@@ -106,9 +123,36 @@
 		}, 400);
 	}
 
+	async function handleAddGame() {
+		if (!pendingGame) return;
+		adding = true;
+		try {
+			const enriched: SearchResult = {
+				...pendingGame,
+				meta: {
+					...pendingGame.meta,
+					...(pendingPlayingOn ? { playingOn: pendingPlayingOn } : {})
+				}
+			};
+			await onAdd(enriched);
+			handleClose();
+		} catch (err) {
+			console.error('add game failed', { slug, title: pendingGame?.title, err });
+		} finally {
+			adding = false;
+		}
+	}
+
 	async function handleSelect(result: SearchResult) {
+		if (isGame) {
+			// Game — show platform picker
+			pendingGame = result;
+			pendingPlayingOn = undefined;
+			return;
+		}
+
 		if (!isSeries) {
-			// Non-series — add directly
+			// Other types — add directly
 			adding = true;
 			try {
 				await onAdd(result);
@@ -240,6 +284,8 @@
 		} else if (slug === 'games') {
 			if (manual.platform.trim()) data.platform = manual.platform.trim();
 			if (manual.genre.trim()) data.genre = manual.genre.trim();
+			if (manual.developer.trim()) data.developer = manual.developer.trim();
+			if (manual.publisher.trim()) data.publisher = manual.publisher.trim();
 		} else if (slug === 'podcasts') {
 			if (manual.host.trim()) data.host = manual.host.trim();
 		}
@@ -274,7 +320,47 @@
 		</Dialog.Header>
 
 		<div class="space-y-3">
-			{#if pendingResult}
+			{#if pendingGame}
+				<!-- Platform picker for games -->
+				<div class="space-y-3">
+					<div class="flex items-center gap-3">
+						<MediaCover title={pendingGame.title} coverUrl={pendingGame.coverUrl} size="sm" />
+						<div class="min-w-0 flex-1">
+							<p class="truncate text-sm font-medium text-foreground">{pendingGame.title}</p>
+							{#if pendingGame.meta.developer}
+								<p class="truncate text-xs text-muted-foreground">
+									{pendingGame.meta.developer}
+								</p>
+							{/if}
+						</div>
+					</div>
+
+					{#if pendingGamePlatforms.length > 0}
+						<div class="space-y-1.5">
+							<Label>Playing on</Label>
+							<Select.Root type="single" bind:value={pendingPlayingOn}>
+								<Select.Trigger class="w-full">
+									{pendingPlayingOn ?? 'Select platform...'}
+								</Select.Trigger>
+								<Select.Content>
+									{#each pendingGamePlatforms as platform}
+										<Select.Item value={platform}>{platform}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+						</div>
+					{/if}
+
+					<div class="flex gap-2">
+						<Button variant="outline" size="sm" class="flex-1" onclick={() => (pendingGame = null)}>
+							Back
+						</Button>
+						<Button size="sm" class="flex-1" onclick={handleAddGame} disabled={adding}>
+							{adding ? 'Adding...' : 'Add'}
+						</Button>
+					</div>
+				</div>
+			{:else if pendingResult}
 				<!-- Season picker for series -->
 				<div class="space-y-3">
 					<div class="flex items-center gap-3">
@@ -500,8 +586,22 @@
 								</div>
 							</div>
 						{:else if slug === 'games'}
+							<div class="grid grid-cols-2 gap-3">
+								<div class="space-y-1.5">
+									<Label for="manual-developer">Developer</Label>
+									<Input id="manual-developer" placeholder="Studio" bind:value={manual.developer} />
+								</div>
+								<div class="space-y-1.5">
+									<Label for="manual-publisher">Publisher</Label>
+									<Input
+										id="manual-publisher"
+										placeholder="Publisher"
+										bind:value={manual.publisher}
+									/>
+								</div>
+							</div>
 							<div class="space-y-1.5">
-								<Label for="manual-platform">Platform</Label>
+								<Label for="manual-platform">Platforms</Label>
 								<Input
 									id="manual-platform"
 									placeholder="PC, PS5, Switch..."

@@ -2,6 +2,12 @@ import { env } from '$env/dynamic/private';
 import type { SearchProvider, TypedSearchResult } from './types';
 import { yearFromTimestamp } from './utils';
 
+interface IGDBInvolvedCompany {
+	company: { name: string };
+	developer: boolean;
+	publisher: boolean;
+}
+
 interface IGDBGame {
 	id: number;
 	name: string;
@@ -9,6 +15,10 @@ interface IGDBGame {
 	platforms?: Array<{ name: string }>;
 	genres?: Array<{ name: string }>;
 	first_release_date?: number;
+	summary?: string;
+	involved_companies?: IGDBInvolvedCompany[];
+	aggregated_rating?: number;
+	rating?: number;
 }
 
 interface TwitchTokenResponse {
@@ -72,7 +82,7 @@ export const igdbProvider: SearchProvider<'game'> = {
 
 		// Escape double quotes in query for IGDB query language
 		const escapedQuery = query.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-		const body = `search "${escapedQuery}"; fields id, name, cover.image_id, platforms.name, genres.name, first_release_date; limit 20;`;
+		const body = `search "${escapedQuery}"; fields id, name, cover.image_id, platforms.name, genres.name, first_release_date, summary, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, aggregated_rating, rating; limit 20;`;
 
 		const response = await fetch('https://api.igdb.com/v4/games', {
 			method: 'POST',
@@ -89,16 +99,31 @@ export const igdbProvider: SearchProvider<'game'> = {
 
 		const games: IGDBGame[] = await response.json();
 
-		return games.map((game) => ({
-			externalId: String(game.id),
-			title: game.name,
-			coverUrl: coverUrl(game.cover?.image_id),
-			releaseYear: yearFromTimestamp(game.first_release_date),
-			meta: {
-				igdbId: game.id,
-				platform: game.platforms?.map((p) => p.name).join(', ') ?? null,
-				genre: game.genres?.map((g) => g.name).join(', ') ?? null
-			}
-		}));
+		return games.map((game) => {
+			const developers = game.involved_companies
+				?.filter((c) => c.developer)
+				.map((c) => c.company.name);
+			const publishers = game.involved_companies
+				?.filter((c) => c.publisher)
+				.map((c) => c.company.name);
+
+			return {
+				externalId: String(game.id),
+				title: game.name,
+				coverUrl: coverUrl(game.cover?.image_id),
+				releaseYear: yearFromTimestamp(game.first_release_date),
+				meta: {
+					igdbId: game.id,
+					platform: game.platforms?.map((p) => p.name).join(', ') ?? null,
+					genre: game.genres?.map((g) => g.name).join(', ') ?? null,
+					description: game.summary ?? null,
+					developer: developers?.length ? developers.join(', ') : null,
+					publisher: publishers?.length ? publishers.join(', ') : null,
+					criticScore:
+						typeof game.aggregated_rating === 'number' ? Math.round(game.aggregated_rating) : null,
+					userScore: typeof game.rating === 'number' ? Math.round(game.rating) : null
+				}
+			};
+		});
 	}
 };

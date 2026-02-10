@@ -51,7 +51,10 @@
 
 	const seasonLabel = $derived(item ? getSeasonBadge(item) : null);
 	const description = $derived(
-		item?.bookMeta?.description ?? item?.movieMeta?.description ?? item?.seriesMeta?.description
+		item?.bookMeta?.description ??
+			item?.movieMeta?.description ??
+			item?.seriesMeta?.description ??
+			item?.gameMeta?.description
 	);
 
 	const labels = $derived(STATUS_LABELS[mediaType]);
@@ -92,6 +95,23 @@
 			saving = false;
 		}
 	}
+
+	async function handlePlayingOnChange(value: string | undefined) {
+		saving = true;
+		try {
+			await onUpdate({}, { playingOn: value || null });
+		} catch (err) {
+			console.error('update playingOn failed', { itemId: item?.id, value, err });
+			toast.error('Failed to update platform');
+		} finally {
+			saving = false;
+		}
+	}
+
+	/** Available platforms from a game's meta.platform (comma-separated from IGDB) */
+	const gamePlatforms = $derived(
+		item?.gameMeta?.platform ? item.gameMeta.platform.split(', ').filter(Boolean) : []
+	);
 
 	async function handleRate(rating: number | null) {
 		saving = true;
@@ -168,8 +188,14 @@
 			if (i.seriesMeta.network) entries.push({ label: 'Network', value: i.seriesMeta.network });
 		}
 		if (i.gameMeta) {
-			if (i.gameMeta.platform) entries.push({ label: 'Platform', value: i.gameMeta.platform });
+			if (i.gameMeta.developer) entries.push({ label: 'Developer', value: i.gameMeta.developer });
+			if (i.gameMeta.publisher) entries.push({ label: 'Publisher', value: i.gameMeta.publisher });
+			if (i.gameMeta.platform) entries.push({ label: 'Platforms', value: i.gameMeta.platform });
 			if (i.gameMeta.genre) entries.push({ label: 'Genre', value: i.gameMeta.genre });
+			if (i.gameMeta.criticScore != null)
+				entries.push({ label: 'Critic score', value: `${i.gameMeta.criticScore} / 100` });
+			if (i.gameMeta.userScore != null)
+				entries.push({ label: 'User score', value: `${i.gameMeta.userScore} / 100` });
 			if (i.gameMeta.playtimeMinutes)
 				entries.push({
 					label: 'Playtime',
@@ -334,6 +360,32 @@
 								{/each}
 							</Select.Content>
 						</Select.Root>
+					</div>
+				{/if}
+
+				<!-- Playing on (games only) -->
+				{#if item.gameMeta}
+					<div class="mt-5 space-y-1.5">
+						<Label>Playing on</Label>
+						{#if gamePlatforms.length > 0}
+							<Select.Root
+								type="single"
+								value={item.gameMeta.playingOn ?? undefined}
+								onValueChange={handlePlayingOnChange}
+								disabled={saving}
+							>
+								<Select.Trigger class="w-full">
+									{item.gameMeta.playingOn ?? 'Select platform...'}
+								</Select.Trigger>
+								<Select.Content>
+									{#each gamePlatforms as platform}
+										<Select.Item value={platform}>{platform}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+						{:else}
+							<p class="text-sm text-muted-foreground">No platforms available</p>
+						{/if}
 					</div>
 				{/if}
 
