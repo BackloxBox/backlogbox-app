@@ -27,6 +27,11 @@
 	let adding = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
+	// Clear search debounce on unmount
+	$effect(() => {
+		return () => clearTimeout(debounceTimer);
+	});
+
 	// Manual add form state
 	let showManualForm = $state(false);
 	let manualTitle = $state('');

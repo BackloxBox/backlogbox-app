@@ -42,7 +42,12 @@ export const getSeriesDetails = query(
 	v.number(),
 	async (tmdbId): Promise<TmdbSeriesDetailsResult | null> => {
 		requireUserId();
-		return fetchTmdbSeriesDetails(tmdbId);
+		try {
+			return await fetchTmdbSeriesDetails(tmdbId);
+		} catch (err) {
+			console.error(`Failed to fetch TMDB series details for ${tmdbId}:`, err);
+			return null;
+		}
 	}
 );
 
@@ -51,12 +56,22 @@ export const getMovieDetails = query(
 	v.number(),
 	async (tmdbId): Promise<TmdbMovieDetailsResult | null> => {
 		requireUserId();
-		return fetchTmdbMovieDetails(tmdbId);
+		try {
+			return await fetchTmdbMovieDetails(tmdbId);
+		} catch (err) {
+			console.error(`Failed to fetch TMDB movie details for ${tmdbId}:`, err);
+			return null;
+		}
 	}
 );
 
 /** Fetch book description from OpenLibrary works endpoint */
 export const getBookDescription = query(v.string(), async (workKey): Promise<string | null> => {
 	requireUserId();
-	return fetchBookDescription(workKey);
+	try {
+		return await fetchBookDescription(workKey);
+	} catch (err) {
+		console.error(`Failed to fetch book description for ${workKey}:`, err);
+		return null;
+	}
 });

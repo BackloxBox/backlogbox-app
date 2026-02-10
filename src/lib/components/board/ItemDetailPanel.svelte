@@ -16,6 +16,7 @@
 		type MediaType
 	} from '$lib/types';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
+	import { toast } from 'svelte-sonner';
 
 	/** Human-friendly descriptions for TMDB series status values */
 	const SERIES_STATUS_DESCRIPTIONS: Record<string, string> = {
@@ -59,6 +60,9 @@
 		saving = true;
 		try {
 			await onUpdate({ status: value });
+		} catch (err) {
+			console.error('Failed to update status:', err);
+			toast.error('Failed to update status');
 		} finally {
 			saving = false;
 		}
@@ -68,6 +72,9 @@
 		saving = true;
 		try {
 			await onUpdate({}, { currentSeason: season });
+		} catch (err) {
+			console.error('Failed to update season:', err);
+			toast.error('Failed to update season');
 		} finally {
 			saving = false;
 		}
@@ -77,6 +84,9 @@
 		saving = true;
 		try {
 			await onUpdate({}, { watchingOn: value || null });
+		} catch (err) {
+			console.error('Failed to update platform:', err);
+			toast.error('Failed to update platform');
 		} finally {
 			saving = false;
 		}
@@ -86,18 +96,31 @@
 		saving = true;
 		try {
 			await onUpdate({ rating });
+		} catch (err) {
+			console.error('Failed to update rating:', err);
+			toast.error('Failed to save rating');
 		} finally {
 			saving = false;
 		}
 	}
 
 	let notesTimer: ReturnType<typeof setTimeout> | undefined;
+
+	// Clear pending notes timer when panel closes or item changes
+	$effect(() => {
+		item; // track item reactively
+		return () => clearTimeout(notesTimer);
+	});
+
 	function handleNotesInput() {
 		clearTimeout(notesTimer);
 		notesTimer = setTimeout(async () => {
 			saving = true;
 			try {
 				await onUpdate({ notes: notes || null });
+			} catch (err) {
+				console.error('Failed to save notes:', err);
+				toast.error('Failed to save notes');
 			} finally {
 				saving = false;
 			}
@@ -109,6 +132,9 @@
 		try {
 			await onDelete();
 			onClose();
+		} catch (err) {
+			console.error('Failed to delete item:', err);
+			toast.error('Failed to delete item');
 		} finally {
 			deleting = false;
 		}
