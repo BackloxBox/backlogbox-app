@@ -95,6 +95,12 @@ const gameMetaSchema = v.object({
 
 const podcastMetaSchema = v.object({
 	host: optStr,
+	genre: optStr,
+	description: optStr,
+	publisher: optStr,
+	listeningOn: optStr,
+	frequency: optStr,
+	episodeLength: optNum,
 	totalEpisodes: optNum,
 	currentEpisode: optNum,
 	applePodcastId: optStr
@@ -237,6 +243,12 @@ function extractMeta(type: MediaType, data: AddItemInput): MetaFieldsFor<MediaTy
 		case 'podcast':
 			return pick(data as v.InferOutput<(typeof addItemSchema.options)[4]>, [
 				'host',
+				'genre',
+				'description',
+				'publisher',
+				'listeningOn',
+				'frequency',
+				'episodeLength',
 				'totalEpisodes',
 				'currentEpisode',
 				'applePodcastId'

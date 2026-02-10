@@ -17,6 +17,7 @@
 		MEDIA_STATUSES,
 		STATUS_LABELS,
 		STREAMING_PLATFORMS,
+		PODCAST_PLATFORMS,
 		type MediaStatus,
 		type MediaType
 	} from '$lib/types';
@@ -85,7 +86,8 @@
 		item?.bookMeta?.description ??
 			item?.movieMeta?.description ??
 			item?.seriesMeta?.description ??
-			item?.gameMeta?.description
+			item?.gameMeta?.description ??
+			item?.podcastMeta?.description
 	);
 
 	const labels = $derived(STATUS_LABELS[mediaType]);
@@ -133,6 +135,18 @@
 			await onUpdate({}, { playingOn: value || null });
 		} catch (err) {
 			console.error('update playingOn failed', { itemId: item?.id, value, err });
+			toast.error('Failed to update platform');
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleListeningOnChange(value: string | undefined) {
+		saving = true;
+		try {
+			await onUpdate({}, { listeningOn: value || null });
+		} catch (err) {
+			console.error('update listeningOn failed', { itemId: item?.id, value, err });
 			toast.error('Failed to update platform');
 		} finally {
 			saving = false;
@@ -269,6 +283,13 @@
 		}
 		if (i.podcastMeta) {
 			if (i.podcastMeta.host) entries.push({ label: 'Host', value: i.podcastMeta.host });
+			if (i.podcastMeta.genre) entries.push({ label: 'Genre', value: i.podcastMeta.genre });
+			if (i.podcastMeta.publisher)
+				entries.push({ label: 'Publisher', value: i.podcastMeta.publisher });
+			if (i.podcastMeta.frequency)
+				entries.push({ label: 'Frequency', value: i.podcastMeta.frequency });
+			if (i.podcastMeta.episodeLength)
+				entries.push({ label: 'Avg. episode', value: `${i.podcastMeta.episodeLength}m` });
 			if (i.podcastMeta.totalEpisodes)
 				entries.push({ label: 'Episodes', value: String(i.podcastMeta.totalEpisodes) });
 			if (i.podcastMeta.currentEpisode)
@@ -464,6 +485,28 @@
 						{:else}
 							<p class="text-sm text-muted-foreground">No platforms available</p>
 						{/if}
+					</div>
+				{/if}
+
+				<!-- Listening on (podcasts only) -->
+				{#if item.podcastMeta}
+					<div class="mt-5 space-y-1.5">
+						<Label>Listening on</Label>
+						<Select.Root
+							type="single"
+							value={item.podcastMeta.listeningOn ?? undefined}
+							onValueChange={handleListeningOnChange}
+							disabled={saving}
+						>
+							<Select.Trigger class="w-full">
+								{item.podcastMeta.listeningOn ?? 'Select platform...'}
+							</Select.Trigger>
+							<Select.Content>
+								{#each PODCAST_PLATFORMS as platform}
+									<Select.Item value={platform}>{platform}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
 					</div>
 				{/if}
 

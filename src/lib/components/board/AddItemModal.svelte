@@ -7,7 +7,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import MediaCover from './MediaCover.svelte';
 	import type { SearchResult } from '$lib/server/search';
-	import { STREAMING_PLATFORMS } from '$lib/types';
+	import { STREAMING_PLATFORMS, PODCAST_PLATFORMS } from '$lib/types';
 
 	type Props = {
 		slug: string;
@@ -68,8 +68,13 @@
 	let pendingGame = $state<SearchResult | null>(null);
 	let pendingPlayingOn = $state<string | undefined>(undefined);
 
+	// Podcast platform picker state
+	let pendingPodcast = $state<SearchResult | null>(null);
+	let pendingListeningOn = $state<string | undefined>(undefined);
+
 	const isSeries = $derived(slug === 'series');
 	const isGame = $derived(slug === 'games');
+	const isPodcast = $derived(slug === 'podcasts');
 	const allSeasonsSelected = $derived(selectedSeasons.has(0));
 
 	/** Available platforms from a game search result's meta.platform (comma-separated) */
@@ -93,6 +98,8 @@
 		pendingWatchingOn = undefined;
 		pendingGame = null;
 		pendingPlayingOn = undefined;
+		pendingPodcast = null;
+		pendingListeningOn = undefined;
 	}
 
 	function handleClose() {
@@ -105,6 +112,7 @@
 		showManualForm = false;
 		pendingResult = null;
 		pendingGame = null;
+		pendingPodcast = null;
 
 		if (searchQuery.trim().length < 2) {
 			results = [];
@@ -143,11 +151,38 @@
 		}
 	}
 
+	async function handleAddPodcast() {
+		if (!pendingPodcast) return;
+		adding = true;
+		try {
+			const enriched: SearchResult = {
+				...pendingPodcast,
+				meta: {
+					...pendingPodcast.meta,
+					...(pendingListeningOn ? { listeningOn: pendingListeningOn } : {})
+				}
+			};
+			await onAdd(enriched);
+			handleClose();
+		} catch (err) {
+			console.error('add podcast failed', { slug, title: pendingPodcast?.title, err });
+		} finally {
+			adding = false;
+		}
+	}
+
 	async function handleSelect(result: SearchResult) {
 		if (isGame) {
 			// Game — show platform picker
 			pendingGame = result;
 			pendingPlayingOn = undefined;
+			return;
+		}
+
+		if (isPodcast) {
+			// Podcast — show platform picker
+			pendingPodcast = result;
+			pendingListeningOn = undefined;
 			return;
 		}
 
@@ -288,6 +323,8 @@
 			if (manual.publisher.trim()) data.publisher = manual.publisher.trim();
 		} else if (slug === 'podcasts') {
 			if (manual.host.trim()) data.host = manual.host.trim();
+			if (manual.genre.trim()) data.genre = manual.genre.trim();
+			if (manual.publisher.trim()) data.publisher = manual.publisher.trim();
 		}
 
 		return data;
@@ -320,7 +357,50 @@
 		</Dialog.Header>
 
 		<div class="space-y-3">
-			{#if pendingGame}
+			{#if pendingPodcast}
+				<!-- Platform picker for podcasts -->
+				<div class="space-y-3">
+					<div class="flex items-center gap-3">
+						<MediaCover title={pendingPodcast.title} coverUrl={pendingPodcast.coverUrl} size="sm" />
+						<div class="min-w-0 flex-1">
+							<p class="truncate text-sm font-medium text-foreground">{pendingPodcast.title}</p>
+							{#if pendingPodcast.meta.host}
+								<p class="truncate text-xs text-muted-foreground">
+									{pendingPodcast.meta.host}
+								</p>
+							{/if}
+						</div>
+					</div>
+
+					<div class="space-y-1.5">
+						<Label>Listening on</Label>
+						<Select.Root type="single" bind:value={pendingListeningOn}>
+							<Select.Trigger class="w-full">
+								{pendingListeningOn ?? 'Select platform...'}
+							</Select.Trigger>
+							<Select.Content>
+								{#each PODCAST_PLATFORMS as platform}
+									<Select.Item value={platform}>{platform}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					</div>
+
+					<div class="flex gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							class="flex-1"
+							onclick={() => (pendingPodcast = null)}
+						>
+							Back
+						</Button>
+						<Button size="sm" class="flex-1" onclick={handleAddPodcast} disabled={adding}>
+							{adding ? 'Adding...' : 'Add'}
+						</Button>
+					</div>
+				</div>
+			{:else if pendingGame}
 				<!-- Platform picker for games -->
 				<div class="space-y-3">
 					<div class="flex items-center gap-3">
@@ -628,6 +708,20 @@
 								<div class="space-y-1.5">
 									<Label for="manual-host">Host</Label>
 									<Input id="manual-host" placeholder="Host" bind:value={manual.host} />
+								</div>
+								<div class="space-y-1.5">
+									<Label for="manual-publisher">Publisher</Label>
+									<Input
+										id="manual-publisher"
+										placeholder="Publisher"
+										bind:value={manual.publisher}
+									/>
+								</div>
+							</div>
+							<div class="grid grid-cols-2 gap-3">
+								<div class="space-y-1.5">
+									<Label for="manual-genre">Genre</Label>
+									<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
 								</div>
 								<div class="space-y-1.5">
 									<Label for="manual-year">Year</Label>

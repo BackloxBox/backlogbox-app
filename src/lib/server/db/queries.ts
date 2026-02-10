@@ -395,9 +395,13 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
 						JOIN ${mediaItem} ON ${mediaItem.id} = ${seriesMeta.mediaItemId}
 						WHERE ${mediaItem.userId} = ${userId} AND ${seriesMeta.genre} IS NOT NULL
 					UNION ALL
-					SELECT ${gameMeta.genre}, ${mediaItem.type} FROM ${gameMeta}
-						JOIN ${mediaItem} ON ${mediaItem.id} = ${gameMeta.mediaItemId}
-						WHERE ${mediaItem.userId} = ${userId} AND ${gameMeta.genre} IS NOT NULL
+				SELECT ${gameMeta.genre}, ${mediaItem.type} FROM ${gameMeta}
+					JOIN ${mediaItem} ON ${mediaItem.id} = ${gameMeta.mediaItemId}
+					WHERE ${mediaItem.userId} = ${userId} AND ${gameMeta.genre} IS NOT NULL
+				UNION ALL
+				SELECT ${podcastMeta.genre}, ${mediaItem.type} FROM ${podcastMeta}
+					JOIN ${mediaItem} ON ${mediaItem.id} = ${podcastMeta.mediaItemId}
+					WHERE ${mediaItem.userId} = ${userId} AND ${podcastMeta.genre} IS NOT NULL
 				) AS genres
 				GROUP BY genre, type ORDER BY count DESC LIMIT 8
 			`)

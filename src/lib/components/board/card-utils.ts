@@ -34,9 +34,18 @@ export function getRuntimeBadge(item: MediaItemWithMeta): string | null {
 	return formatRuntime(rt);
 }
 
-/** Single badge for the cover overlay — season for series, runtime for movies, year for books */
+/** Episode count badge for podcasts (e.g. "142 eps") */
+export function getEpisodeBadge(item: MediaItemWithMeta): string | null {
+	const ep = item.podcastMeta?.totalEpisodes;
+	if (!ep) return null;
+	return `${ep} eps`;
+}
+
+/** Single badge for the cover overlay — season for series, runtime for movies, episodes for podcasts, year for books */
 export function getBadge(item: MediaItemWithMeta): string | null {
-	return getSeasonBadge(item) ?? getRuntimeBadge(item) ?? getYearBadge(item);
+	return (
+		getSeasonBadge(item) ?? getRuntimeBadge(item) ?? getEpisodeBadge(item) ?? getYearBadge(item)
+	);
 }
 
 /** Lowercased searchable text: title + subtitle fields (author/director/genre/etc.) */
@@ -64,6 +73,9 @@ export function getSubtitle(item: MediaItemWithMeta): string {
 		const parts = [item.gameMeta.playingOn, item.gameMeta.genre].filter(Boolean);
 		return parts.join(' \u00b7 ');
 	}
-	if (item.podcastMeta?.host) return item.podcastMeta.host;
+	if (item.podcastMeta) {
+		const parts = [item.podcastMeta.host, item.podcastMeta.genre].filter(Boolean);
+		return parts.join(' \u00b7 ');
+	}
 	return '';
 }

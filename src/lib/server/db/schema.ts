@@ -125,6 +125,12 @@ export const podcastMeta = pgTable('podcast_meta', {
 		.primaryKey()
 		.references(() => mediaItem.id, { onDelete: 'cascade' }),
 	host: text('host'),
+	genre: text('genre'),
+	description: text('description'),
+	publisher: text('publisher'),
+	listeningOn: text('listening_on'),
+	frequency: text('frequency'),
+	episodeLength: integer('episode_length'),
 	totalEpisodes: integer('total_episodes'),
 	currentEpisode: integer('current_episode'),
 	applePodcastId: text('apple_podcast_id')

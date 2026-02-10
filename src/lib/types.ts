@@ -173,3 +173,28 @@ export const STREAMING_PLATFORMS = [
 	'Crunchyroll',
 	'YouTube'
 ] as const;
+
+/** Podcast listening platforms for the "Listening on" selector */
+export const PODCAST_PLATFORMS = [
+	'Spotify',
+	'Apple Podcasts',
+	'Overcast',
+	'Pocket Casts',
+	'Google Podcasts',
+	'Castro',
+	'YouTube',
+	'Amazon Music',
+	'Audible',
+	'iHeart Radio',
+	'Stitcher'
+] as const;
+
+/** Podcast release frequency options */
+export const PODCAST_FREQUENCIES = [
+	'Daily',
+	'Twice a week',
+	'Weekly',
+	'Biweekly',
+	'Monthly',
+	'Irregular'
+] as const;
