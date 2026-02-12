@@ -1,8 +1,8 @@
 # Docker Swarm stack for BacklogBox production deployment.
 # Deploy: docker stack deploy -c docker-stack.yml backlogbox
 #
-# The CD workflow overrides the tag via `docker service update --image`,
-# but the initial stack deploy needs a pullable image reference.
+# IMAGE_TAG is injected by the CD workflow before `docker stack deploy`.
+# Falls back to "latest" for manual deploys.
 
 configs:
   caddyfile:
@@ -39,7 +39,7 @@ services:
         condition: on-failure
 
   app:
-    image: ghcr.io/backloxbox/backlogbox-app:latest
+    image: ${IMAGE}
     secrets:
       - DATABASE_URL
       - BETTER_AUTH_SECRET
@@ -67,16 +67,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 15s
+      start_period: 30s
     deploy:
-      replicas: 4
+      replicas: 2
       placement:
         max_replicas_per_node: 2
       update_config:
         parallelism: 1
         delay: 10s
-        order: start-first
-        failure_action: rollback
+        order: stop-first
+        failure_action: pause
       restart_policy:
         condition: on-failure
         delay: 5s
