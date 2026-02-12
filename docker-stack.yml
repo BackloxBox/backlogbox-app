@@ -1,10 +1,8 @@
 # Docker Swarm stack for BacklogBox production deployment.
 # Deploy: docker stack deploy -c docker-stack.yml backlogbox
 #
-# IMPORTANT: Replace OWNER in the app image with your GitHub username/org
-# before the first deploy. The CD workflow overrides the tag via
-# `docker service update --image`, but the initial stack deploy needs a
-# pullable image reference.
+# The CD workflow overrides the tag via `docker service update --image`,
+# but the initial stack deploy needs a pullable image reference.
 
 configs:
   caddyfile:
@@ -41,7 +39,7 @@ services:
         condition: on-failure
 
   app:
-    image: ghcr.io/OWNER/backlogbox:latest
+    image: ghcr.io/backloxbox/backlogbox-app:latest
     secrets:
       - DATABASE_URL
       - BETTER_AUTH_SECRET
