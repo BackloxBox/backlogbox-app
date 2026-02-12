@@ -3,18 +3,8 @@ import { building } from '$app/environment';
 import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
-import { paraglideMiddleware } from '$lib/paraglide/server';
 import { log } from '$lib/server/logger';
 import { getUserProfile } from '$lib/server/db/queries';
-
-const handleParaglide: Handle = ({ event, resolve }) =>
-	paraglideMiddleware(event.request, ({ request, locale }) => {
-		event.request = request;
-
-		return resolve(event, {
-			transformPageChunk: ({ html }) => html.replace('%paraglide.lang%', locale)
-		});
-	});
 
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
 	const session = await auth.api.getSession({ headers: event.request.headers });
@@ -83,7 +73,7 @@ const handleRequestLog: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-export const handle: Handle = sequence(handleParaglide, handleBetterAuth, handleRequestLog);
+export const handle: Handle = sequence(handleBetterAuth, handleRequestLog);
 
 // ---------------------------------------------------------------------------
 // Unexpected error handler — logs unhandled server errors

@@ -36,8 +36,8 @@
 		onCardClick
 	}: Props = $props();
 
-	/** Local mutable copy for optimistic DnD updates */
-	let columns = $state<Record<string, MediaItemWithMeta[]>>(structuredClone(groupedItems));
+	/** Local mutable copy for optimistic DnD updates — initialized via $effect below */
+	let columns = $state<Record<string, MediaItemWithMeta[]>>({});
 
 	/** Which sections are expanded in mobile view */
 	let expandedSections = $state<Set<MediaStatus>>(new Set(['in_progress', 'backlog']));
