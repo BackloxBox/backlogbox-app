@@ -8,7 +8,8 @@ if [ -d "/run/secrets" ]; then
   for secret_file in /run/secrets/*; do
     [ -f "$secret_file" ] || continue
     secret_name=$(basename "$secret_file")
-    export "$secret_name=$(cat "$secret_file")"
+    secret_value=$(cat "$secret_file" | tr -d '\n\r')
+    export "$secret_name=$secret_value"
   done
 fi
 
