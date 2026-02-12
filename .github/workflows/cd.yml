@@ -75,21 +75,19 @@ jobs:
 
       - name: Deploy to Docker Swarm
         uses: appleboy/ssh-action@v1.0.3
-        env:
-          IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: IMAGE_TAG
           script: |
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             cd ~/backlogbox
-
-            # Pin the image tag in the stack file before deploying
-            sed -i "s|ghcr.io/backloxbox/backlogbox-app:latest|ghcr.io/backloxbox/backlogbox-app:${IMAGE_TAG}|" docker-stack.yml
-
             docker stack deploy --with-registry-auth -c docker-stack.yml backlogbox
+
+            docker service update \
+              --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.workflow_run.head_sha }} \
+              --with-registry-auth \
+              backlogbox_app
 
             docker system prune -af --filter "until=72h"
