@@ -21,6 +21,9 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Deployment guide (local only)
+DEPLOYMENT.md
 # Playwright
 test-results
 # Paraglide
