@@ -87,4 +87,10 @@ jobs:
             cd ~/backlogbox
             docker stack deploy --with-registry-auth -c docker-stack.yml backlogbox
 
+            # Force credential distribution to worker nodes for image pull
+            docker service update \
+              --image $IMAGE \
+              --with-registry-auth \
+              backlogbox_app
+
             docker system prune -af --filter "until=72h"
