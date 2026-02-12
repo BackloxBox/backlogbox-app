@@ -5,7 +5,7 @@ import { username } from 'better-auth/plugins/username';
 import { polar, checkout, portal, webhooks } from '@polar-sh/better-auth';
 import { Polar } from '@polar-sh/sdk';
 import { env } from '$env/dynamic/private';
-import { building } from '$app/environment';
+import { building, dev } from '$app/environment';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
 import { setUserSubscribed } from '$lib/server/db/queries';
@@ -14,7 +14,7 @@ import { log } from '$lib/server/logger';
 function createAuth() {
 	const polarClient = new Polar({
 		accessToken: env.POLAR_ACCESS_TOKEN,
-		server: 'sandbox'
+		server: dev ? 'sandbox' : 'production'
 	});
 
 	return betterAuth({
