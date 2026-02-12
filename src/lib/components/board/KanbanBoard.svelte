@@ -4,7 +4,6 @@
 	import { PointerSensor, KeyboardSensor } from '@dnd-kit-svelte/svelte';
 	import { browser } from '$app/environment';
 	import KanbanColumn from './KanbanColumn.svelte';
-	import KanbanCard from './KanbanCard.svelte';
 	import MobileCard from './MobileCard.svelte';
 	import {
 		Collapsible,
@@ -13,13 +12,13 @@
 	} from '$lib/components/ui/collapsible/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import { SvelteSet } from 'svelte/reactivity';
 	import { MEDIA_STATUSES, STATUS_COLORS, type MediaStatus } from '$lib/types';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 
 	type Props = {
 		groupedItems: Record<MediaStatus, MediaItemWithMeta[]>;
 		statusLabels: Record<MediaStatus, string>;
-		slug: string;
 		readonly?: boolean;
 		onReorder?: (
 			updates: Array<{ id: string; status: MediaStatus; sortOrder: number }>
@@ -27,25 +26,13 @@
 		onCardClick?: (item: MediaItemWithMeta) => void;
 	};
 
-	let {
-		groupedItems,
-		statusLabels,
-		slug,
-		readonly = false,
-		onReorder,
-		onCardClick
-	}: Props = $props();
+	let { groupedItems, statusLabels, readonly = false, onReorder, onCardClick }: Props = $props();
 
-	/** Local mutable copy for optimistic DnD updates — initialized via $effect below */
-	let columns = $state<Record<string, MediaItemWithMeta[]>>({});
+	/** Local mutable copy for optimistic DnD updates — re-derived on server refresh, overridable by DnD */
+	let columns = $derived(structuredClone(groupedItems));
 
 	/** Which sections are expanded in mobile view */
-	let expandedSections = $state<Set<MediaStatus>>(new Set(['in_progress', 'backlog']));
-
-	/** Sync from parent when data refreshes */
-	$effect(() => {
-		columns = structuredClone(groupedItems);
-	});
+	let expandedSections = new SvelteSet<MediaStatus>(['in_progress', 'backlog']);
 
 	async function handleDragEnd() {
 		const updates: Array<{ id: string; status: MediaStatus; sortOrder: number }> = [];
@@ -78,13 +65,11 @@
 	}
 
 	function toggleSection(status: MediaStatus) {
-		const next = new Set(expandedSections);
-		if (next.has(status)) {
-			next.delete(status);
+		if (expandedSections.has(status)) {
+			expandedSections.delete(status);
 		} else {
-			next.add(status);
+			expandedSections.add(status);
 		}
-		expandedSections = next;
 	}
 </script>
 
@@ -99,13 +84,12 @@
 			onDragEnd={handleDragEnd}
 		>
 			<div class="flex h-full gap-3 overflow-x-auto p-4">
-				{#each MEDIA_STATUSES as status}
+				{#each MEDIA_STATUSES as status (status)}
 					<KanbanColumn
 						{status}
 						label={statusLabels[status]}
 						color={STATUS_COLORS[status]}
 						items={columns[status] ?? []}
-						{slug}
 						{onCardClick}
 					/>
 				{/each}
@@ -123,7 +107,7 @@
 	{:else}
 		<!-- SSR placeholder: render static columns without DnD -->
 		<div class="flex h-full gap-3 overflow-x-auto p-4">
-			{#each MEDIA_STATUSES as status}
+			{#each MEDIA_STATUSES as status (status)}
 				{@const items = columns[status] ?? []}
 				<div
 					class="flex min-h-0 min-w-0 flex-1 flex-col rounded-lg border border-border bg-muted/40"
@@ -160,7 +144,7 @@
 
 <!-- Mobile: collapsed accordion list (no DnD) -->
 <div class="flex-1 overflow-y-auto p-3 lg:hidden">
-	{#each MEDIA_STATUSES as status}
+	{#each MEDIA_STATUSES as status (status)}
 		{@const items = columns[status] ?? []}
 		{@const expanded = expandedSections.has(status)}
 		<Collapsible open={expanded} class="mb-1.5">

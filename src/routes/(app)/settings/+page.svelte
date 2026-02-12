@@ -14,11 +14,7 @@
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
-	let profilePublic = $state(false);
-
-	$effect.pre(() => {
-		profilePublic = data.profile?.profilePublic ?? false;
-	});
+	let profilePublic = $derived(data.profile?.profilePublic ?? false);
 	let copied = $state(false);
 	let portalLoading = $state(false);
 

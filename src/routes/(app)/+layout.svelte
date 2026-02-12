@@ -88,7 +88,6 @@
 
 	<!-- Sidebar backdrop (mobile) -->
 	{#if sidebarOpen}
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			class="fixed inset-0 z-30 bg-black/50 lg:hidden"
 			onclick={() => (sidebarOpen = false)}
@@ -114,7 +113,7 @@
 
 		<!-- Nav links -->
 		<div class="flex-1 space-y-0.5 overflow-y-auto p-2">
-			{#each navItems as item}
+			{#each navItems as item (item.slug)}
 				{@const active = page.url.pathname === item.href}
 				<a
 					href={item.href}

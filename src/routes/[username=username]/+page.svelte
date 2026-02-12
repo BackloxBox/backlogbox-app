@@ -58,7 +58,7 @@
 
 		<!-- Board grid -->
 		<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-			{#each boards as board, i (board.label)}
+			{#each boards as board (board.label)}
 				<a
 					href={board.href}
 					class="group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition hover:border-transparent hover:shadow-md"

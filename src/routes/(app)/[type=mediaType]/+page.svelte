@@ -16,7 +16,6 @@
 		MEDIA_STATUSES,
 		STATUS_LABELS,
 		type MediaStatus,
-		type MediaType,
 		type MediaTypeSlug
 	} from '$lib/types';
 	import { getBoardItems, addItem, updateItem, deleteItem, reorderItems } from './data.remote';
@@ -49,7 +48,7 @@
 
 	// Reset search when switching media types
 	$effect(() => {
-		slug;
+		void slug;
 		searchQuery = '';
 	});
 
@@ -259,7 +258,6 @@
 			<KanbanBoard
 				{groupedItems}
 				{statusLabels}
-				{slug}
 				onReorder={async (updates) => {
 					try {
 						await reorderItems({ slug, updates });
@@ -279,7 +277,7 @@
 				</div>
 			{/snippet}
 
-			{#snippet failed(error, reset)}
+			{#snippet failed(_error, reset)}
 				<div class="flex flex-1 flex-col items-center justify-center gap-3">
 					<p class="text-sm text-muted-foreground">Failed to load board</p>
 					<Button variant="outline" size="sm" onclick={reset}>Retry</Button>

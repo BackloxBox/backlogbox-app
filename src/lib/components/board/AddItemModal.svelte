@@ -8,6 +8,7 @@
 	import MediaCover from './MediaCover.svelte';
 	import type { SearchResult } from '$lib/server/search';
 	import { STREAMING_PLATFORMS, PODCAST_PLATFORMS } from '$lib/types';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	type Props = {
 		slug: string;
@@ -220,7 +221,7 @@
 	}
 
 	function toggleSeason(season: number) {
-		const next = new Set(selectedSeasons);
+		const next = new SvelteSet(selectedSeasons);
 		if (season === 0) {
 			// "All seasons" is exclusive — deselect individual seasons
 			if (next.has(0)) {
@@ -379,7 +380,7 @@
 								{pendingListeningOn ?? 'Select platform...'}
 							</Select.Trigger>
 							<Select.Content>
-								{#each PODCAST_PLATFORMS as platform}
+								{#each PODCAST_PLATFORMS as platform (platform)}
 									<Select.Item value={platform}>{platform}</Select.Item>
 								{/each}
 							</Select.Content>
@@ -423,7 +424,7 @@
 									{pendingPlayingOn ?? 'Select platform...'}
 								</Select.Trigger>
 								<Select.Content>
-									{#each pendingGamePlatforms as platform}
+									{#each pendingGamePlatforms as platform (platform)}
 										<Select.Item value={platform}>{platform}</Select.Item>
 									{/each}
 								</Select.Content>
@@ -465,8 +466,7 @@
 							>
 								All
 							</button>
-							{#each { length: pendingTotalSeasons } as _, i}
-								{@const season = i + 1}
+							{#each Array.from({ length: pendingTotalSeasons }, (_, i) => i + 1) as season (season)}
 								{@const selected = selectedSeasons.has(season)}
 								<button
 									aria-pressed={selected}
@@ -490,7 +490,7 @@
 								{pendingWatchingOn ?? 'Select platform...'}
 							</Select.Trigger>
 							<Select.Content>
-								{#each STREAMING_PLATFORMS as platform}
+								{#each STREAMING_PLATFORMS as platform (platform)}
 									<Select.Item value={platform}>{platform}</Select.Item>
 								{/each}
 							</Select.Content>

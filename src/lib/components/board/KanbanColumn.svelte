@@ -11,11 +11,10 @@
 		label: string;
 		color: string;
 		items: MediaItemWithMeta[];
-		slug: string;
 		onCardClick?: (item: MediaItemWithMeta) => void;
 	};
 
-	let { status, label, color, items, slug, onCardClick }: Props = $props();
+	let { status, label, color, items, onCardClick }: Props = $props();
 
 	const { ref, isDropTarget } = useDroppable({
 		id: () => status,

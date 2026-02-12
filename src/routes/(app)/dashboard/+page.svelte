@@ -80,6 +80,7 @@
 
 	/** Items added in last 30 days */
 	const recentlyAddedCount = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local computation, not reactive state
 		const thirtyDaysAgo = new Date();
 		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 		const cutoff = thirtyDaysAgo.toISOString().slice(0, 10);

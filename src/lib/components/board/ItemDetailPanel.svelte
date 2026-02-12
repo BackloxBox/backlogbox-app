@@ -18,7 +18,6 @@
 		STATUS_LABELS,
 		STREAMING_PLATFORMS,
 		PODCAST_PLATFORMS,
-		type MediaStatus,
 		type MediaType
 	} from '$lib/types';
 	import type { MediaItemWithMeta, MediaNoteRow } from '$lib/server/db/queries';
@@ -345,7 +344,7 @@
 							<p class="text-sm text-muted-foreground">{item.releaseYear}</p>
 						{/if}
 
-						{#each metaEntries(item) as entry}
+						{#each metaEntries(item) as entry (entry.label)}
 							<div>
 								<span class="text-xs text-muted-foreground">{entry.label}</span>
 								<p class="text-sm text-foreground">{entry.value}</p>
@@ -398,7 +397,7 @@
 							{labels[item.status]}
 						</Select.Trigger>
 						<Select.Content>
-							{#each MEDIA_STATUSES as status}
+							{#each MEDIA_STATUSES as status (status)}
 								<Select.Item value={status}>{labels[status]}</Select.Item>
 							{/each}
 						</Select.Content>
@@ -423,8 +422,7 @@
 								All
 							</button>
 							{#if item.seriesMeta.totalSeasons}
-								{#each { length: item.seriesMeta.totalSeasons } as _, i}
-									{@const season = i + 1}
+								{#each Array.from({ length: item.seriesMeta.totalSeasons }, (_, i) => i + 1) as season (season)}
 									<button
 										aria-pressed={currentSeason === season}
 										class="rounded border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50
@@ -454,7 +452,7 @@
 								{item.seriesMeta.watchingOn ?? 'Select platform...'}
 							</Select.Trigger>
 							<Select.Content>
-								{#each STREAMING_PLATFORMS as platform}
+								{#each STREAMING_PLATFORMS as platform (platform)}
 									<Select.Item value={platform}>{platform}</Select.Item>
 								{/each}
 							</Select.Content>
@@ -477,7 +475,7 @@
 									{item.gameMeta.playingOn ?? 'Select platform...'}
 								</Select.Trigger>
 								<Select.Content>
-									{#each gamePlatforms as platform}
+									{#each gamePlatforms as platform (platform)}
 										<Select.Item value={platform}>{platform}</Select.Item>
 									{/each}
 								</Select.Content>
@@ -502,7 +500,7 @@
 								{item.podcastMeta.listeningOn ?? 'Select platform...'}
 							</Select.Trigger>
 							<Select.Content>
-								{#each PODCAST_PLATFORMS as platform}
+								{#each PODCAST_PLATFORMS as platform (platform)}
 									<Select.Item value={platform}>{platform}</Select.Item>
 								{/each}
 							</Select.Content>

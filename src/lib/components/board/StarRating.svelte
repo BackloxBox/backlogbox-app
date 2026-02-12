@@ -17,7 +17,7 @@
 </script>
 
 <div class="flex gap-0.5" role="radiogroup" aria-label="Rating">
-	{#each [1, 2, 3, 4, 5] as star}
+	{#each [1, 2, 3, 4, 5] as star (star)}
 		{@const filled = (hovered ?? value ?? 0) >= star}
 		<button
 			type="button"

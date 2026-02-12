@@ -23,18 +23,6 @@ import {
 	type MetaFieldsFor
 } from '$lib/types';
 
-// ---------------------------------------------------------------------------
-// Meta table registry — maps MediaType to its Drizzle table
-// ---------------------------------------------------------------------------
-
-const META_TABLES = {
-	book: bookMeta,
-	movie: movieMeta,
-	series: seriesMeta,
-	game: gameMeta,
-	podcast: podcastMeta
-} as const;
-
 /** Relation name lookup for Drizzle relational queries */
 const META_RELATION = {
 	book: 'bookMeta',

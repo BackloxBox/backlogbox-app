@@ -121,7 +121,7 @@
 							<span class="text-[10px] font-medium text-muted-foreground sm:text-xs">{col}</span>
 						</div>
 						<!-- Placeholder cards -->
-						{#each { length: i === 1 ? 3 : i === 2 ? 2 : i === 3 ? 1 : 2 } as _, j (j)}
+						{#each Array.from({ length: i === 1 ? 3 : i === 2 ? 2 : i === 3 ? 1 : 2 }, (_, j) => j) as j (j)}
 							<div class="h-8 rounded-md border border-border bg-background/80 sm:h-10"></div>
 						{/each}
 					</div>

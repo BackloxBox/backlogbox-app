@@ -16,6 +16,7 @@
 
 	/** Merge added + completed into total per-day counts */
 	const dailyCounts = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local computation, not reactive state
 		const map = new Map<string, number>();
 		for (const { date, count } of addedActivity) {
 			map.set(date, (map.get(date) ?? 0) + count);
@@ -28,19 +29,23 @@
 
 	/** Generate 371 days (53 weeks) ending today, aligned to start on Sunday */
 	const cells = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local computation, not reactive state
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
 
 		// End of the grid is Saturday of this week (or today's week-end)
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const endDay = new Date(today);
 		// Walk forward to Saturday
 		endDay.setDate(endDay.getDate() + (6 - endDay.getDay()));
 
 		// Start from 52 weeks before endDay's Sunday
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const startDay = new Date(endDay);
 		startDay.setDate(startDay.getDate() - 52 * 7);
 
 		const result: Array<{ date: string; count: number; col: number; row: number }> = [];
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const cursor = new Date(startDay);
 		let col = 0;
 
@@ -96,9 +101,11 @@
 
 	/** Current streak — consecutive days with activity ending today */
 	const streak = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
 		let days = 0;
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const cursor = new Date(today);
 
 		while (true) {
@@ -134,7 +141,7 @@
 	<!-- Month labels -->
 	<div class="flex pl-8">
 		<div class="relative h-4 flex-1" style="--cols: 53">
-			{#each monthLabels as { label, col }}
+			{#each monthLabels as { label, col } (col)}
 				<span
 					class="absolute top-0 text-[10px] text-muted-foreground"
 					style="left: calc({col} / 53 * 100%)"
@@ -184,7 +191,7 @@
 		</span>
 		<div class="flex items-center gap-1">
 			<span>Less</span>
-			{#each [0, 1, 2, 3, 4] as level}
+			{#each [0, 1, 2, 3, 4] as level (level)}
 				<div class="heatmap-cell legend" data-level={level}></div>
 			{/each}
 			<span>More</span>

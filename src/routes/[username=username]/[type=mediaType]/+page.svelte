@@ -23,7 +23,7 @@
 
 	// Reset search when switching media types
 	$effect(() => {
-		data.slug;
+		void data.slug;
 		searchQuery = '';
 	});
 
@@ -100,6 +100,6 @@
 
 	<!-- Board -->
 	<div class="flex flex-1 flex-col overflow-hidden">
-		<KanbanBoard {groupedItems} {statusLabels} slug={data.slug} readonly />
+		<KanbanBoard {groupedItems} {statusLabels} readonly />
 	</div>
 </div>
