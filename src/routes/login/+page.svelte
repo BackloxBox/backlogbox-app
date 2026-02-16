@@ -16,6 +16,7 @@
 <div class="flex min-h-screen items-center justify-center bg-background px-4">
 	<div class="w-full max-w-sm space-y-6">
 		<div class="text-center">
+			<img src="/backlogbox-logo.svg" alt="BacklogBox" class="mx-auto mb-4 size-10" />
 			<h1 class="text-2xl font-semibold tracking-tight text-foreground">Sign in</h1>
 			<p class="mt-1 text-sm text-muted-foreground">Welcome back to BacklogBox</p>
 		</div>

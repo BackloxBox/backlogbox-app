@@ -79,8 +79,10 @@
 		</div>
 
 		<p class="text-xs text-muted-foreground/60">
-			Powered by <a href="/" class="underline underline-offset-2 hover:text-muted-foreground"
-				>BacklogBox</a
+			Powered by <a
+				href="/"
+				class="inline-flex items-center gap-1 underline underline-offset-2 hover:text-muted-foreground"
+				><img src="/backlogbox-logo.svg" alt="" class="size-3.5" />BacklogBox</a
 			>
 		</p>
 	</div>

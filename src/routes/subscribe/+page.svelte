@@ -67,7 +67,10 @@
 
 	<!-- Nav -->
 	<nav class="relative z-10 flex items-center justify-between px-6 py-4 sm:px-10 sm:py-6">
-		<a href="/" class="text-sm font-bold tracking-tight text-foreground">BacklogBox</a>
+		<a href="/" class="flex items-center gap-2 text-sm font-bold tracking-tight text-foreground">
+			<img src="/backlogbox-logo.svg" alt="" class="size-5" />
+			BacklogBox
+		</a>
 		<div class="flex items-center gap-2">
 			<Button
 				variant="ghost"

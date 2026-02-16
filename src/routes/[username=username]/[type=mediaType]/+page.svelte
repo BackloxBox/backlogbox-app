@@ -79,7 +79,13 @@
 		</div>
 		<div class="flex items-center gap-2">
 			<BoardSearch bind:value={searchQuery} />
-			<a href="/" class="text-xs text-muted-foreground hover:text-foreground">BacklogBox</a>
+			<a
+				href="/"
+				class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+			>
+				<img src="/backlogbox-logo.svg" alt="" class="size-3.5" />
+				BacklogBox
+			</a>
 		</div>
 	</header>
 

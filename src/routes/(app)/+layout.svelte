@@ -23,7 +23,6 @@
 	import Tv from '@lucide/svelte/icons/tv';
 	import Gamepad2 from '@lucide/svelte/icons/gamepad-2';
 	import Podcast from '@lucide/svelte/icons/podcast';
-	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 	import type { Component } from 'svelte';
 
 	let { children, data } = $props();
@@ -104,7 +103,7 @@
 		<!-- Logo -->
 		<div class="flex h-14 items-center gap-2 px-4">
 			<a href="/dashboard" class="flex items-center gap-2 text-foreground">
-				<LayoutDashboard class="size-4 text-muted-foreground" />
+				<img src="/backlogbox-logo.svg" alt="" class="size-5" />
 				<span class="text-sm font-semibold tracking-tight">BacklogBox</span>
 			</a>
 		</div>
