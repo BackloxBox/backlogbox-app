@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { toggleMode } from 'mode-watcher';
 	import Sun from '@lucide/svelte/icons/sun';
@@ -10,8 +9,6 @@
 	import Gamepad2 from '@lucide/svelte/icons/gamepad-2';
 	import Podcast from '@lucide/svelte/icons/podcast';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
-
-	const user = $derived(page.data.user);
 
 	const categories = [
 		{ icon: BookOpen, label: 'Books', color: '#3B82F6' },
@@ -58,13 +55,9 @@
 					class="absolute size-3.5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"
 				/>
 			</Button>
-			{#if user}
-				<Button variant="outline" size="sm" href="/dashboard">Dashboard</Button>
-			{:else}
-				<Button variant="ghost" size="sm" href="/subscribe">Pricing</Button>
-				<Button variant="ghost" size="sm" href="/login">Sign in</Button>
-				<Button size="sm" href="/register">Get Started</Button>
-			{/if}
+			<Button variant="ghost" size="sm" href="/subscribe">Pricing</Button>
+			<Button variant="ghost" size="sm" href="/login">Sign in</Button>
+			<Button size="sm" href="/register">Get Started</Button>
 		</div>
 	</nav>
 
@@ -94,18 +87,11 @@
 		</p>
 
 		<div class="mt-8 flex items-center justify-center gap-3">
-			{#if user}
-				<Button size="lg" href="/dashboard" class="gap-2">
-					Go to Dashboard
-					<ArrowRight class="size-4" />
-				</Button>
-			{:else}
-				<Button size="lg" href="/register" class="gap-2">
-					Start Tracking
-					<ArrowRight class="size-4" />
-				</Button>
-				<Button variant="outline" size="lg" href="/login">Sign in</Button>
-			{/if}
+			<Button size="lg" href="/register" class="gap-2">
+				Start Tracking
+				<ArrowRight class="size-4" />
+			</Button>
+			<Button variant="outline" size="lg" href="/login">Sign in</Button>
 		</div>
 	</div>
 

@@ -63,14 +63,6 @@
 		}
 		return undefined;
 	}
-
-	function toggleSection(status: MediaStatus) {
-		if (expandedSections.has(status)) {
-			expandedSections.delete(status);
-		} else {
-			expandedSections.add(status);
-		}
-	}
 </script>
 
 <!-- Desktop: horizontal Kanban columns (client-only due to DnD context) -->
@@ -147,10 +139,16 @@
 	{#each MEDIA_STATUSES as status (status)}
 		{@const items = columns[status] ?? []}
 		{@const expanded = expandedSections.has(status)}
-		<Collapsible open={expanded} class="mb-1.5">
+		<Collapsible
+			open={expanded}
+			onOpenChange={(v) => {
+				if (v) expandedSections.add(status);
+				else expandedSections.delete(status);
+			}}
+			class="mb-1.5"
+		>
 			<CollapsibleTrigger
 				class="flex w-full items-center justify-between rounded-lg bg-muted/60 px-3 py-2.5 text-left"
-				onclick={() => toggleSection(status)}
 			>
 				<span class="flex items-center gap-2">
 					<span class="size-2 shrink-0 rounded-full" style:background-color={STATUS_COLORS[status]}
