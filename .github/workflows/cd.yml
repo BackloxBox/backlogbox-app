@@ -85,11 +85,6 @@ jobs:
             export IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.workflow_run.head_sha }}
 
             cd ~/backlogbox
-            docker stack deploy --with-registry-auth -c docker-stack.yml backlogbox
-
-            docker service update \
-              --image $IMAGE \
-              --with-registry-auth \
-              backlogbox_app
+            docker stack deploy --with-registry-auth --detach=false -c docker-stack.yml backlogbox
 
             docker system prune -af --filter "until=72h"

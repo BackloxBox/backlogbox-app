@@ -61,7 +61,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 45s
     deploy:
       replicas: 2
       placement:
@@ -70,10 +70,7 @@ services:
         parallelism: 1
         delay: 10s
         order: start-first
-        failure_action: rollback
-      rollback_config:
-        parallelism: 1
-        order: stop-first
+        failure_action: pause
       restart_policy:
         condition: on-failure
         delay: 5s
