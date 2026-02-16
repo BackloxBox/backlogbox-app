@@ -35,14 +35,14 @@
 	<meta name="twitter:image" content="https://backlogbox.com/backlogbox-logo.svg" />
 
 	<!-- Structured data -->
-	{@html `<script type="application/ld+json">${JSON.stringify({
+	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'WebSite',
 		name: 'BacklogBox',
 		url: 'https://backlogbox.com',
 		description:
 			'Stop losing track of what to play next. The ultimate Kanban-style tracker for your games, books, movies, and TV shows.'
-	})}</script>`}
+	})}</${'script'}>`}
 </svelte:head>
 
 <ModeWatcher defaultMode="dark" />
