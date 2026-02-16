@@ -2,6 +2,7 @@
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -50,6 +51,7 @@
 	let saving = $state(false);
 	let deleting = $state(false);
 	let scrollRef = $state<HTMLDivElement | null>(null);
+	let pendingDeleteNoteId = $state<string | null>(null);
 
 	// --- Notes timeline ---
 	let timelineNotes = $state<MediaNoteRow[]>([]);
@@ -519,7 +521,7 @@
 					<Label>Notes</Label>
 
 					<!-- Add note form -->
-					<div class="flex gap-2">
+					<div class="space-y-2">
 						<Textarea
 							rows={2}
 							placeholder="Add a note..."
@@ -528,15 +530,17 @@
 								if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddNote();
 							}}
 						/>
-						<Button
-							variant="ghost"
-							size="icon"
-							class="shrink-0 self-end"
-							onclick={handleAddNote}
-							disabled={addingNote || !newNoteText.trim()}
-						>
-							<Send class="size-4" />
-						</Button>
+						<div class="flex justify-end">
+							<Button
+								size="sm"
+								class="gap-1.5"
+								onclick={handleAddNote}
+								disabled={addingNote || !newNoteText.trim()}
+							>
+								<Send class="size-3.5" />
+								{addingNote ? 'Adding...' : 'Add note'}
+							</Button>
+						</div>
 					</div>
 
 					<!-- Timeline -->
@@ -556,7 +560,7 @@
 									</div>
 									<button
 										class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-										onclick={() => handleDeleteNote(note.id)}
+										onclick={() => (pendingDeleteNoteId = note.id)}
 										aria-label="Delete note"
 									>
 										<X class="size-3.5 text-muted-foreground hover:text-destructive" />
@@ -576,11 +580,62 @@
 				</div>
 			</div>
 
+			<!-- Note delete confirmation (shared single dialog) -->
+			<AlertDialog.Root
+				open={pendingDeleteNoteId !== null}
+				onOpenChange={(v) => {
+					if (!v) pendingDeleteNoteId = null;
+				}}
+			>
+				<AlertDialog.Content>
+					<AlertDialog.Header>
+						<AlertDialog.Title>Delete note?</AlertDialog.Title>
+						<AlertDialog.Description>This note will be permanently deleted.</AlertDialog.Description
+						>
+					</AlertDialog.Header>
+					<AlertDialog.Footer>
+						<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+						<AlertDialog.Action
+							class="text-destructive-foreground bg-destructive hover:bg-destructive/90"
+							onclick={() => {
+								if (pendingDeleteNoteId) handleDeleteNote(pendingDeleteNoteId);
+								pendingDeleteNoteId = null;
+							}}
+						>
+							Delete
+						</AlertDialog.Action>
+					</AlertDialog.Footer>
+				</AlertDialog.Content>
+			</AlertDialog.Root>
+
 			<!-- Footer actions -->
 			<Sheet.Footer class="border-t border-border px-5 py-4">
-				<Button variant="destructive" class="w-full" onclick={handleDelete} disabled={deleting}>
-					{deleting ? 'Deleting...' : 'Delete item'}
-				</Button>
+				<AlertDialog.Root>
+					<AlertDialog.Trigger>
+						{#snippet child({ props })}
+							<Button {...props} variant="destructive" class="w-full" disabled={deleting}>
+								{deleting ? 'Deleting...' : 'Delete item'}
+							</Button>
+						{/snippet}
+					</AlertDialog.Trigger>
+					<AlertDialog.Content>
+						<AlertDialog.Header>
+							<AlertDialog.Title>Delete item?</AlertDialog.Title>
+							<AlertDialog.Description>
+								This will permanently delete this item and all its notes. This cannot be undone.
+							</AlertDialog.Description>
+						</AlertDialog.Header>
+						<AlertDialog.Footer>
+							<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+							<AlertDialog.Action
+								class="text-destructive-foreground bg-destructive hover:bg-destructive/90"
+								onclick={handleDelete}
+							>
+								Delete
+							</AlertDialog.Action>
+						</AlertDialog.Footer>
+					</AlertDialog.Content>
+				</AlertDialog.Root>
 			</Sheet.Footer>
 		{/if}
 	</Sheet.Content>

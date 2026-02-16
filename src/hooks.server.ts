@@ -7,6 +7,11 @@ import { log } from '$lib/server/logger';
 import { getUserProfile } from '$lib/server/db/queries';
 
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
+	if (building) {
+		event.locals.subscribed = false;
+		return resolve(event);
+	}
+
 	const session = await auth.api.getSession({ headers: event.request.headers });
 
 	event.locals.subscribed = false;

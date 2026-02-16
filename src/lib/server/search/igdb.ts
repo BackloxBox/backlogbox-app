@@ -69,6 +69,15 @@ async function getAccessToken(): Promise<{ clientId: string; accessToken: string
 	return { clientId, accessToken: data.access_token };
 }
 
+/** Shorten verbose IGDB platform names for display */
+const PLATFORM_NAME_MAP: Record<string, string> = {
+	'PC (Microsoft Windows)': 'PC'
+};
+
+function normalizePlatformName(name: string): string {
+	return PLATFORM_NAME_MAP[name] ?? name;
+}
+
 function coverUrl(imageId: string | undefined): string | null {
 	if (!imageId) return null;
 	return `https://images.igdb.com/igdb/image/upload/t_cover_big/${imageId}.jpg`;
@@ -114,7 +123,7 @@ export const igdbProvider: SearchProvider<'game'> = {
 				releaseYear: yearFromTimestamp(game.first_release_date),
 				meta: {
 					igdbId: game.id,
-					platform: game.platforms?.map((p) => p.name).join(', ') ?? null,
+					platform: game.platforms?.map((p) => normalizePlatformName(p.name)).join(', ') ?? null,
 					genre: game.genres?.map((g) => g.name).join(', ') ?? null,
 					description: game.summary ?? null,
 					developer: developers?.length ? developers.join(', ') : null,
