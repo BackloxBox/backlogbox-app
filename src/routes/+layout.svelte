@@ -35,6 +35,7 @@
 	<meta name="twitter:image" content="https://backlogbox.com/backlogbox-logo.svg" />
 
 	<!-- Structured data -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD, no user input -->
 	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'WebSite',
