@@ -1,13 +1,16 @@
 import pino from 'pino';
-import type { TransportTargetOptions } from 'pino';
 import { dev } from '$app/environment';
 
 /**
  * Single structured logger for the entire server.
  *
- * - Dev:  pretty-printed to stdout via pino-pretty
- * - Prod: shipped to Axiom via @axiomhq/pino (when AXIOM_TOKEN is set),
- *         otherwise plain JSON to stdout
+ * - Dev:  pretty-printed via pino-pretty transport
+ * - Prod: JSON to stdout + Axiom via @axiomhq/pino transport (when configured)
+ *
+ * pino, pino-pretty, and @axiomhq/pino must be in `dependencies` (not
+ * devDependencies) so adapter-node keeps them external. If bundled by Vite,
+ * pino's worker threads crash with `__dirname is not defined` in ESM.
+ * See https://github.com/sveltejs/kit/discussions/7663
  *
  * Usage:
  *   import { log } from '$lib/server/logger';
@@ -15,32 +18,25 @@ import { dev } from '$app/environment';
  *   log.error({ err, userId, tmdbId }, 'tmdb fetch failed');
  */
 
-function buildTransport(): pino.TransportMultiOptions | undefined {
-	const targets: TransportTargetOptions[] = [];
-
-	if (dev) {
-		targets.push({
-			target: 'pino-pretty',
-			options: { colorize: true, translateTime: 'HH:MM:ss', ignore: 'pid,hostname' },
-			level: 'debug'
-		});
-	} else if (process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET) {
-		targets.push({
-			target: '@axiomhq/pino',
-			options: {
-				dataset: process.env.AXIOM_DATASET,
-				token: process.env.AXIOM_TOKEN
-			},
-			level: 'info'
-		});
-	}
-
-	return targets.length > 0 ? { targets } : undefined;
-}
-
-const transport = buildTransport();
-
-export const log = pino({
-	level: dev ? 'debug' : 'info',
-	...(transport ? { transport } : {})
-});
+export const log = dev
+	? pino({
+			level: 'debug',
+			transport: {
+				target: 'pino-pretty',
+				options: { colorize: true, translateTime: 'HH:MM:ss', ignore: 'pid,hostname' }
+			}
+		})
+	: pino(
+			{ level: 'info' },
+			...(process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET
+				? [
+						pino.transport({
+							target: '@axiomhq/pino',
+							options: {
+								dataset: process.env.AXIOM_DATASET,
+								token: process.env.AXIOM_TOKEN
+							}
+						})
+					]
+				: [])
+		);
