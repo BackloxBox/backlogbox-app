@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
 import { command, query } from '$app/server';
 import { requireSubscription } from '$lib/server/auth-guard';
+import { log } from '$lib/server/logger';
 import {
 	getCustomListBySlug,
 	getItemsByList,
@@ -191,6 +192,8 @@ export const deleteItem = command(deleteItemSchema, async (data) => {
 
 	const deleted = await deleteCustomListItem(data.itemId, listId);
 	if (!deleted) error(404, 'Item not found');
+
+	log.info({ userId, itemId: data.itemId, listId }, 'custom list item deleted');
 });
 
 /** Batch reorder items after drag-and-drop */
@@ -216,6 +219,7 @@ export const addField = command(addFieldSchema, async (data) => {
 		});
 	} catch (e) {
 		if (e instanceof Error && e.message.includes(`${MAX_CUSTOM_FIELDS}`)) {
+			log.warn({ userId, listId, name: data.name }, 'max fields limit');
 			error(400, e.message);
 		}
 		throw e;
@@ -248,6 +252,8 @@ export const removeField = command(deleteFieldSchema, async (data) => {
 
 	const deleted = await deleteCustomListField(data.fieldId, listId);
 	if (!deleted) error(404, 'Field not found');
+
+	log.info({ userId, fieldId: data.fieldId, listId }, 'custom field deleted');
 });
 
 // ---------------------------------------------------------------------------

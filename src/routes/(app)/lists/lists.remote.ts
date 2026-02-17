@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
 import { command, query } from '$app/server';
 import { requireSubscription } from '$lib/server/auth-guard';
+import { log } from '$lib/server/logger';
 import {
 	createCustomList,
 	deleteCustomList,
@@ -52,6 +53,7 @@ export const addList = command(createListSchema, async (data) => {
 		});
 	} catch (e) {
 		if (e instanceof Error && e.message.includes(`${MAX_CUSTOM_LISTS}`)) {
+			log.warn({ userId, name: data.name }, 'max lists limit');
 			error(400, e.message);
 		}
 		throw e;
@@ -82,4 +84,6 @@ export const removeList = command(deleteListSchema, async (data) => {
 
 	const deleted = await deleteCustomList(data.listId, userId);
 	if (!deleted) error(404, 'List not found');
+
+	log.info({ userId, listId: data.listId }, 'list deleted');
 });
