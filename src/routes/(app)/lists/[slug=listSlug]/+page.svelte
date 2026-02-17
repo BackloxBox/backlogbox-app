@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { goto, invalidateAll } from '$app/navigation';
 	import CustomKanbanBoard from '$lib/components/custom-list/CustomKanbanBoard.svelte';
 	import AddCustomItemModal from '$lib/components/custom-list/AddCustomItemModal.svelte';
 	import CustomItemDetailPanel from '$lib/components/custom-list/CustomItemDetailPanel.svelte';
+	import ListSettingsSheet from '$lib/components/custom-list/ListSettingsSheet.svelte';
 	import BoardSearch from '$lib/components/board/BoardSearch.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
@@ -21,8 +23,11 @@
 		updateItem,
 		deleteItem,
 		reorderItems,
-		setFieldValues
+		setFieldValues,
+		addField,
+		removeField
 	} from './data.remote';
+	import { editList, removeList } from '../lists.remote';
 	import type {
 		CustomListItemWithFields,
 		CustomListFieldRow
@@ -30,6 +35,7 @@
 	import { toast } from 'svelte-sonner';
 	import { handleSubscriptionError } from '$lib/subscription-guard';
 	import { getIconComponent } from '$lib/components/custom-list/icon-map';
+	import type { ListIconName } from '$lib/types';
 
 	const slug = $derived(page.params.slug ?? '');
 
@@ -42,7 +48,7 @@
 
 	let addModalOpen = $state(false);
 	let selectedItem = $state<CustomListItemWithFields | null>(null);
-	let _settingsOpen = $state(false);
+	let settingsOpen = $state(false);
 	let searchQuery = $state('');
 	let listFields = $state<CustomListFieldRow[]>([]);
 
@@ -150,6 +156,76 @@
 			toast.error('Failed to save field');
 		}
 	}
+
+	// --- Settings handlers ---
+
+	async function handleUpdateList(fields: {
+		name?: string;
+		icon?: string | null;
+		isPublic?: boolean;
+	}) {
+		if (!listMeta) return;
+		try {
+			const updated = await editList({
+				listId: listMeta.id,
+				name: fields.name,
+				icon: fields.icon as ListIconName | null | undefined,
+				isPublic: fields.isPublic
+			});
+			// If name changed, slug changed — navigate to new URL
+			if (updated && fields.name && updated.slug !== slug) {
+				await invalidateAll();
+				goto(`/lists/${updated.slug}`, { replaceState: true });
+			} else {
+				await invalidateAll();
+			}
+		} catch (err) {
+			if (handleSubscriptionError(err)) return;
+			console.error('update list failed', { slug, err });
+			toast.error('Failed to update list');
+		}
+	}
+
+	async function handleDeleteList() {
+		if (!listMeta) return;
+		try {
+			await removeList({ listId: listMeta.id });
+			await invalidateAll();
+			goto('/dashboard');
+		} catch (err) {
+			if (handleSubscriptionError(err)) return;
+			console.error('delete list failed', { slug, err });
+			toast.error('Failed to delete list');
+		}
+	}
+
+	async function handleAddField(data: { name: string; fieldType: string }) {
+		try {
+			await addField({
+				slug,
+				name: data.name,
+				fieldType: data.fieldType as 'text' | 'number' | 'url' | 'date'
+			});
+			const fields = await getListFields(slug);
+			listFields = fields;
+		} catch (err) {
+			if (handleSubscriptionError(err)) return;
+			console.error('add field failed', { slug, err });
+			toast.error('Failed to add field');
+		}
+	}
+
+	async function handleDeleteField(fieldId: string) {
+		try {
+			await removeField({ slug, fieldId });
+			const fields = await getListFields(slug);
+			listFields = fields;
+		} catch (err) {
+			if (handleSubscriptionError(err)) return;
+			console.error('delete field failed', { slug, fieldId, err });
+			toast.error('Failed to delete field');
+		}
+	}
 </script>
 
 <div class="flex h-full flex-col">
@@ -167,7 +243,7 @@
 				<Plus class="size-4" />
 				Add
 			</Button>
-			<Button variant="ghost" size="icon" class="size-8" onclick={() => (_settingsOpen = true)}>
+			<Button variant="ghost" size="icon" class="size-8" onclick={() => (settingsOpen = true)}>
 				<SettingsIcon class="size-4" />
 			</Button>
 		</div>
@@ -232,4 +308,23 @@
 	onUpdate={handleUpdateItem}
 	onDelete={handleDeleteItem}
 	onFieldValueChange={handleFieldValueChange}
+/>
+
+<ListSettingsSheet
+	open={settingsOpen}
+	list={listMeta
+		? {
+				id: listMeta.id,
+				name: listMeta.name,
+				slug: listMeta.slug,
+				icon: listMeta.icon,
+				isPublic: listMeta.isPublic
+			}
+		: null}
+	fields={listFields}
+	onClose={() => (settingsOpen = false)}
+	onUpdateList={handleUpdateList}
+	onDeleteList={handleDeleteList}
+	onAddField={handleAddField}
+	onDeleteField={handleDeleteField}
 />
