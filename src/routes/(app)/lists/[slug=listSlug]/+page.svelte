@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import CustomKanbanBoard from '$lib/components/custom-list/CustomKanbanBoard.svelte';
 	import AddCustomItemModal from '$lib/components/custom-list/AddCustomItemModal.svelte';
+	import CustomItemDetailPanel from '$lib/components/custom-list/CustomItemDetailPanel.svelte';
 	import BoardSearch from '$lib/components/board/BoardSearch.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
@@ -13,8 +14,19 @@
 		CUSTOM_LIST_STATUS_LABELS,
 		type CustomListStatus
 	} from '$lib/types';
-	import { getBoardItems, addItem, updateItem, deleteItem, reorderItems } from './data.remote';
-	import type { CustomListItemWithFields } from '$lib/server/db/custom-list-queries';
+	import {
+		getBoardItems,
+		getListFields,
+		addItem,
+		updateItem,
+		deleteItem,
+		reorderItems,
+		setFieldValues
+	} from './data.remote';
+	import type {
+		CustomListItemWithFields,
+		CustomListFieldRow
+	} from '$lib/server/db/custom-list-queries';
 	import { toast } from 'svelte-sonner';
 	import { handleSubscriptionError } from '$lib/subscription-guard';
 	import { getIconComponent } from '$lib/components/custom-list/icon-map';
@@ -32,11 +44,18 @@
 	let selectedItem = $state<CustomListItemWithFields | null>(null);
 	let _settingsOpen = $state(false);
 	let searchQuery = $state('');
+	let listFields = $state<CustomListFieldRow[]>([]);
 
-	// Reset search when switching lists
+	// Reset search + load fields when switching lists
 	$effect(() => {
-		void slug;
+		const s = slug;
 		searchQuery = '';
+		listFields = [];
+		if (s) {
+			getListFields(s).then((fields) => {
+				listFields = fields;
+			});
+		}
 	});
 
 	/** Group items by status */
@@ -79,7 +98,7 @@
 		}
 	}
 
-	async function _handleUpdateItem(
+	async function handleUpdateItem(
 		fields: Partial<{
 			title: string;
 			subtitle: string | null;
@@ -107,7 +126,7 @@
 		}
 	}
 
-	async function _handleDeleteItem() {
+	async function handleDeleteItem() {
 		if (!selectedItem) return;
 		try {
 			await deleteItem({ slug, itemId: selectedItem.id });
@@ -117,6 +136,18 @@
 			if (handleSubscriptionError(err)) return;
 			console.error('delete item failed', { slug, itemId: selectedItem?.id, err });
 			toast.error('Failed to delete item');
+		}
+	}
+
+	async function handleFieldValueChange(fieldId: string, value: string) {
+		if (!selectedItem) return;
+		try {
+			await setFieldValues({ slug, itemId: selectedItem.id, values: [{ fieldId, value }] });
+			getBoardItems(slug).refresh();
+		} catch (err) {
+			if (handleSubscriptionError(err)) return;
+			console.error('field value update failed', { slug, fieldId, err });
+			toast.error('Failed to save field');
 		}
 	}
 </script>
@@ -193,3 +224,12 @@
 </div>
 
 <AddCustomItemModal open={addModalOpen} onClose={() => (addModalOpen = false)} onAdd={handleAdd} />
+
+<CustomItemDetailPanel
+	item={selectedItem}
+	fields={listFields}
+	onClose={() => (selectedItem = null)}
+	onUpdate={handleUpdateItem}
+	onDelete={handleDeleteItem}
+	onFieldValueChange={handleFieldValueChange}
+/>

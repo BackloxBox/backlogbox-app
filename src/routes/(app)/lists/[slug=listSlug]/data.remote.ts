@@ -5,6 +5,7 @@ import { requireSubscription } from '$lib/server/auth-guard';
 import {
 	getCustomListBySlug,
 	getItemsByList,
+	getFieldsByList,
 	createCustomListItem,
 	updateCustomListItem,
 	deleteCustomListItem,
@@ -132,6 +133,13 @@ export const getBoardItems = query(v.string(), async (slug) => {
 	const userId = requireSubscription();
 	const listId = await resolveList(userId, slug);
 	return getItemsByList(listId);
+});
+
+/** Fetch all custom fields for a list */
+export const getListFields = query(v.string(), async (slug) => {
+	const userId = requireSubscription();
+	const listId = await resolveList(userId, slug);
+	return getFieldsByList(listId);
 });
 
 /** Add an item to the list */
