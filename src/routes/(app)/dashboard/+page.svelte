@@ -123,7 +123,7 @@
 	}
 </script>
 
-<div class="space-y-6 p-4 lg:p-6">
+<div class="space-y-4 p-4 lg:p-6">
 	<!-- Header row: title + summary stats -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 		<div>
@@ -153,11 +153,11 @@
 	</div>
 
 	<!-- Media type cards -->
-	<div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+	<div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
 		{#each typeCards as card (card.type)}
 			<a
 				href="/{card.slug}"
-				class="group relative overflow-hidden rounded-xl border border-border bg-card p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-transparent hover:shadow-lg"
+				class="group relative overflow-hidden rounded-xl border border-border bg-card p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-transparent hover:shadow-lg"
 			>
 				<!-- Colored gradient background on hover -->
 				<div
@@ -167,23 +167,23 @@
 				<div class="relative">
 					<div class="flex items-center gap-2">
 						<div
-							class="flex size-8 items-center justify-center rounded-lg transition-colors duration-200"
+							class="flex size-7 items-center justify-center rounded-lg transition-colors duration-200"
 							style:background="{card.color}15"
 							style:color={card.color}
 						>
-							<card.icon class="size-4" />
+							<card.icon class="size-3.5" />
 						</div>
 						<span class="text-xs font-medium text-muted-foreground">{card.label}</span>
 					</div>
-					<div class="mt-2.5 flex items-baseline gap-2">
-						<span class="text-xl font-bold text-foreground tabular-nums">{card.total}</span>
+					<div class="mt-2 flex items-baseline gap-2">
+						<span class="text-lg font-bold text-foreground tabular-nums">{card.total}</span>
 						{#if card.completed > 0}
 							<span class="text-xs text-muted-foreground">{card.completed} done</span>
 						{/if}
 					</div>
 					{#if card.total > 0}
 						<!-- Mini progress bar -->
-						<div class="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+						<div class="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
 							<div
 								class="h-full rounded-full transition-all duration-500"
 								style:background={card.color}
@@ -197,8 +197,8 @@
 	</div>
 
 	<!-- Activity heatmap -->
-	<div class="rounded-xl border border-border bg-card p-4 sm:p-5">
-		<h2 class="mb-3 text-sm font-medium text-foreground">Activity</h2>
+	<div class="rounded-xl border border-border bg-card p-3 sm:p-4">
+		<h2 class="mb-2 text-sm font-medium text-foreground">Activity</h2>
 		<div class="scrollbar-none overflow-x-auto">
 			<div class="min-w-[580px]">
 				<ActivityHeatmap
@@ -211,20 +211,20 @@
 	</div>
 
 	<!-- Charts row: status + completions (wider) -->
-	<div class="grid gap-4 lg:grid-cols-5">
+	<div class="grid gap-3 lg:grid-cols-5">
 		<!-- Status distribution — donut -->
-		<div class="rounded-xl border border-border bg-card p-4 sm:p-5 lg:col-span-2">
-			<h2 class="mb-1 text-sm font-medium text-foreground">Status Breakdown</h2>
-			<p class="mb-2 text-xs text-muted-foreground">Across all media types</p>
+		<div class="rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-2">
+			<h2 class="mb-0.5 text-sm font-medium text-foreground">Status Breakdown</h2>
+			<p class="mb-1.5 text-xs text-muted-foreground">Across all media types</p>
 			<StatusDonut statusCounts={stats.statusCounts} totalItems={stats.totalItems} />
 		</div>
 
 		<!-- Completions over time — area chart -->
-		<div class="rounded-xl border border-border bg-card p-4 sm:p-5 lg:col-span-3">
-			<h2 class="mb-1 text-sm font-medium text-foreground">Completions</h2>
-			<p class="mb-2 text-xs text-muted-foreground">Last 6 months by media type</p>
+		<div class="rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-3">
+			<h2 class="mb-0.5 text-sm font-medium text-foreground">Completions</h2>
+			<p class="mb-1.5 text-xs text-muted-foreground">Last 6 months by media type</p>
 			{#if chartData.length > 0}
-				<Chart.Container config={chartConfig} class="h-[220px] w-full">
+				<Chart.Container config={chartConfig} class="h-[200px] w-full">
 					<AreaChart
 						data={chartData}
 						x="monthLabel"
@@ -244,7 +244,7 @@
 					</AreaChart>
 				</Chart.Container>
 			{:else}
-				<div class="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
+				<div class="flex h-[200px] items-center justify-center text-sm text-muted-foreground">
 					No completions yet
 				</div>
 			{/if}
@@ -252,17 +252,17 @@
 	</div>
 
 	<!-- Genres row -->
-	<div class="grid gap-4 lg:grid-cols-5">
+	<div class="grid gap-3 lg:grid-cols-5">
 		<!-- Top genres -->
-		<div class="rounded-xl border border-border bg-card p-4 sm:p-5 lg:col-span-3">
-			<h2 class="mb-1 text-sm font-medium text-foreground">Top Genres</h2>
-			<p class="mb-2 text-xs text-muted-foreground">Most tracked genres across your collection</p>
+		<div class="rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-3">
+			<h2 class="mb-0.5 text-sm font-medium text-foreground">Top Genres</h2>
+			<p class="mb-1.5 text-xs text-muted-foreground">Most tracked genres across your collection</p>
 			<GenreChart genres={stats.topGenres} />
 		</div>
 
 		<!-- Recently added -->
-		<div class="rounded-xl border border-border bg-card p-4 sm:p-5 lg:col-span-2">
-			<h2 class="mb-3 text-sm font-medium text-foreground">Recently Added</h2>
+		<div class="rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-2">
+			<h2 class="mb-2 text-sm font-medium text-foreground">Recently Added</h2>
 			{#if stats.recentItems.length > 0}
 				<div class="space-y-1">
 					{#each stats.recentItems as item, i (item.title + item.createdAt)}
