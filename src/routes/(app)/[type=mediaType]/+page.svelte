@@ -228,7 +228,7 @@
 </script>
 
 <div class="flex h-full flex-col">
-	<header class="flex items-center justify-between px-6 py-3 pl-14 lg:pl-6">
+	<header class="flex h-14 items-center justify-between px-6 pl-14 lg:pl-6">
 		<h1 class="text-lg font-semibold tracking-tight text-foreground">{typeLabel}</h1>
 		<div class="flex items-center gap-2">
 			<BoardSearch bind:value={searchQuery} />

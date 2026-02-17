@@ -236,7 +236,7 @@
 </script>
 
 <div class="flex h-full flex-col">
-	<header class="flex items-center justify-between px-6 py-3 pl-14 lg:pl-6">
+	<header class="flex h-14 items-center justify-between px-6 pl-14 lg:pl-6">
 		<div class="flex items-center gap-2">
 			{#if listMeta?.icon}
 				{@const Icon = getIconComponent(listMeta.icon)}
