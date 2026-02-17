@@ -1,4 +1,5 @@
 import type { SearchProvider, SearchResult, TypedSearchResult } from './types';
+import { openLibraryLimiter } from './rate-limiter';
 
 const OL_USER_AGENT = 'BacklogBox/1.0 (https://github.com/backlogbox)';
 
@@ -96,6 +97,7 @@ export const openLibraryProvider: SearchProvider<'book'> = {
 			limit: '20'
 		});
 
+		await openLibraryLimiter.acquire();
 		const response = await fetch(`https://openlibrary.org/search.json?${params}`, {
 			headers: { 'User-Agent': OL_USER_AGENT }
 		});
@@ -127,6 +129,7 @@ export const openLibraryProvider: SearchProvider<'book'> = {
 export async function fetchBookDescription(workKey: string): Promise<string | null> {
 	const url = `https://openlibrary.org${workKey}.json`;
 	try {
+		await openLibraryLimiter.acquire();
 		const response = await fetch(url, {
 			headers: { 'User-Agent': OL_USER_AGENT }
 		});
@@ -159,6 +162,7 @@ interface OpenLibraryTrendingResponse {
 /** Fetch daily trending books from OpenLibrary */
 export async function fetchTrendingBooks(): Promise<SearchResult[]> {
 	try {
+		await openLibraryLimiter.acquire();
 		const response = await fetch('https://openlibrary.org/trending/daily.json?limit=20', {
 			headers: { 'User-Agent': OL_USER_AGENT }
 		});
@@ -213,6 +217,7 @@ export async function fetchBooksBySubject(subject: string): Promise<SearchResult
 		.replace(/\s+/g, '_')
 		.replace(/[^a-z0-9_]/g, '');
 	try {
+		await openLibraryLimiter.acquire();
 		const response = await fetch(`https://openlibrary.org/subjects/${normalized}.json?limit=10`, {
 			headers: { 'User-Agent': OL_USER_AGENT }
 		});

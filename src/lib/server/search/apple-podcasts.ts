@@ -1,3 +1,10 @@
+/**
+ * Apple Podcasts / iTunes search API.
+ *
+ * No rate limiter: Apple's iTunes Search API and RSS marketing feed are
+ * public with no documented rate limits. Volume is also low — only 1 call
+ * per discover tab switch (no "similar" endpoint exists for podcasts).
+ */
 import type { SearchProvider, SearchResult, TypedSearchResult } from './types';
 import { yearFromDate } from './utils';
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import {
 		MEDIA_TYPE_SLUGS,
 		MEDIA_TYPE_LABELS,
@@ -8,10 +9,12 @@
 	} from '$lib/types';
 	import { getTrending, getRecommendations } from './discover.remote';
 	import { addItem } from '../[type=mediaType]/data.remote';
+	import { debugMode } from '$lib/components/dev/debug-state.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { toast } from 'svelte-sonner';
 	import { handleSubscriptionError } from '$lib/subscription-guard';
 	import type { SearchResult } from '$lib/server/search';
+	import type { CacheDebugMeta } from '$lib/server/search/cache';
 	import Plus from '@lucide/svelte/icons/plus';
 	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
@@ -40,6 +43,13 @@
 	const trendingQuery = $derived(getTrending(activeTab));
 	const recsQuery = $derived(getRecommendations(activeTab));
 
+	// Unwrap response data
+	const trendingData = $derived(trendingQuery.current?.data ?? []);
+	const trendingDebug = $derived(trendingQuery.current?._debug ?? null);
+	const recsData = $derived(recsQuery.current?.data ?? []);
+
+	const showDebug = $derived(dev && debugMode.enabled);
+
 	function titleToHue(t: string): number {
 		let hash = 0;
 		for (let i = 0; i < t.length; i++) hash = t.charCodeAt(i) + ((hash << 5) - hash);
@@ -59,6 +69,63 @@
 
 		if (result.releaseYear) parts.push(String(result.releaseYear));
 		return parts.join(' \u00b7 ');
+	}
+
+	function debugBadgeClass(debug: CacheDebugMeta): string {
+		switch (debug.source) {
+			case 'cache-fresh':
+				return 'border-green-500/50 bg-green-500/10 text-green-400';
+			case 'cache-stale':
+				return 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400';
+			case 'fetch':
+				return 'border-red-500/50 bg-red-500/10 text-red-400';
+			case 'coalesced':
+				return 'border-blue-500/50 bg-blue-500/10 text-blue-400';
+			default: {
+				const _exhaustive: never = debug.source;
+				return _exhaustive;
+			}
+		}
+	}
+
+	function debugLabel(debug: CacheDebugMeta): string {
+		const label =
+			debug.source === 'cache-fresh'
+				? 'CACHED'
+				: debug.source === 'cache-stale'
+					? 'STALE'
+					: debug.source === 'coalesced'
+						? 'COALESCED'
+						: 'FRESH';
+
+		const parts = [label];
+		if (debug.ageMs !== null) {
+			const sec = Math.round(debug.ageMs / 1000);
+			parts.push(sec < 60 ? `${sec}s ago` : `${Math.round(sec / 60)}m ago`);
+		}
+		if (debug.fetchDurationMs !== null) {
+			parts.push(`${debug.fetchDurationMs}ms`);
+		}
+		parts.push(debug.provider);
+		return parts.join(' · ');
+	}
+
+	function debugBorderClass(debug: CacheDebugMeta | null): string {
+		if (!debug) return '';
+		switch (debug.source) {
+			case 'cache-fresh':
+				return 'ring-2 ring-green-500/40';
+			case 'cache-stale':
+				return 'ring-2 ring-yellow-500/40';
+			case 'fetch':
+				return 'ring-2 ring-red-500/40';
+			case 'coalesced':
+				return 'ring-2 ring-blue-500/40';
+			default: {
+				const _exhaustive: never = debug.source;
+				return _exhaustive;
+			}
+		}
 	}
 
 	async function handleAdd(result: SearchResult) {
@@ -144,7 +211,7 @@
 						</div>
 					</div>
 				{/each}
-			{:else if (recsQuery.current ?? []).length === 0}
+			{:else if recsData.length === 0}
 				<div
 					class="flex h-40 items-center justify-center rounded-lg border border-dashed bg-muted/40 text-sm text-muted-foreground"
 				>
@@ -152,17 +219,33 @@
 					get personalized recommendations.
 				</div>
 			{:else}
-				{#each recsQuery.current ?? [] as group, i (i)}
-					<div class="space-y-3 rounded-lg border border-border/50 bg-muted/20 p-4">
-						<h3 class="text-sm font-medium text-muted-foreground">
-							Because you added
-							<span
-								class="font-semibold text-foreground"
-								style:color={type ? MEDIA_TYPE_COLORS[type] : undefined}
-							>
-								{group.seedTitle}
-							</span>
-						</h3>
+				{#each recsData as group, i (i)}
+					<div
+						class="space-y-3 rounded-lg border border-border/50 bg-muted/20 p-4 {showDebug &&
+						group._debug
+							? debugBorderClass(group._debug)
+							: ''}"
+					>
+						<div class="flex items-center justify-between gap-2">
+							<h3 class="text-sm font-medium text-muted-foreground">
+								Because you added
+								<span
+									class="font-semibold text-foreground"
+									style:color={type ? MEDIA_TYPE_COLORS[type] : undefined}
+								>
+									{group.seedTitle}
+								</span>
+							</h3>
+							{#if showDebug && group._debug}
+								<span
+									class="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] {debugBadgeClass(
+										group._debug
+									)}"
+								>
+									{debugLabel(group._debug)}
+								</span>
+							{/if}
+						</div>
 						<div class="flex gap-3 overflow-x-auto pb-1">
 							{#each group.items as result (result.externalId)}
 								{@const isAdding = addingIds.has(result.externalId)}
@@ -216,10 +299,21 @@
 	{/if}
 
 	<!-- Trending -->
-	<section class="space-y-3">
-		<div class="flex items-center gap-2">
-			<span style:color="#A855F7"><TrendingUp class="size-5" /></span>
-			<h2 class="text-lg font-semibold">Trending</h2>
+	<section class="space-y-3 {showDebug && trendingDebug ? debugBorderClass(trendingDebug) : ''}">
+		<div class="flex items-center justify-between gap-2">
+			<div class="flex items-center gap-2">
+				<span style:color="#A855F7"><TrendingUp class="size-5" /></span>
+				<h2 class="text-lg font-semibold">Trending</h2>
+			</div>
+			{#if showDebug && trendingDebug}
+				<span
+					class="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] {debugBadgeClass(
+						trendingDebug
+					)}"
+				>
+					{debugLabel(trendingDebug)}
+				</span>
+			{/if}
 		</div>
 
 		{#if trendingQuery.error}
@@ -238,7 +332,7 @@
 					</div>
 				{/each}
 			</div>
-		{:else if (trendingQuery.current ?? []).length === 0}
+		{:else if trendingData.length === 0}
 			<p class="py-8 text-center text-sm text-muted-foreground">
 				No trending items available right now.
 			</p>
@@ -246,7 +340,7 @@
 			<div
 				class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7"
 			>
-				{#each (trendingQuery.current ?? []).slice(0, 14) as result (result.externalId)}
+				{#each trendingData.slice(0, 14) as result (result.externalId)}
 					{@const isAdding = addingIds.has(result.externalId)}
 					<div class="group space-y-1.5">
 						<div class="relative aspect-[2/3] overflow-hidden rounded-md">

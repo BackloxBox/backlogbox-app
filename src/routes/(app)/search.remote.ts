@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { query } from '$app/server';
 import { requireSubscription } from '$lib/server/auth-guard';
 import { getSearchProvider, type SearchResult } from '$lib/server/search';
-import { getCached, setCache } from '$lib/server/search/cache';
+import { getOrFetch } from '$lib/server/search/cache';
 import { fetchBookDescription } from '$lib/server/search/openlibrary';
 import {
 	fetchTmdbSeriesDetails,
@@ -14,6 +14,14 @@ import { slugToMediaType } from '$lib/types';
 import { error } from '@sveltejs/kit';
 import { log } from '$lib/server/logger';
 
+const SEARCH_PROVIDERS: Record<string, string> = {
+	book: 'openlibrary',
+	movie: 'tmdb',
+	series: 'tmdb',
+	game: 'igdb',
+	podcast: 'apple'
+};
+
 const searchSchema = v.object({
 	slug: v.string(),
 	query: v.pipe(v.string(), v.nonEmpty())
@@ -21,7 +29,7 @@ const searchSchema = v.object({
 
 /**
  * Search external APIs for media items.
- * Returns normalized results regardless of provider.
+ * Uses getOrFetch for coalescing (no SWR — search should always feel fresh).
  */
 export const searchMedia = query(searchSchema, async (input): Promise<SearchResult[]> => {
 	requireSubscription();
@@ -29,14 +37,14 @@ export const searchMedia = query(searchSchema, async (input): Promise<SearchResu
 	const type = slugToMediaType(input.slug);
 	if (!type) error(400, `Invalid media type slug: ${input.slug}`);
 
-	const cached = getCached(type, input.query);
-	if (cached) return cached;
-
 	const provider = getSearchProvider(type);
+	const key = `search:${type}:${input.query.toLowerCase().trim()}`;
+	const providerName = SEARCH_PROVIDERS[type] ?? type;
 
 	try {
-		const results = await provider.search(input.query);
-		setCache(type, input.query, results);
+		const { results } = await getOrFetch(key, 'search', providerName, () =>
+			provider.search(input.query)
+		);
 		return results;
 	} catch (err) {
 		log.error({ err, mediaType: type, query: input.query }, 'search provider failed');

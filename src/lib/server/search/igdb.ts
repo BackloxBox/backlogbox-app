@@ -1,6 +1,7 @@
 import { env } from '$env/dynamic/private';
 import type { SearchProvider, TypedSearchResult } from './types';
 import { yearFromTimestamp } from './utils';
+import { igdbLimiter } from './rate-limiter';
 
 interface IGDBInvolvedCompany {
 	company: { name: string };
@@ -86,6 +87,7 @@ function coverUrl(imageId: string | undefined): string | null {
 /** Shared IGDB fetch helper */
 async function igdbFetch(body: string): Promise<IGDBGame[]> {
 	const { clientId, accessToken } = await getAccessToken();
+	await igdbLimiter.acquire();
 	const response = await fetch('https://api.igdb.com/v4/games', {
 		method: 'POST',
 		headers: {
@@ -170,6 +172,7 @@ export async function fetchSimilarGames(
 	const body = `fields ${similarFields}; where id = (${idList}); limit ${igdbIds.length};`;
 
 	const { clientId, accessToken } = await getAccessToken();
+	await igdbLimiter.acquire();
 	const response = await fetch('https://api.igdb.com/v4/games', {
 		method: 'POST',
 		headers: {

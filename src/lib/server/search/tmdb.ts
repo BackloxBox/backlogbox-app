@@ -1,6 +1,7 @@
 import { env } from '$env/dynamic/private';
 import type { SearchProvider, TypedSearchResult } from './types';
 import { yearFromDate } from './utils';
+import { tmdbLimiter } from './rate-limiter';
 
 interface TMDBMovieResult {
 	id: number;
@@ -128,6 +129,7 @@ export const tmdbMovieProvider: SearchProvider<'movie'> = {
 			include_adult: 'false'
 		});
 
+		await tmdbLimiter.acquire();
 		const response = await fetch(`https://api.themoviedb.org/3/search/movie?${params}`);
 		if (!response.ok) return [];
 
@@ -157,6 +159,7 @@ export const tmdbSeriesProvider: SearchProvider<'series'> = {
 			include_adult: 'false'
 		});
 
+		await tmdbLimiter.acquire();
 		const response = await fetch(`https://api.themoviedb.org/3/search/tv?${params}`);
 		if (!response.ok) return [];
 
@@ -186,6 +189,7 @@ export async function fetchTmdbSeriesDetails(
 			api_key: getApiKey(),
 			append_to_response: 'aggregate_credits'
 		});
+		await tmdbLimiter.acquire();
 		const response = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?${params}`);
 		if (!response.ok) return null;
 		const data: TMDBTVDetails = await response.json();
@@ -215,6 +219,7 @@ export async function fetchTmdbSeriesDetails(
 /** Fetch trending movies for the week from TMDB */
 export async function fetchTrendingMovies(): Promise<TypedSearchResult<'movie'>[]> {
 	const params = new URLSearchParams({ api_key: getApiKey() });
+	await tmdbLimiter.acquire();
 	const response = await fetch(`https://api.themoviedb.org/3/trending/movie/week?${params}`);
 	if (!response.ok) return [];
 
@@ -235,6 +240,7 @@ export async function fetchTrendingMovies(): Promise<TypedSearchResult<'movie'>[
 /** Fetch trending TV series for the week from TMDB */
 export async function fetchTrendingSeries(): Promise<TypedSearchResult<'series'>[]> {
 	const params = new URLSearchParams({ api_key: getApiKey() });
+	await tmdbLimiter.acquire();
 	const response = await fetch(`https://api.themoviedb.org/3/trending/tv/week?${params}`);
 	if (!response.ok) return [];
 
@@ -258,6 +264,7 @@ export async function fetchTrendingSeries(): Promise<TypedSearchResult<'series'>
 /** Fetch movies similar to a given TMDB movie ID */
 export async function fetchSimilarMovies(tmdbId: number): Promise<TypedSearchResult<'movie'>[]> {
 	const params = new URLSearchParams({ api_key: getApiKey() });
+	await tmdbLimiter.acquire();
 	const response = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}/similar?${params}`);
 	if (!response.ok) return [];
 
@@ -278,6 +285,7 @@ export async function fetchSimilarMovies(tmdbId: number): Promise<TypedSearchRes
 /** Fetch series similar to a given TMDB series ID */
 export async function fetchSimilarSeries(tmdbId: number): Promise<TypedSearchResult<'series'>[]> {
 	const params = new URLSearchParams({ api_key: getApiKey() });
+	await tmdbLimiter.acquire();
 	const response = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}/similar?${params}`);
 	if (!response.ok) return [];
 
@@ -305,6 +313,7 @@ export async function fetchTmdbMovieDetails(
 			api_key: getApiKey(),
 			append_to_response: 'credits'
 		});
+		await tmdbLimiter.acquire();
 		const response = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?${params}`);
 		if (!response.ok) return null;
 		const data: TMDBMovieDetails = await response.json();

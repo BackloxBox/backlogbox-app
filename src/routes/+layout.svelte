@@ -1,7 +1,9 @@
 <script lang="ts">
 	import './layout.css';
+	import { dev } from '$app/environment';
 	import { ModeWatcher } from 'mode-watcher';
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
+	import CacheDebugOverlay from '$lib/components/dev/CacheDebugOverlay.svelte';
 
 	let { children } = $props();
 </script>
@@ -48,4 +50,7 @@
 
 <ModeWatcher defaultMode="dark" />
 <Toaster richColors />
+{#if dev}
+	<CacheDebugOverlay />
+{/if}
 {@render children()}
