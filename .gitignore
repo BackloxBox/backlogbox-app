@@ -26,3 +26,5 @@ vite.config.ts.timestamp-*
 DEPLOYMENT.md
 # Playwright
 test-results
+
+.agents
