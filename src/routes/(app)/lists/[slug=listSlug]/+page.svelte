@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import CustomKanbanBoard from '$lib/components/custom-list/CustomKanbanBoard.svelte';
+	import AddCustomItemModal from '$lib/components/custom-list/AddCustomItemModal.svelte';
 	import BoardSearch from '$lib/components/board/BoardSearch.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
@@ -27,7 +28,7 @@
 	);
 	const listName = $derived(listMeta?.name ?? 'List');
 
-	let _addModalOpen = $state(false);
+	let addModalOpen = $state(false);
 	let selectedItem = $state<CustomListItemWithFields | null>(null);
 	let _settingsOpen = $state(false);
 	let searchQuery = $state('');
@@ -61,18 +62,20 @@
 		return grouped;
 	}
 
-	async function handleAddItem() {
-		// Simple inline add for now — will be replaced with modal in Phase 6
-		const title = prompt('Item title:');
-		if (!title?.trim()) return;
-
+	async function handleAdd(data: {
+		title: string;
+		subtitle: string | null;
+		imageUrl: string | null;
+		status: CustomListStatus;
+	}) {
 		try {
-			await addItem({ slug, title: title.trim(), status: 'planned' });
+			await addItem({ slug, ...data });
 			getBoardItems(slug).refresh();
 		} catch (err) {
 			if (handleSubscriptionError(err)) return;
-			console.error('add item failed', { slug, title, err });
+			console.error('add item failed', { slug, title: data.title, err });
 			toast.error('Failed to add item');
+			throw err;
 		}
 	}
 
@@ -129,11 +132,11 @@
 		</div>
 		<div class="flex items-center gap-2">
 			<BoardSearch bind:value={searchQuery} />
-			<Button size="sm" onclick={handleAddItem}>
+			<Button size="sm" onclick={() => (addModalOpen = true)}>
 				<Plus class="size-4" />
 				Add
 			</Button>
-			<Button variant="ghost" size="icon" class="size-8" onclick={() => (settingsOpen = true)}>
+			<Button variant="ghost" size="icon" class="size-8" onclick={() => (_settingsOpen = true)}>
 				<SettingsIcon class="size-4" />
 			</Button>
 		</div>
@@ -188,3 +191,5 @@
 		{/snippet}
 	</svelte:boundary>
 </div>
+
+<AddCustomItemModal open={addModalOpen} onClose={() => (addModalOpen = false)} onAdd={handleAdd} />
