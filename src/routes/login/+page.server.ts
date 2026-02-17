@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { auth } from '$lib/server/auth';
 import { APIError } from 'better-auth';
+import { friendlyAuthError } from '$lib/server/auth-errors';
 
 /** Resolve post-login redirect, defaulting to /dashboard. Only allows relative paths. */
 function safeRedirect(value: string | null | undefined): string {
@@ -28,9 +29,11 @@ export const actions: Actions = {
 			});
 		} catch (error) {
 			if (error instanceof APIError) {
-				return fail(400, { message: error.message || 'Sign in failed' });
+				return fail(400, {
+					message: friendlyAuthError(error, { action: 'signIn', email })
+				});
 			}
-			return fail(500, { message: 'Unexpected error' });
+			return fail(500, { message: 'Something went wrong. Please try again.' });
 		}
 
 		redirect(302, redirectTo);

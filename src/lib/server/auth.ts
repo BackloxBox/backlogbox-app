@@ -10,6 +10,8 @@ import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
 import { setUserSubscribed } from '$lib/server/db/queries';
 import { log } from '$lib/server/logger';
+import { sendEmail } from '$lib/server/email';
+import { passwordResetTemplate, emailVerificationTemplate } from '$lib/server/email-templates';
 
 function createAuth() {
 	const polarClient = new Polar({
@@ -25,7 +27,31 @@ function createAuth() {
 		],
 		secret: env.BETTER_AUTH_SECRET,
 		database: drizzleAdapter(db, { provider: 'pg' }),
-		emailAndPassword: { enabled: true },
+		emailAndPassword: {
+			enabled: true,
+			requireEmailVerification: true,
+			sendResetPassword: async ({ user, url }) => {
+				void sendEmail({
+					to: user.email,
+					subject: 'Reset your password',
+					html: passwordResetTemplate({ url, name: user.name })
+				});
+			},
+			onPasswordReset: async ({ user }) => {
+				log.info({ userId: user.id }, 'password reset completed');
+			}
+		},
+		emailVerification: {
+			sendVerificationEmail: async ({ user, url }) => {
+				void sendEmail({
+					to: user.email,
+					subject: 'Verify your email address',
+					html: emailVerificationTemplate({ url, name: user.name })
+				});
+			},
+			sendOnSignUp: true,
+			autoSignInAfterVerification: true
+		},
 		...(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET
 			? {
 					socialProviders: {

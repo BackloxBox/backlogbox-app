@@ -53,6 +53,8 @@ services:
       - AXIOM_DATASET
       - SENTRY_DSN
       - PUBLIC_SENTRY_DSN
+      - RESEND_API_KEY
+      - EMAIL_FROM
     environment:
       PORT: '3000'
       HOST: '0.0.0.0'
@@ -117,6 +119,10 @@ secrets:
   SENTRY_DSN:
     external: true
   PUBLIC_SENTRY_DSN:
+    external: true
+  RESEND_API_KEY:
+    external: true
+  EMAIL_FROM:
     external: true
 
 networks:

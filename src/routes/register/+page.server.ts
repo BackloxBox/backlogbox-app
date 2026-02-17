@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { auth } from '$lib/server/auth';
 import { APIError } from 'better-auth';
+import { friendlyAuthError } from '$lib/server/auth-errors';
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
@@ -27,12 +28,16 @@ export const actions: Actions = {
 			});
 		} catch (error) {
 			if (error instanceof APIError) {
-				return fail(400, { message: error.message || 'Registration failed' });
+				return fail(400, {
+					message: friendlyAuthError(error, { action: 'signUp', email, username })
+				});
 			}
-			return fail(500, { message: 'Unexpected error' });
+			return fail(500, { message: 'Something went wrong. Please try again.' });
 		}
 
-		redirect(302, '/dashboard');
+		// With requireEmailVerification, no session is created.
+		// Return success so the page can show a "check your email" state.
+		return { success: true, email };
 	},
 	signInSocial: async (event) => {
 		const formData = await event.request.formData();
