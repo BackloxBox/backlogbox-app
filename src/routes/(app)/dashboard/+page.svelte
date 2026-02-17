@@ -277,7 +277,8 @@
 								<p class="truncate text-sm font-medium text-foreground">{item.title}</p>
 								<p class="text-xs text-muted-foreground">
 									<span style:color={TYPE_COLORS[item.type]}>
-										{MEDIA_TYPE_LABELS[item.type].singular}
+										{MEDIA_TYPE_LABELS[item.type]
+											.singular}{#if item.currentSeason}&nbsp;S{item.currentSeason}{/if}
 									</span>
 									&middot; {timeAgo(item.createdAt)}
 								</p>

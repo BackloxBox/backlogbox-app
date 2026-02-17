@@ -297,6 +297,7 @@ export type DashboardStats = {
 		status: MediaStatus;
 		createdAt: Date;
 		coverUrl: string | null;
+		currentSeason: number | null;
 	}>;
 	totalItems: number;
 	totalCompleted: number;
@@ -361,9 +362,11 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
 					type: mediaItem.type,
 					status: mediaItem.status,
 					createdAt: mediaItem.createdAt,
-					coverUrl: mediaItem.coverUrl
+					coverUrl: mediaItem.coverUrl,
+					currentSeason: seriesMeta.currentSeason
 				})
 				.from(mediaItem)
+				.leftJoin(seriesMeta, eq(seriesMeta.mediaItemId, mediaItem.id))
 				.where(eq(mediaItem.userId, userId))
 				.orderBy(desc(mediaItem.createdAt))
 				.limit(5),
