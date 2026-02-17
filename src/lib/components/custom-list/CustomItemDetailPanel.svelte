@@ -7,7 +7,6 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
-	import X from '@lucide/svelte/icons/x';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import MediaCover from '$lib/components/board/MediaCover.svelte';
 	import StarRating from '$lib/components/board/StarRating.svelte';
@@ -129,19 +128,14 @@
 >
 	<Sheet.Content side="right" class="w-full sm:max-w-lg">
 		{#if item}
-			<Sheet.Header class="flex flex-row items-start justify-between gap-3 pr-2">
-				<div class="flex items-center gap-3">
-					<MediaCover title={item.title} coverUrl={item.imageUrl} size="lg" />
-					<div class="min-w-0">
-						<Sheet.Title class="text-base leading-snug">{item.title}</Sheet.Title>
-						{#if item.subtitle}
-							<p class="mt-0.5 text-sm text-muted-foreground">{item.subtitle}</p>
-						{/if}
-					</div>
+			<Sheet.Header class="flex flex-row items-start gap-3">
+				<MediaCover title={item.title} coverUrl={item.imageUrl} size="lg" />
+				<div class="min-w-0">
+					<Sheet.Title class="text-base leading-snug">{item.title}</Sheet.Title>
+					{#if item.subtitle}
+						<p class="mt-0.5 text-sm text-muted-foreground">{item.subtitle}</p>
+					{/if}
 				</div>
-				<Button variant="ghost" size="icon" class="size-7 shrink-0" onclick={onClose}>
-					<X class="size-4" />
-				</Button>
 			</Sheet.Header>
 
 			<div bind:this={scrollRef} class="flex-1 space-y-5 overflow-y-auto py-4">
