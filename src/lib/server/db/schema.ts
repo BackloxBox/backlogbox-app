@@ -7,6 +7,7 @@ import {
 	pgTable,
 	text,
 	timestamp,
+	unique,
 	uuid
 } from 'drizzle-orm/pg-core';
 
@@ -185,6 +186,127 @@ export const podcastMetaRelations = relations(podcastMeta, ({ one }) => ({
 
 export const mediaNoteRelations = relations(mediaNote, ({ one }) => ({
 	mediaItem: one(mediaItem, { fields: [mediaNote.mediaItemId], references: [mediaItem.id] })
+}));
+
+// ---------------------------------------------------------------------------
+// Custom lists
+// ---------------------------------------------------------------------------
+
+export const customListStatusEnum = pgEnum('custom_list_status', [
+	'wishlist',
+	'planned',
+	'doing',
+	'completed',
+	'abandoned'
+]);
+
+export const customFieldTypeEnum = pgEnum('custom_field_type', ['text', 'number', 'url', 'date']);
+
+export const customList = pgTable(
+	'custom_list',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		slug: text('slug').notNull(),
+		icon: text('icon'),
+		isPublic: boolean('is_public').notNull().default(false),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.defaultNow()
+			.$onUpdate(() => new Date())
+			.notNull()
+	},
+	(table) => [
+		unique('custom_list_user_slug_uniq').on(table.userId, table.slug),
+		index('custom_list_user_idx').on(table.userId)
+	]
+);
+
+export const customListField = pgTable(
+	'custom_list_field',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		listId: uuid('list_id')
+			.notNull()
+			.references(() => customList.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		fieldType: customFieldTypeEnum('field_type').notNull().default('text'),
+		sortOrder: integer('sort_order').notNull().default(0)
+	},
+	(table) => [index('custom_list_field_list_idx').on(table.listId)]
+);
+
+export const customListItem = pgTable(
+	'custom_list_item',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		listId: uuid('list_id')
+			.notNull()
+			.references(() => customList.id, { onDelete: 'cascade' }),
+		title: text('title').notNull(),
+		subtitle: text('subtitle'),
+		imageUrl: text('image_url'),
+		rating: integer('rating'),
+		notes: text('notes'),
+		status: customListStatusEnum('status').notNull().default('planned'),
+		sortOrder: integer('sort_order').notNull().default(0),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.defaultNow()
+			.$onUpdate(() => new Date())
+			.notNull(),
+		completedAt: timestamp('completed_at')
+	},
+	(table) => [
+		index('custom_list_item_list_status_sort_idx').on(table.listId, table.status, table.sortOrder)
+	]
+);
+
+export const customListItemFieldValue = pgTable(
+	'custom_list_item_field_value',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		itemId: uuid('item_id')
+			.notNull()
+			.references(() => customListItem.id, { onDelete: 'cascade' }),
+		fieldId: uuid('field_id')
+			.notNull()
+			.references(() => customListField.id, { onDelete: 'cascade' }),
+		value: text('value').notNull()
+	},
+	(table) => [index('custom_list_item_field_value_item_idx').on(table.itemId)]
+);
+
+// --- Custom list relations ---
+
+export const customListRelations = relations(customList, ({ one, many }) => ({
+	user: one(user, { fields: [customList.userId], references: [user.id] }),
+	fields: many(customListField),
+	items: many(customListItem)
+}));
+
+export const customListFieldRelations = relations(customListField, ({ one, many }) => ({
+	list: one(customList, { fields: [customListField.listId], references: [customList.id] }),
+	values: many(customListItemFieldValue)
+}));
+
+export const customListItemRelations = relations(customListItem, ({ one, many }) => ({
+	list: one(customList, { fields: [customListItem.listId], references: [customList.id] }),
+	fieldValues: many(customListItemFieldValue)
+}));
+
+export const customListItemFieldValueRelations = relations(customListItemFieldValue, ({ one }) => ({
+	item: one(customListItem, {
+		fields: [customListItemFieldValue.itemId],
+		references: [customListItem.id]
+	}),
+	field: one(customListField, {
+		fields: [customListItemFieldValue.fieldId],
+		references: [customListField.id]
+	})
 }));
 
 // Re-export auth schema

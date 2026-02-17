@@ -157,6 +157,116 @@ export function mediaTypeToSlug(type: MediaType): MediaTypeSlug {
 }
 
 // ---------------------------------------------------------------------------
+// Custom lists
+// ---------------------------------------------------------------------------
+
+/** Kanban statuses for custom list items */
+export const CUSTOM_LIST_STATUSES = [
+	'wishlist',
+	'planned',
+	'doing',
+	'completed',
+	'abandoned'
+] as const;
+export type CustomListStatus = (typeof CUSTOM_LIST_STATUSES)[number];
+
+/** Display labels for custom list statuses */
+export const CUSTOM_LIST_STATUS_LABELS: Record<CustomListStatus, string> = {
+	wishlist: 'Wishlist',
+	planned: 'Planned',
+	doing: 'Doing',
+	completed: 'Completed',
+	abandoned: 'Dropped'
+};
+
+/** Dot color for each custom list status column header */
+export const CUSTOM_LIST_STATUS_COLORS: Record<CustomListStatus, string> = {
+	wishlist: '#3B82F6',
+	planned: '#737373',
+	doing: '#F59E0B',
+	completed: '#22C55E',
+	abandoned: '#EF4444'
+};
+
+/** Custom field types */
+export const CUSTOM_FIELD_TYPES = ['text', 'number', 'url', 'date'] as const;
+export type CustomFieldType = (typeof CUSTOM_FIELD_TYPES)[number];
+
+/** Max custom lists per user */
+export const MAX_CUSTOM_LISTS = 5;
+
+/** Max custom fields per list */
+export const MAX_CUSTOM_FIELDS = 5;
+
+/**
+ * Curated Lucide icon names for the custom list icon picker.
+ * Covers common list themes: food, travel, activities, collections, etc.
+ */
+export const LIST_ICON_OPTIONS = [
+	'list',
+	'heart',
+	'star',
+	'bookmark',
+	'flag',
+	'target',
+	'trophy',
+	'crown',
+	'gem',
+	'gift',
+	'wine',
+	'coffee',
+	'utensils',
+	'pizza',
+	'cake',
+	'apple',
+	'beer',
+	'cup-soda',
+	'globe',
+	'map-pin',
+	'plane',
+	'mountain',
+	'tent',
+	'palmtree',
+	'anchor',
+	'bike',
+	'car',
+	'train-front',
+	'dumbbell',
+	'music',
+	'guitar',
+	'palette',
+	'camera',
+	'pen-tool',
+	'scissors',
+	'shirt',
+	'watch',
+	'glasses',
+	'baby',
+	'dog',
+	'cat',
+	'flower-2',
+	'trees',
+	'leaf',
+	'sun',
+	'sparkles',
+	'zap',
+	'flame',
+	'lightbulb',
+	'rocket',
+	'graduation-cap',
+	'briefcase',
+	'building-2',
+	'home',
+	'wrench',
+	'shield',
+	'puzzle',
+	'dice-5',
+	'clapperboard',
+	'headphones'
+] as const;
+export type ListIconName = (typeof LIST_ICON_OPTIONS)[number];
+
+// ---------------------------------------------------------------------------
 // Shared constants
 // ---------------------------------------------------------------------------
 
