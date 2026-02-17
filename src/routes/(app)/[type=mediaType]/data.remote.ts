@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
 import { command, query } from '$app/server';
 import { requireSubscription } from '$lib/server/auth-guard';
+import { log } from '$lib/server/logger';
 import {
 	createMediaItem,
 	deleteMediaItem,
@@ -316,9 +317,11 @@ export const updateItem = command(updateItemSchema, async (data) => {
 
 export const deleteItem = command(deleteItemSchema, async (data) => {
 	const userId = requireSubscription();
-	resolveType(data.slug);
+	const type = resolveType(data.slug);
 	const deleted = await deleteMediaItem(data.id, userId);
 	if (!deleted) error(404, 'Item not found');
+
+	log.info({ userId, itemId: data.id, type }, 'media item deleted');
 });
 
 export const reorderItems = command(reorderSchema, async (data) => {

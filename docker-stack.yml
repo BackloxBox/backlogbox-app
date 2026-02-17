@@ -49,6 +49,10 @@ services:
       - POLAR_PRODUCT_ID_MONTHLY
       - POLAR_PRODUCT_ID_YEARLY
       - POLAR_WEBHOOK_SECRET
+      - AXIOM_TOKEN
+      - AXIOM_DATASET
+      - SENTRY_DSN
+      - PUBLIC_SENTRY_DSN
     environment:
       PORT: '3000'
       HOST: '0.0.0.0'
@@ -105,6 +109,14 @@ secrets:
   POLAR_PRODUCT_ID_YEARLY:
     external: true
   POLAR_WEBHOOK_SECRET:
+    external: true
+  AXIOM_TOKEN:
+    external: true
+  AXIOM_DATASET:
+    external: true
+  SENTRY_DSN:
+    external: true
+  PUBLIC_SENTRY_DSN:
     external: true
 
 networks:

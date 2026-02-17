@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/sveltekit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { building } from '$app/environment';
 import { auth } from '$lib/server/auth';
@@ -5,6 +6,21 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { log } from '$lib/server/logger';
 import { getUserProfile } from '$lib/server/db/queries';
+
+// ---------------------------------------------------------------------------
+// Sentry — errors only, no performance tracing. No-op when DSN is unset.
+// ---------------------------------------------------------------------------
+
+if (process.env.SENTRY_DSN) {
+	Sentry.init({
+		dsn: process.env.SENTRY_DSN,
+		tracesSampleRate: 0
+	});
+}
+
+// ---------------------------------------------------------------------------
+// Auth
+// ---------------------------------------------------------------------------
 
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
 	if (building) {
@@ -78,13 +94,13 @@ const handleRequestLog: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-export const handle: Handle = sequence(handleBetterAuth, handleRequestLog);
+export const handle: Handle = sequence(Sentry.sentryHandle(), handleBetterAuth, handleRequestLog);
 
 // ---------------------------------------------------------------------------
-// Unexpected error handler — logs unhandled server errors
+// Unexpected error handler — Sentry captures first, then Pino logs + errorId
 // ---------------------------------------------------------------------------
 
-export const handleError: HandleServerError = ({ error, event, status, message }) => {
+const pinoErrorHandler: HandleServerError = ({ error, event, status, message }) => {
 	const errorId = crypto.randomUUID();
 
 	log.error(
@@ -101,3 +117,5 @@ export const handleError: HandleServerError = ({ error, event, status, message }
 
 	return { message: 'Internal error', errorId };
 };
+
+export const handleError = Sentry.handleErrorWithSentry(pinoErrorHandler);

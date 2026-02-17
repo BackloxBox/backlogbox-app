@@ -11,6 +11,9 @@ FROM node:24-alpine AS build
 RUN corepack enable
 WORKDIR /app
 
+ARG SENTRY_AUTH_TOKEN
+ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 RUN corepack install && pnpm install --frozen-lockfile
 
