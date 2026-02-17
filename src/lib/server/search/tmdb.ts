@@ -210,6 +210,92 @@ export async function fetchTmdbSeriesDetails(
 	}
 }
 
+// --- Discover: Trending ---
+
+/** Fetch trending movies for the week from TMDB */
+export async function fetchTrendingMovies(): Promise<TypedSearchResult<'movie'>[]> {
+	const params = new URLSearchParams({ api_key: getApiKey() });
+	const response = await fetch(`https://api.themoviedb.org/3/trending/movie/week?${params}`);
+	if (!response.ok) return [];
+
+	const data: TMDBSearchResponse<TMDBMovieResult> = await response.json();
+	return data.results.slice(0, 20).map((movie) => ({
+		externalId: String(movie.id),
+		title: movie.title,
+		coverUrl: posterUrl(movie.poster_path),
+		releaseYear: yearFromDate(movie.release_date),
+		meta: {
+			tmdbId: movie.id,
+			director: null,
+			genre: genreLabel(movie.genre_ids)
+		}
+	}));
+}
+
+/** Fetch trending TV series for the week from TMDB */
+export async function fetchTrendingSeries(): Promise<TypedSearchResult<'series'>[]> {
+	const params = new URLSearchParams({ api_key: getApiKey() });
+	const response = await fetch(`https://api.themoviedb.org/3/trending/tv/week?${params}`);
+	if (!response.ok) return [];
+
+	const data: TMDBSearchResponse<TMDBTVResult> = await response.json();
+	return data.results.slice(0, 20).map((tv) => ({
+		externalId: String(tv.id),
+		title: tv.name,
+		coverUrl: posterUrl(tv.poster_path),
+		releaseYear: yearFromDate(tv.first_air_date),
+		meta: {
+			tmdbId: tv.id,
+			genre: genreLabel(tv.genre_ids),
+			totalSeasons: null,
+			currentSeason: null
+		}
+	}));
+}
+
+// --- Discover: Similar ---
+
+/** Fetch movies similar to a given TMDB movie ID */
+export async function fetchSimilarMovies(tmdbId: number): Promise<TypedSearchResult<'movie'>[]> {
+	const params = new URLSearchParams({ api_key: getApiKey() });
+	const response = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}/similar?${params}`);
+	if (!response.ok) return [];
+
+	const data: TMDBSearchResponse<TMDBMovieResult> = await response.json();
+	return data.results.slice(0, 10).map((movie) => ({
+		externalId: String(movie.id),
+		title: movie.title,
+		coverUrl: posterUrl(movie.poster_path),
+		releaseYear: yearFromDate(movie.release_date),
+		meta: {
+			tmdbId: movie.id,
+			director: null,
+			genre: genreLabel(movie.genre_ids)
+		}
+	}));
+}
+
+/** Fetch series similar to a given TMDB series ID */
+export async function fetchSimilarSeries(tmdbId: number): Promise<TypedSearchResult<'series'>[]> {
+	const params = new URLSearchParams({ api_key: getApiKey() });
+	const response = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}/similar?${params}`);
+	if (!response.ok) return [];
+
+	const data: TMDBSearchResponse<TMDBTVResult> = await response.json();
+	return data.results.slice(0, 10).map((tv) => ({
+		externalId: String(tv.id),
+		title: tv.name,
+		coverUrl: posterUrl(tv.poster_path),
+		releaseYear: yearFromDate(tv.first_air_date),
+		meta: {
+			tmdbId: tv.id,
+			genre: genreLabel(tv.genre_ids),
+			totalSeasons: null,
+			currentSeason: null
+		}
+	}));
+}
+
 /** Fetch movie details (director, description, runtime, cast) from TMDB */
 export async function fetchTmdbMovieDetails(
 	tmdbId: number

@@ -123,7 +123,7 @@
 	}
 </script>
 
-<div class="space-y-4 p-4 lg:p-6">
+<div class="space-y-4 p-4 pt-14 lg:p-6 lg:pt-6">
 	<!-- Header row: title + summary stats -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 		<div>

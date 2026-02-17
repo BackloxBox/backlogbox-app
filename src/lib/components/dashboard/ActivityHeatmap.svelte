@@ -3,6 +3,7 @@
 	 * GitHub-style activity heatmap — pure CSS grid, 53 columns x 7 rows.
 	 * Blue gradient from transparent through 4 intensity levels.
 	 */
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 
 	type DayActivity = { date: string; count: number };
 
@@ -14,14 +15,42 @@
 
 	let { addedActivity, completedActivity, totalItems }: Props = $props();
 
-	/** Merge added + completed into total per-day counts */
-	const dailyCounts = $derived.by(() => {
+	/** Format a Date as YYYY-MM-DD in local timezone */
+	function localDateStr(d: Date): string {
+		const y = d.getFullYear();
+		const m = String(d.getMonth() + 1).padStart(2, '0');
+		const day = String(d.getDate()).padStart(2, '0');
+		return `${y}-${m}-${day}`;
+	}
+
+	/** Per-day added counts */
+	const addedCounts = $derived.by(() => {
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local computation, not reactive state
 		const map = new Map<string, number>();
 		for (const { date, count } of addedActivity) {
 			map.set(date, (map.get(date) ?? 0) + count);
 		}
+		return map;
+	});
+
+	/** Per-day completed counts */
+	const completedCounts = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local computation, not reactive state
+		const map = new Map<string, number>();
 		for (const { date, count } of completedActivity) {
+			map.set(date, (map.get(date) ?? 0) + count);
+		}
+		return map;
+	});
+
+	/** Merge added + completed into total per-day counts */
+	const dailyCounts = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local computation, not reactive state
+		const map = new Map<string, number>();
+		for (const [date, count] of addedCounts) {
+			map.set(date, (map.get(date) ?? 0) + count);
+		}
+		for (const [date, count] of completedCounts) {
 			map.set(date, (map.get(date) ?? 0) + count);
 		}
 		return map;
@@ -44,18 +73,27 @@
 		const startDay = new Date(endDay);
 		startDay.setDate(startDay.getDate() - 52 * 7);
 
-		const result: Array<{ date: string; count: number; col: number; row: number }> = [];
+		const result: Array<{
+			date: string;
+			count: number;
+			added: number;
+			completed: number;
+			col: number;
+			row: number;
+		}> = [];
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const cursor = new Date(startDay);
 		let col = 0;
 
 		while (cursor <= endDay) {
 			const row = cursor.getDay(); // 0=Sun .. 6=Sat
-			const dateStr = cursor.toISOString().slice(0, 10);
+			const dateStr = localDateStr(cursor);
 			const isFuture = cursor > today;
 			result.push({
 				date: dateStr,
 				count: isFuture ? -1 : (dailyCounts.get(dateStr) ?? 0),
+				added: isFuture ? 0 : (addedCounts.get(dateStr) ?? 0),
+				completed: isFuture ? 0 : (completedCounts.get(dateStr) ?? 0),
 				col,
 				row
 			});
@@ -109,7 +147,7 @@
 		const cursor = new Date(today);
 
 		while (true) {
-			const dateStr = cursor.toISOString().slice(0, 10);
+			const dateStr = localDateStr(cursor);
 			if ((dailyCounts.get(dateStr) ?? 0) > 0) {
 				days++;
 				cursor.setDate(cursor.getDate() - 1);
@@ -166,20 +204,41 @@
 		</div>
 
 		<!-- Heatmap cells -->
-		<div class="heatmap-grid flex-1" style="--cols: 53">
-			{#each cells as cell (cell.date)}
-				{@const level = cell.count === -1 ? -1 : intensity(cell.count)}
-				<div
-					class="heatmap-cell"
-					class:future={level === -1}
-					data-level={level}
-					style="grid-column: {cell.col + 1}; grid-row: {cell.row + 1}"
-					title={level === -1
-						? ''
-						: `${formatDate(cell.date)}: ${cell.count} item${cell.count !== 1 ? 's' : ''}`}
-				></div>
-			{/each}
-		</div>
+		<Tooltip.Provider delayDuration={0}>
+			<div class="heatmap-grid flex-1" style="--cols: 53">
+				{#each cells as cell (cell.date)}
+					{@const level = cell.count === -1 ? -1 : intensity(cell.count)}
+					{#if level === -1}
+						<div
+							class="heatmap-cell future"
+							data-level={level}
+							style="grid-column: {cell.col + 1}; grid-row: {cell.row + 1}"
+						></div>
+					{:else}
+						<Tooltip.Root>
+							<Tooltip.Trigger
+								class="heatmap-cell"
+								data-level={level}
+								style="grid-column: {cell.col + 1}; grid-row: {cell.row + 1}"
+							/>
+							<Tooltip.Content side="top" sideOffset={4}>
+								<p class="font-medium">{formatDate(cell.date)}</p>
+								{#if cell.count === 0}
+									<p class="text-muted">No activity</p>
+								{:else}
+									<p>
+										{cell.count} item{cell.count !== 1 ? 's' : ''}
+										<span class="text-muted-foreground">
+											({cell.added} added, {cell.completed} completed)
+										</span>
+									</p>
+								{/if}
+							</Tooltip.Content>
+						</Tooltip.Root>
+					{/if}
+				{/each}
+			</div>
+		</Tooltip.Provider>
 	</div>
 
 	<!-- Legend -->
@@ -207,10 +266,14 @@
 		gap: 2px;
 	}
 
+	/* Tooltip.Trigger renders a <button> — use :global for component-rendered elements */
+	.heatmap-grid :global(.heatmap-cell),
 	.heatmap-cell {
 		aspect-ratio: 1;
 		border-radius: 3px;
 		min-width: 0;
+		border: none;
+		padding: 0;
 	}
 
 	.heatmap-cell.legend {
@@ -222,34 +285,44 @@
 		background: transparent;
 	}
 
+	.heatmap-grid :global(.heatmap-cell[data-level='0']),
 	.heatmap-cell[data-level='0'] {
 		background: var(--heatmap-0, oklch(0.95 0 0));
 	}
+	.heatmap-grid :global(.heatmap-cell[data-level='1']),
 	.heatmap-cell[data-level='1'] {
 		background: var(--heatmap-1, #dbeafe);
 	}
+	.heatmap-grid :global(.heatmap-cell[data-level='2']),
 	.heatmap-cell[data-level='2'] {
 		background: var(--heatmap-2, #93c5fd);
 	}
+	.heatmap-grid :global(.heatmap-cell[data-level='3']),
 	.heatmap-cell[data-level='3'] {
 		background: var(--heatmap-3, #3b82f6);
 	}
+	.heatmap-grid :global(.heatmap-cell[data-level='4']),
 	.heatmap-cell[data-level='4'] {
 		background: var(--heatmap-4, #1d4ed8);
 	}
 
+	:global(.dark) .heatmap-grid :global(.heatmap-cell[data-level='0']),
 	:global(.dark) .heatmap-cell[data-level='0'] {
 		background: var(--heatmap-0-dark, oklch(0.25 0 0));
 	}
+	:global(.dark) .heatmap-grid :global(.heatmap-cell[data-level='1']),
 	:global(.dark) .heatmap-cell[data-level='1'] {
 		background: var(--heatmap-1-dark, #1e3a5f);
 	}
+	:global(.dark) .heatmap-grid :global(.heatmap-cell[data-level='2']),
 	:global(.dark) .heatmap-cell[data-level='2'] {
 		background: var(--heatmap-2-dark, #1d4ed8);
 	}
+	:global(.dark) .heatmap-grid :global(.heatmap-cell[data-level='3']),
 	:global(.dark) .heatmap-cell[data-level='3'] {
 		background: var(--heatmap-3-dark, #3b82f6);
 	}
+	:global(.dark) .heatmap-grid :global(.heatmap-cell[data-level='4']),
 	:global(.dark) .heatmap-cell[data-level='4'] {
 		background: var(--heatmap-4-dark, #60a5fa);
 	}
