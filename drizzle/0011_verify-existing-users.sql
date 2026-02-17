@@ -1,1 +1,1 @@
-UPDATE "user" SET "emailVerified" = true WHERE "emailVerified" = false;
+UPDATE "user" SET "email_verified" = true WHERE "email_verified" = false;
