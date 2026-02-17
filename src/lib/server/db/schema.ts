@@ -277,7 +277,10 @@ export const customListItemFieldValue = pgTable(
 			.references(() => customListField.id, { onDelete: 'cascade' }),
 		value: text('value').notNull()
 	},
-	(table) => [index('custom_list_item_field_value_item_idx').on(table.itemId)]
+	(table) => [
+		unique('custom_list_item_field_value_item_field_uniq').on(table.itemId, table.fieldId),
+		index('custom_list_item_field_value_item_idx').on(table.itemId)
+	]
 );
 
 // --- Custom list relations ---
