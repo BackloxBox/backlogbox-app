@@ -1,16 +1,20 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import {
 		MEDIA_TYPE_SLUGS,
 		MEDIA_TYPE_LABELS,
 		MEDIA_TYPE_COLORS,
+		MAX_CUSTOM_LISTS,
 		slugToMediaType,
 		type MediaTypeSlug
 	} from '$lib/types';
 	import { toggleMode } from 'mode-watcher';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
+	import { getIconComponent } from '$lib/components/custom-list/icon-map';
+	import { addList } from './lists/lists.remote';
 	import Sun from '@lucide/svelte/icons/sun';
 	import Moon from '@lucide/svelte/icons/moon';
 	import Menu from '@lucide/svelte/icons/menu';
@@ -24,6 +28,7 @@
 	import Gamepad2 from '@lucide/svelte/icons/gamepad-2';
 	import Podcast from '@lucide/svelte/icons/podcast';
 	import Compass from '@lucide/svelte/icons/compass';
+	import Plus from '@lucide/svelte/icons/plus';
 	import type { Component } from 'svelte';
 
 	let { children, data } = $props();
@@ -50,6 +55,37 @@
 	let sidebarOpen = $state(false);
 	const discoverActive = $derived(page.url.pathname === '/discover');
 	let copied = $state(false);
+
+	// Custom list inline create
+	let showNewListInput = $state(false);
+	let newListName = $state('');
+	let creatingList = $state(false);
+
+	const canCreateList = $derived(data.customLists.length < MAX_CUSTOM_LISTS);
+
+	async function handleCreateList() {
+		const name = newListName.trim();
+		if (!name || creatingList) return;
+		creatingList = true;
+		try {
+			await addList({ name });
+			newListName = '';
+			showNewListInput = false;
+			await invalidateAll();
+		} finally {
+			creatingList = false;
+		}
+	}
+
+	function handleNewListKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			handleCreateList();
+		} else if (e.key === 'Escape') {
+			showNewListInput = false;
+			newListName = '';
+		}
+	}
 
 	const shareUrl = $derived(
 		data.profile?.username && data.profile.profilePublic
@@ -150,6 +186,60 @@
 					{item.label}
 				</a>
 			{/each}
+
+			<!-- Custom lists -->
+			{#if data.customLists.length > 0 || canCreateList}
+				<Separator class="my-1.5" />
+				<span
+					class="px-3 py-1 text-[11px] font-medium tracking-wider text-muted-foreground/60 uppercase"
+					>Lists</span
+				>
+				{#each data.customLists as list (list.id)}
+					{@const listActive = page.url.pathname === `/lists/${list.slug}`}
+					{@const Icon = getIconComponent(list.icon)}
+					<a
+						href="/lists/{list.slug}"
+						class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+						{listActive
+							? 'bg-sidebar-accent text-sidebar-accent-foreground'
+							: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+						onclick={() => (sidebarOpen = false)}
+					>
+						<span class="shrink-0 text-muted-foreground">
+							<Icon class="size-4" />
+						</span>
+						<span class="truncate">{list.name}</span>
+					</a>
+				{/each}
+				{#if canCreateList}
+					{#if showNewListInput}
+						<div class="px-3 py-1">
+							<input
+								type="text"
+								bind:value={newListName}
+								onkeydown={handleNewListKeydown}
+								onblur={() => {
+									if (!newListName.trim()) {
+										showNewListInput = false;
+										newListName = '';
+									}
+								}}
+								placeholder="List name…"
+								disabled={creatingList}
+								class="w-full rounded border border-border bg-transparent px-2 py-1 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:opacity-50"
+							/>
+						</div>
+					{:else}
+						<button
+							class="flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+							onclick={() => (showNewListInput = true)}
+						>
+							<Plus class="size-4 shrink-0" />
+							New list
+						</button>
+					{/if}
+				{/if}
+			{/if}
 		</div>
 
 		<!-- Bottom nav -->

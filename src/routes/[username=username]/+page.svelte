@@ -1,10 +1,17 @@
 <script lang="ts">
-	import { MEDIA_TYPE_SLUGS, MEDIA_TYPE_LABELS, slugToMediaType, STATUS_COLORS } from '$lib/types';
+	import {
+		MEDIA_TYPE_SLUGS,
+		MEDIA_TYPE_LABELS,
+		slugToMediaType,
+		STATUS_COLORS,
+		CUSTOM_LIST_STATUS_COLORS
+	} from '$lib/types';
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Film from '@lucide/svelte/icons/film';
 	import Tv from '@lucide/svelte/icons/tv';
 	import Gamepad2 from '@lucide/svelte/icons/gamepad-2';
 	import Podcast from '@lucide/svelte/icons/podcast';
+	import { getIconComponent } from '$lib/components/custom-list/icon-map';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -77,6 +84,35 @@
 				</a>
 			{/each}
 		</div>
+
+		<!-- Custom lists -->
+		{#if data.publicCustomLists.length > 0}
+			<div class="space-y-3">
+				<h2 class="text-sm font-medium text-muted-foreground">Custom lists</h2>
+				<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+					{#each data.publicCustomLists as list (list.id)}
+						{@const Icon = getIconComponent(list.icon)}
+						{@const color = CUSTOM_LIST_STATUS_COLORS.doing}
+						<a
+							href="/@{data.profileUser.username}/lists/{list.slug}"
+							class="group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition hover:border-transparent hover:shadow-md"
+							style:--accent={color}
+						>
+							<div
+								class="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-[0.08] dark:group-hover:opacity-[0.12]"
+								style:background={color}
+							></div>
+							<div class="relative flex flex-col items-center gap-2">
+								<span style:color>
+									<Icon class="size-6" />
+								</span>
+								<span class="text-sm font-medium text-foreground">{list.name}</span>
+							</div>
+						</a>
+					{/each}
+				</div>
+			</div>
+		{/if}
 
 		<p class="text-xs text-muted-foreground/60">
 			Powered by <a

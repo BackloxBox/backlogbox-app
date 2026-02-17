@@ -20,11 +20,13 @@
 	import Podcast from '@lucide/svelte/icons/podcast';
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
 	import Flame from '@lucide/svelte/icons/flame';
+	import ListIcon from '@lucide/svelte/icons/list';
 	import type { Component } from 'svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	const stats = $derived(data.stats);
+	const customListStats = $derived(data.customListStats);
 
 	// --- Media type cards config ---
 
@@ -195,6 +197,45 @@
 			</a>
 		{/each}
 	</div>
+
+	<!-- Custom lists summary -->
+	{#if customListStats.totalLists > 0}
+		<div class="rounded-xl border border-border bg-card p-3">
+			<div class="flex items-center gap-2">
+				<div
+					class="flex size-7 items-center justify-center rounded-lg"
+					style:background="#8B5CF615"
+					style:color="#8B5CF6"
+				>
+					<ListIcon class="size-3.5" />
+				</div>
+				<span class="text-xs font-medium text-muted-foreground">Custom Lists</span>
+			</div>
+			<div class="mt-2 flex items-baseline gap-3">
+				<span class="text-lg font-bold text-foreground tabular-nums"
+					>{customListStats.totalItems}</span
+				>
+				<span class="text-xs text-muted-foreground"
+					>items across {customListStats.totalLists} list{customListStats.totalLists !== 1
+						? 's'
+						: ''}</span
+				>
+			</div>
+			{#if customListStats.statusCounts.length > 0}
+				{@const completed =
+					customListStats.statusCounts.find((s) => s.status === 'completed')?.count ?? 0}
+				{#if customListStats.totalItems > 0}
+					<div class="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
+						<div
+							class="h-full rounded-full transition-all duration-500"
+							style:background="#8B5CF6"
+							style:width="{Math.round((completed / customListStats.totalItems) * 100)}%"
+						></div>
+					</div>
+				{/if}
+			{/if}
+		</div>
+	{/if}
 
 	<!-- Activity heatmap -->
 	<div class="rounded-xl border border-border bg-card p-3 sm:p-4">

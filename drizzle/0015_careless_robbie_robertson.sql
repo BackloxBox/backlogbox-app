@@ -1,0 +1,1 @@
+ALTER TABLE "custom_list_item_field_value" ADD CONSTRAINT "custom_list_item_field_value_item_field_uniq" UNIQUE("item_id","field_id");
