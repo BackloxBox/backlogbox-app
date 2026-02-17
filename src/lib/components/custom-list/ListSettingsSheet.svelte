@@ -134,16 +134,19 @@
 		if (!v) onClose();
 	}}
 >
-	<Sheet.Content side="right" class="w-full sm:max-w-md">
+	<Sheet.Content side="right" class="flex w-full max-w-md flex-col p-0">
 		{#if list}
-			<Sheet.Header class="flex flex-row items-center justify-between pr-2">
-				<Sheet.Title>List settings</Sheet.Title>
-				<Button variant="ghost" size="icon" class="size-7 shrink-0" onclick={onClose}>
-					<X class="size-4" />
-				</Button>
+			<Sheet.Header class="px-5 pt-5 pb-0">
+				<div class="flex items-center justify-between">
+					<Sheet.Title>List settings</Sheet.Title>
+					<Button variant="ghost" size="icon" class="size-7 shrink-0" onclick={onClose}>
+						<X class="size-4" />
+					</Button>
+				</div>
+				<Sheet.Description class="sr-only">Manage list settings</Sheet.Description>
 			</Sheet.Header>
 
-			<div class="flex-1 space-y-5 overflow-y-auto py-4">
+			<div class="flex-1 space-y-5 overflow-y-auto px-5 py-4">
 				<!-- Name -->
 				<div class="space-y-1.5">
 					<Label for="list-name">Name</Label>
@@ -258,10 +261,10 @@
 						</div>
 					{/if}
 				</div>
+			</div>
 
-				<Separator />
-
-				<!-- Delete list -->
+			<!-- Footer with delete -->
+			<Sheet.Footer class="border-t border-border px-5 py-4">
 				<AlertDialog.Root>
 					<AlertDialog.Trigger>
 						{#snippet child({ props })}
@@ -286,7 +289,7 @@
 						</AlertDialog.Footer>
 					</AlertDialog.Content>
 				</AlertDialog.Root>
-			</div>
+			</Sheet.Footer>
 		{/if}
 	</Sheet.Content>
 </Sheet.Root>

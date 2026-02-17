@@ -1,43 +1,42 @@
 <script lang="ts">
-	import KanbanBoard from '$lib/components/board/KanbanBoard.svelte';
+	import CustomKanbanBoard from '$lib/components/custom-list/CustomKanbanBoard.svelte';
 	import BoardSearch from '$lib/components/board/BoardSearch.svelte';
-	import { getSearchableText } from '$lib/components/board/card-utils';
+	import { getIconComponent } from '$lib/components/custom-list/icon-map';
 	import {
-		MEDIA_STATUSES,
-		STATUS_LABELS,
-		slugToMediaType,
-		MEDIA_TYPE_LABELS,
+		CUSTOM_LIST_STATUSES,
+		CUSTOM_LIST_STATUS_LABELS,
 		MEDIA_TYPE_SLUGS,
-		type MediaStatus
+		MEDIA_TYPE_LABELS,
+		slugToMediaType,
+		type CustomListStatus
 	} from '$lib/types';
-	import type { MediaItemWithMeta } from '$lib/server/db/queries';
+	import type { CustomListItemWithFields } from '$lib/server/db/custom-list-queries';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	const type = $derived(slugToMediaType(data.slug));
-	const statusLabels = $derived(type ? STATUS_LABELS[type] : STATUS_LABELS.book);
-	const typeLabel = $derived(type ? MEDIA_TYPE_LABELS[type].plural : data.slug);
-
 	let searchQuery = $state('');
 
-	// Reset search when switching media types
 	$effect(() => {
-		void data.slug;
+		void data.list;
 		searchQuery = '';
 	});
 
-	function groupByStatus(items: MediaItemWithMeta[]): Record<MediaStatus, MediaItemWithMeta[]> {
-		const grouped = Object.fromEntries(
-			MEDIA_STATUSES.map((s) => [s, [] as MediaItemWithMeta[]])
-		) as Record<MediaStatus, MediaItemWithMeta[]>;
+	function groupByStatus(
+		items: CustomListItemWithFields[]
+	): Record<CustomListStatus, CustomListItemWithFields[]> {
+		const grouped: Record<CustomListStatus, CustomListItemWithFields[]> = {
+			wishlist: [],
+			planned: [],
+			doing: [],
+			completed: [],
+			abandoned: []
+		};
 		for (const item of items) {
 			grouped[item.status].push(item);
 		}
-		for (const status of MEDIA_STATUSES) {
-			grouped[status].sort(
-				(a, b) => Number(b.pinned) - Number(a.pinned) || a.sortOrder - b.sortOrder
-			);
+		for (const status of CUSTOM_LIST_STATUSES) {
+			grouped[status].sort((a, b) => a.sortOrder - b.sortOrder);
 		}
 		return grouped;
 	}
@@ -45,28 +44,34 @@
 	const filteredItems = $derived.by(() => {
 		const needle = searchQuery.trim().toLowerCase();
 		return needle
-			? data.items.filter((item) => getSearchableText(item).includes(needle))
+			? data.items.filter(
+					(item) =>
+						item.title.toLowerCase().includes(needle) ||
+						(item.subtitle?.toLowerCase().includes(needle) ?? false)
+				)
 			: data.items;
 	});
 	const groupedItems = $derived(groupByStatus(filteredItems));
 
-	/** Nav links for switching media types within this profile */
+	const Icon = $derived(getIconComponent(data.list.icon));
+
+	/** Nav links for media types + custom lists within this profile */
 	const profileNav = $derived(
 		MEDIA_TYPE_SLUGS.map((slug) => {
 			const mt = slugToMediaType(slug);
 			return {
 				href: `/@${data.profileUser.username}/${slug}`,
 				label: mt ? MEDIA_TYPE_LABELS[mt].plural : slug,
-				active: slug === data.slug
+				active: false
 			};
 		})
 	);
 
 	const customListNav = $derived(
-		(data.publicCustomLists ?? []).map((l: { slug: string; name: string }) => ({
+		data.publicCustomLists.map((l) => ({
 			href: `/@${data.profileUser.username}/lists/${l.slug}`,
 			label: l.name,
-			active: false
+			active: l.slug === data.list.slug
 		}))
 	);
 </script>
@@ -82,7 +87,10 @@
 				@{data.profileUser.username}
 			</a>
 			<span class="text-muted-foreground">/</span>
-			<h1 class="text-sm font-medium text-foreground">{typeLabel}</h1>
+			<div class="flex items-center gap-1.5">
+				<Icon class="size-4 text-muted-foreground" />
+				<h1 class="text-sm font-medium text-foreground">{data.list.name}</h1>
+			</div>
 		</div>
 		<div class="flex items-center gap-2">
 			<BoardSearch bind:value={searchQuery} />
@@ -96,7 +104,7 @@
 		</div>
 	</header>
 
-	<!-- Media type tabs -->
+	<!-- Nav tabs -->
 	<nav class="flex gap-1 overflow-x-auto border-b border-border px-4 sm:px-6">
 		{#each profileNav as nav (nav.label)}
 			<a
@@ -124,6 +132,6 @@
 
 	<!-- Board -->
 	<div class="flex flex-1 flex-col overflow-hidden">
-		<KanbanBoard {groupedItems} {statusLabels} readonly />
+		<CustomKanbanBoard {groupedItems} statusLabels={CUSTOM_LIST_STATUS_LABELS} readonly />
 	</div>
 </div>
