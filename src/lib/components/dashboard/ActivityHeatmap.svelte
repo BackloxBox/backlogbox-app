@@ -15,6 +15,14 @@
 
 	let { addedActivity, completedActivity, totalItems }: Props = $props();
 
+	/** Format a Date as YYYY-MM-DD in local timezone */
+	function localDateStr(d: Date): string {
+		const y = d.getFullYear();
+		const m = String(d.getMonth() + 1).padStart(2, '0');
+		const day = String(d.getDate()).padStart(2, '0');
+		return `${y}-${m}-${day}`;
+	}
+
 	/** Per-day added counts */
 	const addedCounts = $derived.by(() => {
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local computation, not reactive state
@@ -79,7 +87,7 @@
 
 		while (cursor <= endDay) {
 			const row = cursor.getDay(); // 0=Sun .. 6=Sat
-			const dateStr = cursor.toISOString().slice(0, 10);
+			const dateStr = localDateStr(cursor);
 			const isFuture = cursor > today;
 			result.push({
 				date: dateStr,
@@ -139,7 +147,7 @@
 		const cursor = new Date(today);
 
 		while (true) {
-			const dateStr = cursor.toISOString().slice(0, 10);
+			const dateStr = localDateStr(cursor);
 			if ((dailyCounts.get(dateStr) ?? 0) > 0) {
 				days++;
 				cursor.setDate(cursor.getDate() - 1);

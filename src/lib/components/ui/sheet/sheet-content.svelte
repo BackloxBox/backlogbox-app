@@ -53,7 +53,7 @@
 	>
 		{@render children?.()}
 		<SheetPrimitive.Close
-			class="absolute end-4 top-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none"
+			class="absolute end-3 top-3 flex size-8 items-center justify-center rounded-md bg-muted/60 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none sm:end-4 sm:top-4 sm:size-auto sm:rounded-xs sm:bg-transparent"
 		>
 			<XIcon class="size-4" />
 			<span class="sr-only">Close</span>

@@ -89,7 +89,7 @@
 	<title>Discover | BacklogBox</title>
 </svelte:head>
 
-<div class="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
+<div class="mx-auto max-w-5xl space-y-6 p-4 pt-14 sm:p-6 lg:pt-6">
 	<!-- Header -->
 	<div>
 		<h1 class="text-2xl font-bold tracking-tight">Discover</h1>
@@ -152,8 +152,8 @@
 					get personalized recommendations.
 				</div>
 			{:else}
-				{#each recsQuery.current ?? [] as group (group.seedTitle)}
-					<div class="space-y-3">
+				{#each recsQuery.current ?? [] as group, i (i)}
+					<div class="space-y-3 rounded-lg border border-border/50 bg-muted/20 p-4">
 						<h3 class="text-sm font-medium text-muted-foreground">
 							Because you added
 							<span
@@ -163,7 +163,7 @@
 								{group.seedTitle}
 							</span>
 						</h3>
-						<div class="flex gap-3 overflow-x-auto pb-2">
+						<div class="flex gap-3 overflow-x-auto pb-1">
 							{#each group.items as result (result.externalId)}
 								{@const isAdding = addingIds.has(result.externalId)}
 								<div class="group w-32 shrink-0 space-y-1.5">

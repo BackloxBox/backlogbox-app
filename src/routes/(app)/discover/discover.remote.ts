@@ -72,8 +72,17 @@ export const getRecommendations = query(
 		if (type === 'podcast') return [];
 
 		try {
-			const seeds = await getSeedItems(userId, type, 3);
-			if (seeds.length === 0) return [];
+			const rawSeeds = await getSeedItems(userId, type, 3);
+			if (rawSeeds.length === 0) return [];
+
+			// Deduplicate seeds by title (e.g. "Fallout S1" and "Fallout S2" share a title)
+			const seenTitles = new Set<string>();
+			const seeds = rawSeeds.filter((s) => {
+				const key = s.title.toLowerCase();
+				if (seenTitles.has(key)) return false;
+				seenTitles.add(key);
+				return true;
+			});
 
 			const trackedIds = await getUserExternalIds(userId, type);
 			const groups: RecommendationGroup[] = [];
