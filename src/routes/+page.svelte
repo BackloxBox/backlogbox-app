@@ -23,7 +23,6 @@
 	import Wine from '@lucide/svelte/icons/wine';
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import UtensilsCrossed from '@lucide/svelte/icons/utensils-crossed';
-	import Github from '@lucide/svelte/icons/github';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 
 	let mobileMenuOpen = $state(false);
@@ -168,7 +167,7 @@
 	<nav class="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
 		<div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-3 lg:px-8">
 			<a href="/" class="flex items-center gap-2 text-sm font-bold tracking-tight text-foreground">
-				<img src="/backlogbox-logo.svg" alt="" class="size-5" />
+				<img src="/backlogbox-logo.svg" alt="BacklogBox" class="size-5" />
 				BacklogBox
 			</a>
 
@@ -176,6 +175,7 @@
 			<div class="hidden items-center gap-1 md:flex">
 				<Button variant="ghost" size="sm" onclick={() => scrollTo('features')}>Features</Button>
 				<Button variant="ghost" size="sm" onclick={() => scrollTo('pricing')}>Pricing</Button>
+				<Button variant="ghost" size="sm" href="/blog">Blog</Button>
 				<Button
 					variant="ghost"
 					size="icon"
@@ -238,6 +238,12 @@
 					>
 						Pricing
 					</button>
+					<a
+						href="/blog"
+						class="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+					>
+						Blog
+					</a>
 					<div class="my-2 h-px bg-border/60"></div>
 					<a
 						href="/login"
@@ -271,17 +277,17 @@
 			<h1
 				class="landing-fade-in text-4xl leading-[1.1] font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl"
 			>
-				Track anything,
+				Track Your Books, Movies,
 				<br />
-				<span class="hero-gradient bg-clip-text text-transparent">beautifully organized.</span>
+				<span class="hero-gradient bg-clip-text text-transparent">Games & More</span>
 			</h1>
 
 			<p
 				class="landing-fade-in mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
 				style="animation-delay: 100ms"
 			>
-				Kanban boards for your books, movies, series, games, and podcasts — plus custom lists for
-				anything else. One app, everything you care about.
+				The all-in-one media backlog tracker. Kanban boards for books, movies, series, games, and
+				podcasts — plus custom lists for anything else.
 			</p>
 
 			<div
@@ -365,8 +371,8 @@
 		<div class="mx-auto max-w-4xl">
 			<div class="mb-14 max-w-lg">
 				<h2 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-					Everything you need to
-					<span class="hero-gradient bg-clip-text text-transparent">stay on track</span>
+					A media tracker built to
+					<span class="hero-gradient bg-clip-text text-transparent">keep you organized</span>
 				</h2>
 				<p class="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
 					Built for people who consume media across every format — and want to track more than just
@@ -447,9 +453,11 @@
 		<div class="mx-auto max-w-4xl">
 			<div class="mb-14 text-center">
 				<h2 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-					Get started in minutes
+					How BacklogBox works
 				</h2>
-				<p class="mt-3 text-sm text-muted-foreground sm:text-base">Three steps. That's it.</p>
+				<p class="mt-3 text-sm text-muted-foreground sm:text-base">
+					Set up your media backlog in minutes. Three steps.
+				</p>
 			</div>
 
 			<div class="grid gap-px overflow-hidden rounded-2xl border border-border/60 sm:grid-cols-3">
@@ -481,8 +489,9 @@
 		<div class="mx-auto max-w-md">
 			<div class="mb-10 text-center">
 				<h2 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-					One plan.
-					<span class="hero-gradient bg-clip-text text-transparent">Everything included.</span>
+					Simple pricing.
+					<span class="hero-gradient bg-clip-text text-transparent">Full media tracker access.</span
+					>
 				</h2>
 				<p class="mt-3 text-sm text-muted-foreground sm:text-base">
 					No tiers, no feature gates. Full access to everything.
@@ -565,7 +574,7 @@
 			class="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 py-10 sm:flex-row lg:px-8"
 		>
 			<div class="flex items-center gap-2 text-sm font-bold tracking-tight text-foreground">
-				<img src="/backlogbox-logo.svg" alt="" class="size-4" />
+				<img src="/backlogbox-logo.svg" alt="BacklogBox" class="size-4" />
 				BacklogBox
 			</div>
 			<div class="flex items-center gap-5 text-xs text-muted-foreground/60">
@@ -574,14 +583,7 @@
 				<button class="transition-colors hover:text-foreground" onclick={() => scrollTo('pricing')}>
 					Pricing
 				</button>
-				<a
-					href="https://github.com/BackloxBox"
-					target="_blank"
-					rel="noopener noreferrer"
-					class="transition-colors hover:text-foreground"
-				>
-					<Github class="size-3.5" />
-				</a>
+				<a href="/blog" class="transition-colors hover:text-foreground">Blog</a>
 			</div>
 			<p class="text-[11px] text-muted-foreground/30">
 				&copy; {new Date().getFullYear()} BacklogBox
