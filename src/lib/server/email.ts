@@ -1,8 +1,13 @@
 import { Resend } from 'resend';
 import { env } from '$env/dynamic/private';
+import { building } from '$app/environment';
 import { log } from '$lib/server/logger';
 
-const resend = new Resend(env.RESEND_API_KEY);
+/** Lazy-initialised Resend client — avoids crashing during SvelteKit postbuild analysis. */
+let _resend: Resend | undefined;
+function resend(): Resend {
+	return (_resend ??= new Resend(env.RESEND_API_KEY));
+}
 
 interface SendEmailParams {
 	to: string;
@@ -13,11 +18,14 @@ interface SendEmailParams {
 /**
  * Send a transactional email via Resend.
  * Logs errors but never throws — callers should fire-and-forget with `void`.
+ * No-ops during SvelteKit build.
  */
 export async function sendEmail({ to, subject, html }: SendEmailParams): Promise<void> {
+	if (building) return;
+
 	const from = env.EMAIL_FROM ?? 'BacklogBox <noreply@backlogbox.com>';
 
-	const { error } = await resend.emails.send({ from, to: [to], subject, html });
+	const { error } = await resend().emails.send({ from, to: [to], subject, html });
 
 	if (error) {
 		log.error({ error, to, subject }, 'email send failed');
