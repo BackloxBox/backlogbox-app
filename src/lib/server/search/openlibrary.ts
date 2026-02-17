@@ -1,4 +1,6 @@
-import type { SearchProvider, TypedSearchResult } from './types';
+import type { SearchProvider, SearchResult, TypedSearchResult } from './types';
+
+const OL_USER_AGENT = 'BacklogBox/1.0 (https://github.com/backlogbox)';
 
 interface OpenLibraryDoc {
 	key: string;
@@ -94,7 +96,9 @@ export const openLibraryProvider: SearchProvider<'book'> = {
 			limit: '20'
 		});
 
-		const response = await fetch(`https://openlibrary.org/search.json?${params}`);
+		const response = await fetch(`https://openlibrary.org/search.json?${params}`, {
+			headers: { 'User-Agent': OL_USER_AGENT }
+		});
 		if (!response.ok) return [];
 
 		const data: OpenLibraryResponse = await response.json();
@@ -123,7 +127,9 @@ export const openLibraryProvider: SearchProvider<'book'> = {
 export async function fetchBookDescription(workKey: string): Promise<string | null> {
 	const url = `https://openlibrary.org${workKey}.json`;
 	try {
-		const response = await fetch(url);
+		const response = await fetch(url, {
+			headers: { 'User-Agent': OL_USER_AGENT }
+		});
 		if (!response.ok) return null;
 		const data: OpenLibraryWork = await response.json();
 		if (!data.description) return null;
@@ -131,5 +137,103 @@ export async function fetchBookDescription(workKey: string): Promise<string | nu
 		return typeof data.description === 'string' ? data.description : data.description.value;
 	} catch {
 		return null;
+	}
+}
+
+// --- Discover: Trending ---
+
+interface OpenLibraryTrendingWork {
+	key: string;
+	title: string;
+	author_name?: string[];
+	first_publish_year?: number;
+	cover_i?: number;
+	subject?: string[];
+	language?: string[];
+}
+
+interface OpenLibraryTrendingResponse {
+	works: OpenLibraryTrendingWork[];
+}
+
+/** Fetch daily trending books from OpenLibrary */
+export async function fetchTrendingBooks(): Promise<SearchResult[]> {
+	try {
+		const response = await fetch('https://openlibrary.org/trending/daily.json?limit=20', {
+			headers: { 'User-Agent': OL_USER_AGENT }
+		});
+		if (!response.ok) return [];
+
+		const data: OpenLibraryTrendingResponse = await response.json();
+		return data.works.slice(0, 20).map((work) => ({
+			externalId: work.key,
+			title: work.title,
+			coverUrl: coverUrl(work.cover_i),
+			releaseYear: work.first_publish_year ?? null,
+			meta: {
+				author: work.author_name?.[0] ?? null,
+				genre: extractGenres(work.subject),
+				pageCount: null,
+				isbn: null,
+				language: languageName(work.language?.[0]),
+				publisher: null
+			}
+		}));
+	} catch {
+		return [];
+	}
+}
+
+// --- Discover: Similar (subject-based) ---
+
+interface OpenLibrarySubjectWork {
+	key: string;
+	title: string;
+	edition_count: number;
+	authors?: Array<{ name: string; key: string }>;
+	has_fulltext?: boolean;
+	cover_id?: number;
+	first_publish_year?: number;
+	subject?: string[];
+}
+
+interface OpenLibrarySubjectResponse {
+	name: string;
+	work_count: number;
+	works: OpenLibrarySubjectWork[];
+}
+
+/**
+ * Fetch popular books for a given subject (genre).
+ * Subject uses underscores: e.g. "science_fiction", "mystery".
+ */
+export async function fetchBooksBySubject(subject: string): Promise<SearchResult[]> {
+	const normalized = subject
+		.toLowerCase()
+		.replace(/\s+/g, '_')
+		.replace(/[^a-z0-9_]/g, '');
+	try {
+		const response = await fetch(`https://openlibrary.org/subjects/${normalized}.json?limit=10`, {
+			headers: { 'User-Agent': OL_USER_AGENT }
+		});
+		if (!response.ok) return [];
+
+		const data: OpenLibrarySubjectResponse = await response.json();
+		return data.works.slice(0, 10).map((work) => ({
+			externalId: work.key,
+			title: work.title,
+			coverUrl: coverUrl(work.cover_id),
+			releaseYear: work.first_publish_year ?? null,
+			meta: {
+				author: work.authors?.[0]?.name ?? null,
+				genre: subject,
+				pageCount: null,
+				isbn: null,
+				language: null,
+				publisher: null
+			}
+		}));
+	} catch {
+		return [];
 	}
 }

@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, isNotNull, sql } from 'drizzle-orm';
 import { db } from './index';
 import {
 	bookMeta,
@@ -181,6 +181,180 @@ export async function updateMediaItemMeta<T extends MediaType>(
 				.values({ mediaItemId: itemId, ...m })
 				.onConflictDoUpdate({ target: podcastMeta.mediaItemId, set: m });
 			break;
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Discover: seed items + external ID lookups
+// ---------------------------------------------------------------------------
+
+/** Seed item shape for "because you liked X" recommendations */
+export type SeedItem = {
+	title: string;
+	externalId: string;
+	genre: string | null;
+};
+
+/**
+ * Get recent items for a user+type that have a non-null external ID.
+ * Used to seed "similar to" recommendations. Returns up to `limit` items
+ * ordered by most recently created.
+ *
+ * For books, `externalId` is the title (lowercased) since books lack a
+ * reliable single external ID. For all others it's the type-specific ID.
+ */
+export async function getSeedItems(
+	userId: string,
+	type: MediaType,
+	limit = 3
+): Promise<SeedItem[]> {
+	switch (type) {
+		case 'movie': {
+			const rows = await db
+				.select({
+					title: mediaItem.title,
+					externalId: sql<string>`CAST(${movieMeta.tmdbId} AS text)`,
+					genre: movieMeta.genre
+				})
+				.from(mediaItem)
+				.innerJoin(movieMeta, eq(movieMeta.mediaItemId, mediaItem.id))
+				.where(
+					and(
+						eq(mediaItem.userId, userId),
+						eq(mediaItem.type, 'movie'),
+						isNotNull(movieMeta.tmdbId)
+					)
+				)
+				.orderBy(desc(mediaItem.createdAt))
+				.limit(limit);
+			return rows;
+		}
+		case 'series': {
+			const rows = await db
+				.select({
+					title: mediaItem.title,
+					externalId: sql<string>`CAST(${seriesMeta.tmdbId} AS text)`,
+					genre: seriesMeta.genre
+				})
+				.from(mediaItem)
+				.innerJoin(seriesMeta, eq(seriesMeta.mediaItemId, mediaItem.id))
+				.where(
+					and(
+						eq(mediaItem.userId, userId),
+						eq(mediaItem.type, 'series'),
+						isNotNull(seriesMeta.tmdbId)
+					)
+				)
+				.orderBy(desc(mediaItem.createdAt))
+				.limit(limit);
+			return rows;
+		}
+		case 'game': {
+			const rows = await db
+				.select({
+					title: mediaItem.title,
+					externalId: sql<string>`CAST(${gameMeta.igdbId} AS text)`,
+					genre: gameMeta.genre
+				})
+				.from(mediaItem)
+				.innerJoin(gameMeta, eq(gameMeta.mediaItemId, mediaItem.id))
+				.where(
+					and(eq(mediaItem.userId, userId), eq(mediaItem.type, 'game'), isNotNull(gameMeta.igdbId))
+				)
+				.orderBy(desc(mediaItem.createdAt))
+				.limit(limit);
+			return rows;
+		}
+		case 'book': {
+			// Books use genre for subject-based similar lookups
+			const rows = await db
+				.select({
+					title: mediaItem.title,
+					externalId: mediaItem.title,
+					genre: bookMeta.genre
+				})
+				.from(mediaItem)
+				.innerJoin(bookMeta, eq(bookMeta.mediaItemId, mediaItem.id))
+				.where(
+					and(eq(mediaItem.userId, userId), eq(mediaItem.type, 'book'), isNotNull(bookMeta.genre))
+				)
+				.orderBy(desc(mediaItem.createdAt))
+				.limit(limit);
+			return rows;
+		}
+		case 'podcast':
+			// No similar API for podcasts
+			return [];
+	}
+}
+
+/**
+ * Get the set of external IDs already tracked by a user for a given type.
+ * Used to filter out already-tracked items from discover results.
+ * For books, returns lowercased titles instead.
+ */
+export async function getUserExternalIds(userId: string, type: MediaType): Promise<Set<string>> {
+	switch (type) {
+		case 'movie': {
+			const rows = await db
+				.select({ id: sql<string>`CAST(${movieMeta.tmdbId} AS text)` })
+				.from(mediaItem)
+				.innerJoin(movieMeta, eq(movieMeta.mediaItemId, mediaItem.id))
+				.where(
+					and(
+						eq(mediaItem.userId, userId),
+						eq(mediaItem.type, 'movie'),
+						isNotNull(movieMeta.tmdbId)
+					)
+				);
+			return new Set(rows.map((r) => r.id));
+		}
+		case 'series': {
+			const rows = await db
+				.select({ id: sql<string>`CAST(${seriesMeta.tmdbId} AS text)` })
+				.from(mediaItem)
+				.innerJoin(seriesMeta, eq(seriesMeta.mediaItemId, mediaItem.id))
+				.where(
+					and(
+						eq(mediaItem.userId, userId),
+						eq(mediaItem.type, 'series'),
+						isNotNull(seriesMeta.tmdbId)
+					)
+				);
+			return new Set(rows.map((r) => r.id));
+		}
+		case 'game': {
+			const rows = await db
+				.select({ id: sql<string>`CAST(${gameMeta.igdbId} AS text)` })
+				.from(mediaItem)
+				.innerJoin(gameMeta, eq(gameMeta.mediaItemId, mediaItem.id))
+				.where(
+					and(eq(mediaItem.userId, userId), eq(mediaItem.type, 'game'), isNotNull(gameMeta.igdbId))
+				);
+			return new Set(rows.map((r) => r.id));
+		}
+		case 'podcast': {
+			const rows = await db
+				.select({ id: podcastMeta.applePodcastId })
+				.from(mediaItem)
+				.innerJoin(podcastMeta, eq(podcastMeta.mediaItemId, mediaItem.id))
+				.where(
+					and(
+						eq(mediaItem.userId, userId),
+						eq(mediaItem.type, 'podcast'),
+						isNotNull(podcastMeta.applePodcastId)
+					)
+				);
+			return new Set(rows.filter((r) => r.id !== null).map((r) => r.id as string));
+		}
+		case 'book': {
+			// Match on lowercased title for books
+			const rows = await db
+				.select({ title: sql<string>`LOWER(${mediaItem.title})` })
+				.from(mediaItem)
+				.where(and(eq(mediaItem.userId, userId), eq(mediaItem.type, 'book')));
+			return new Set(rows.map((r) => r.title));
 		}
 	}
 }

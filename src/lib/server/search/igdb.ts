@@ -83,56 +83,119 @@ function coverUrl(imageId: string | undefined): string | null {
 	return `https://images.igdb.com/igdb/image/upload/t_cover_big/${imageId}.jpg`;
 }
 
+/** Shared IGDB fetch helper */
+async function igdbFetch(body: string): Promise<IGDBGame[]> {
+	const { clientId, accessToken } = await getAccessToken();
+	const response = await fetch('https://api.igdb.com/v4/games', {
+		method: 'POST',
+		headers: {
+			'Client-ID': clientId,
+			Authorization: `Bearer ${accessToken}`,
+			'Content-Type': 'text/plain',
+			Accept: 'application/json'
+		},
+		body
+	});
+	if (!response.ok) return [];
+	return response.json();
+}
+
+/** Map an IGDBGame to a typed search result */
+function mapGame(game: IGDBGame): TypedSearchResult<'game'> {
+	const developers = game.involved_companies?.filter((c) => c.developer).map((c) => c.company.name);
+	const publishers = game.involved_companies?.filter((c) => c.publisher).map((c) => c.company.name);
+
+	return {
+		externalId: String(game.id),
+		title: game.name,
+		coverUrl: coverUrl(game.cover?.image_id),
+		releaseYear: yearFromTimestamp(game.first_release_date),
+		meta: {
+			igdbId: game.id,
+			platform: game.platforms?.map((p) => normalizePlatformName(p.name)).join(', ') ?? null,
+			genre: game.genres?.map((g) => g.name).join(', ') ?? null,
+			description: game.summary ?? null,
+			developer: developers?.length ? developers.join(', ') : null,
+			publisher: publishers?.length ? publishers.join(', ') : null,
+			criticScore:
+				typeof game.aggregated_rating === 'number' ? Math.round(game.aggregated_rating) : null,
+			userScore: typeof game.rating === 'number' ? Math.round(game.rating) : null
+		}
+	};
+}
+
 export const igdbProvider: SearchProvider<'game'> = {
 	mediaType: 'game',
 
 	async search(query: string): Promise<TypedSearchResult<'game'>[]> {
-		const { clientId, accessToken } = await getAccessToken();
-
-		// Escape double quotes in query for IGDB query language
 		const escapedQuery = query.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 		const body = `search "${escapedQuery}"; fields id, name, cover.image_id, platforms.name, genres.name, first_release_date, summary, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, aggregated_rating, rating; limit 20;`;
-
-		const response = await fetch('https://api.igdb.com/v4/games', {
-			method: 'POST',
-			headers: {
-				'Client-ID': clientId,
-				Authorization: `Bearer ${accessToken}`,
-				'Content-Type': 'text/plain',
-				Accept: 'application/json'
-			},
-			body
-		});
-
-		if (!response.ok) return [];
-
-		const games: IGDBGame[] = await response.json();
-
-		return games.map((game) => {
-			const developers = game.involved_companies
-				?.filter((c) => c.developer)
-				.map((c) => c.company.name);
-			const publishers = game.involved_companies
-				?.filter((c) => c.publisher)
-				.map((c) => c.company.name);
-
-			return {
-				externalId: String(game.id),
-				title: game.name,
-				coverUrl: coverUrl(game.cover?.image_id),
-				releaseYear: yearFromTimestamp(game.first_release_date),
-				meta: {
-					igdbId: game.id,
-					platform: game.platforms?.map((p) => normalizePlatformName(p.name)).join(', ') ?? null,
-					genre: game.genres?.map((g) => g.name).join(', ') ?? null,
-					description: game.summary ?? null,
-					developer: developers?.length ? developers.join(', ') : null,
-					publisher: publishers?.length ? publishers.join(', ') : null,
-					criticScore:
-						typeof game.aggregated_rating === 'number' ? Math.round(game.aggregated_rating) : null,
-					userScore: typeof game.rating === 'number' ? Math.round(game.rating) : null
-				}
-			};
-		});
+		const games = await igdbFetch(body);
+		return games.map(mapGame);
 	}
 };
+
+const IGDB_GAME_FIELDS =
+	'id, name, cover.image_id, platforms.name, genres.name, first_release_date, summary, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, aggregated_rating, rating';
+
+// --- Discover: Trending ---
+
+/** Fetch trending/popular games from IGDB (recent, highly rated) */
+export async function fetchTrendingGames(): Promise<TypedSearchResult<'game'>[]> {
+	const ninetyDaysAgo = Math.floor((Date.now() - 90 * 24 * 60 * 60 * 1000) / 1000);
+	const body = `fields ${IGDB_GAME_FIELDS}; where first_release_date > ${ninetyDaysAgo} & total_rating_count > 5; sort total_rating_count desc; limit 20;`;
+	const games = await igdbFetch(body);
+	return games.map(mapGame);
+}
+
+// --- Discover: Similar ---
+
+interface IGDBGameWithSimilar extends IGDBGame {
+	similar_games?: IGDBGame[];
+}
+
+/**
+ * Fetch games similar to the given IGDB IDs in a single batched call.
+ * Uses IGDB field expansion to hydrate similar_games inline.
+ */
+export async function fetchSimilarGames(
+	igdbIds: readonly number[]
+): Promise<TypedSearchResult<'game'>[]> {
+	if (igdbIds.length === 0) return [];
+
+	const idList = igdbIds.join(',');
+	const similarFields = IGDB_GAME_FIELDS.split(', ')
+		.map((f) => `similar_games.${f}`)
+		.join(', ');
+	const body = `fields ${similarFields}; where id = (${idList}); limit ${igdbIds.length};`;
+
+	const { clientId, accessToken } = await getAccessToken();
+	const response = await fetch('https://api.igdb.com/v4/games', {
+		method: 'POST',
+		headers: {
+			'Client-ID': clientId,
+			Authorization: `Bearer ${accessToken}`,
+			'Content-Type': 'text/plain',
+			Accept: 'application/json'
+		},
+		body
+	});
+	if (!response.ok) return [];
+
+	const results: IGDBGameWithSimilar[] = await response.json();
+
+	// Flatten + dedupe similar games across all seed games
+	const seen = new Set<number>();
+	const seedIds = new Set(igdbIds);
+	const similar: TypedSearchResult<'game'>[] = [];
+
+	for (const result of results) {
+		for (const game of result.similar_games ?? []) {
+			if (seen.has(game.id) || seedIds.has(game.id)) continue;
+			seen.add(game.id);
+			similar.push(mapGame(game));
+		}
+	}
+
+	return similar.slice(0, 20);
+}

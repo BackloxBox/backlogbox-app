@@ -23,6 +23,7 @@
 	import Tv from '@lucide/svelte/icons/tv';
 	import Gamepad2 from '@lucide/svelte/icons/gamepad-2';
 	import Podcast from '@lucide/svelte/icons/podcast';
+	import Compass from '@lucide/svelte/icons/compass';
 	import type { Component } from 'svelte';
 
 	let { children, data } = $props();
@@ -47,6 +48,7 @@
 	});
 
 	let sidebarOpen = $state(false);
+	const discoverActive = $derived(page.url.pathname === '/discover');
 	let copied = $state(false);
 
 	const shareUrl = $derived(
@@ -112,6 +114,20 @@
 
 		<!-- Nav links -->
 		<div class="flex-1 space-y-0.5 overflow-y-auto p-2">
+			<a
+				href="/discover"
+				class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+				{discoverActive
+					? 'bg-sidebar-accent text-sidebar-accent-foreground'
+					: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+				onclick={() => (sidebarOpen = false)}
+			>
+				<span class="shrink-0" style:color="#8B5CF6">
+					<Compass class="size-4" />
+				</span>
+				Discover
+			</a>
+			<Separator class="my-1.5" />
 			{#each navItems as item (item.slug)}
 				{@const active = page.url.pathname === item.href}
 				<a
