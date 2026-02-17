@@ -1,7 +1,15 @@
 import * as v from 'valibot';
 import { query } from '$app/server';
+import { dev } from '$app/environment';
 import { requireSubscription } from '$lib/server/auth-guard';
-import { getDiscoverCached, setDiscoverCache } from '$lib/server/search/cache';
+import {
+	getOrFetch,
+	discoverKey,
+	getCacheStats,
+	type CacheDebugMeta,
+	type CacheStats
+} from '$lib/server/search/cache';
+import { getRateLimiterStats } from '$lib/server/search/rate-limiter';
 import { fetchTrendingMovies, fetchSimilarMovies } from '$lib/server/search/tmdb';
 import { fetchTrendingSeries, fetchSimilarSeries } from '$lib/server/search/tmdb';
 import { fetchTrendingGames, fetchSimilarGames } from '$lib/server/search/igdb';
@@ -14,6 +22,50 @@ import { error } from '@sveltejs/kit';
 import { log } from '$lib/server/logger';
 
 const slugSchema = v.picklist([...MEDIA_TYPE_SLUGS]);
+
+// ---------------------------------------------------------------------------
+// Debug wrapper type
+// ---------------------------------------------------------------------------
+
+export type DiscoverDebug = CacheDebugMeta;
+
+export interface TrendingResponse {
+	data: SearchResult[];
+	_debug: DiscoverDebug | null;
+}
+
+export type RecommendationGroup = {
+	seedTitle: string;
+	items: SearchResult[];
+	_debug: DiscoverDebug | null;
+};
+
+export interface RecommendationsResponse {
+	data: RecommendationGroup[];
+	_debug: null; // top-level debug reserved for future use
+}
+
+// ---------------------------------------------------------------------------
+// Debug stats endpoint (dev-only, but safe to call in prod — returns null)
+// ---------------------------------------------------------------------------
+
+export interface DebugStats {
+	cache: CacheStats;
+	rateLimiters: Array<{
+		provider: string;
+		available: number;
+		waiting: number;
+		maxTokens: number;
+	}>;
+}
+
+export const getDebugStats = query(async (): Promise<DebugStats | null> => {
+	if (!dev) return null;
+	return {
+		cache: getCacheStats(),
+		rateLimiters: getRateLimiterStats()
+	};
+});
 
 // ---------------------------------------------------------------------------
 // Trending
@@ -29,25 +81,33 @@ const trendingFetchers: Record<string, TrendingFetcher> = {
 	podcast: fetchTopPodcasts
 };
 
-/** Fetch trending items for a media type, cached for 30 minutes */
-export const getTrending = query(slugSchema, async (slug): Promise<SearchResult[]> => {
+const TRENDING_PROVIDERS: Record<string, string> = {
+	movie: 'tmdb',
+	series: 'tmdb',
+	game: 'igdb',
+	book: 'openlibrary',
+	podcast: 'apple'
+};
+
+/** Fetch trending items for a media type, with caching + coalescing + SWR */
+export const getTrending = query(slugSchema, async (slug): Promise<TrendingResponse> => {
 	const userId = requireSubscription();
 	const type = slugToMediaType(slug);
 	if (!type) error(400, `Invalid slug: ${slug}`);
 
-	const cached = getDiscoverCached('trending', type);
-	if (cached) return filterTracked(cached, userId, type);
-
 	const fetcher = trendingFetchers[type];
-	if (!fetcher) return [];
+	if (!fetcher) return { data: [], _debug: null };
+
+	const key = discoverKey('trending', type);
+	const provider = TRENDING_PROVIDERS[type] ?? type;
 
 	try {
-		const results = await fetcher();
-		setDiscoverCache('trending', type, results);
-		return filterTracked(results, userId, type);
+		const { results, debug } = await getOrFetch(key, 'trending', provider, fetcher);
+		const filtered = await filterTracked(results, userId, type);
+		return { data: filtered, _debug: debug };
 	} catch (err) {
 		log.error({ err, mediaType: type }, 'trending fetch failed');
-		return [];
+		return { data: [], _debug: null };
 	}
 });
 
@@ -55,25 +115,22 @@ export const getTrending = query(slugSchema, async (slug): Promise<SearchResult[
 // Recommendations ("because you liked X")
 // ---------------------------------------------------------------------------
 
-export type RecommendationGroup = {
-	seedTitle: string;
-	items: SearchResult[];
-};
-
 /** Fetch personalized recommendations based on user's recent items */
 export const getRecommendations = query(
 	slugSchema,
-	async (slug): Promise<RecommendationGroup[]> => {
+	async (slug): Promise<RecommendationsResponse> => {
 		const userId = requireSubscription();
 		const type = slugToMediaType(slug);
 		if (!type) error(400, `Invalid slug: ${slug}`);
 
 		// Podcasts: no similar API available
-		if (type === 'podcast') return [];
+		if (type === 'podcast') return { data: [], _debug: null };
+
+		const provider = TRENDING_PROVIDERS[type] ?? type;
 
 		try {
 			const rawSeeds = await getSeedItems(userId, type, 3);
-			if (rawSeeds.length === 0) return [];
+			if (rawSeeds.length === 0) return { data: [], _debug: null };
 
 			// Deduplicate seeds by title (e.g. "Fallout S1" and "Fallout S2" share a title)
 			const seenTitles = new Set<string>();
@@ -88,16 +145,11 @@ export const getRecommendations = query(
 			const groups: RecommendationGroup[] = [];
 
 			for (const seed of seeds) {
-				const cacheKey = seed.externalId;
-				const cached = getDiscoverCached('similar', type, cacheKey);
-				let items: SearchResult[];
+				const cacheKey = discoverKey('similar', type, seed.externalId);
 
-				if (cached) {
-					items = cached;
-				} else {
-					items = await fetchSimilarForType(type, seed);
-					setDiscoverCache('similar', type, items, cacheKey);
-				}
+				const { results: items, debug } = await getOrFetch(cacheKey, 'similar', provider, () =>
+					fetchSimilarForType(type, seed)
+				);
 
 				// Filter out already-tracked items
 				const filtered =
@@ -106,14 +158,14 @@ export const getRecommendations = query(
 						: items.filter((r) => !trackedIds.has(r.externalId));
 
 				if (filtered.length > 0) {
-					groups.push({ seedTitle: seed.title, items: filtered });
+					groups.push({ seedTitle: seed.title, items: filtered, _debug: debug });
 				}
 			}
 
-			return groups;
+			return { data: groups, _debug: null };
 		} catch (err) {
 			log.error({ err, mediaType: type }, 'recommendations fetch failed');
-			return [];
+			return { data: [], _debug: null };
 		}
 	}
 );
@@ -123,7 +175,7 @@ export const getRecommendations = query(
 // ---------------------------------------------------------------------------
 
 async function fetchSimilarForType(
-	type: string,
+	type: import('$lib/types').MediaType,
 	seed: { externalId: string; genre: string | null }
 ): Promise<SearchResult[]> {
 	switch (type) {
@@ -139,7 +191,7 @@ async function fetchSimilarForType(
 			if (!genre) return [];
 			return fetchBooksBySubject(genre);
 		}
-		default:
+		case 'podcast':
 			return [];
 	}
 }
@@ -147,13 +199,12 @@ async function fetchSimilarForType(
 async function filterTracked(
 	results: SearchResult[],
 	userId: string,
-	type: string
+	type: import('$lib/types').MediaType
 ): Promise<SearchResult[]> {
-	const mediaType = type as import('$lib/types').MediaType;
-	const trackedIds = await getUserExternalIds(userId, mediaType);
+	const trackedIds = await getUserExternalIds(userId, type);
 	if (trackedIds.size === 0) return results;
 
-	return mediaType === 'book'
+	return type === 'book'
 		? results.filter((r) => !trackedIds.has(r.title.toLowerCase()))
 		: results.filter((r) => !trackedIds.has(r.externalId));
 }
