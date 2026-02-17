@@ -3,7 +3,11 @@
 	import { toggleMode } from 'mode-watcher';
 	import Sun from '@lucide/svelte/icons/sun';
 	import Moon from '@lucide/svelte/icons/moon';
+	import Menu from '@lucide/svelte/icons/menu';
+	import X from '@lucide/svelte/icons/x';
 	let { children } = $props();
+
+	let mobileMenuOpen = $state(false);
 </script>
 
 <div class="min-h-screen bg-background">
@@ -15,7 +19,8 @@
 				BacklogBox
 			</a>
 
-			<div class="flex items-center gap-1">
+			<!-- Desktop -->
+			<div class="hidden items-center gap-1 md:flex">
 				<Button variant="ghost" size="sm" href="/blog">Blog</Button>
 				<Button
 					variant="ghost"
@@ -33,7 +38,59 @@
 				<Button variant="ghost" size="sm" href="/login">Sign in</Button>
 				<Button size="sm" href="/register">Get Started</Button>
 			</div>
+
+			<!-- Mobile -->
+			<div class="flex items-center gap-1 md:hidden">
+				<Button
+					variant="ghost"
+					size="icon"
+					class="size-8"
+					onclick={toggleMode}
+					aria-label="Toggle theme"
+				>
+					<Sun class="size-3.5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+					<Moon
+						class="absolute size-3.5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"
+					/>
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon"
+					class="size-8"
+					onclick={() => (mobileMenuOpen = !mobileMenuOpen)}
+					aria-label="Toggle menu"
+				>
+					{#if mobileMenuOpen}
+						<X class="size-4" />
+					{:else}
+						<Menu class="size-4" />
+					{/if}
+				</Button>
+			</div>
 		</div>
+
+		{#if mobileMenuOpen}
+			<div class="border-t border-border/40 bg-background/95 px-6 py-4 backdrop-blur-xl md:hidden">
+				<div class="flex flex-col gap-1">
+					<a
+						href="/blog"
+						class="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+					>
+						Blog
+					</a>
+					<a
+						href="/login"
+						class="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+					>
+						Sign in
+					</a>
+					<div class="my-2 h-px bg-border/60"></div>
+					<div class="pt-1">
+						<Button size="sm" href="/register" class="w-full">Get Started</Button>
+					</div>
+				</div>
+			</div>
+		{/if}
 	</nav>
 
 	<!-- Content -->

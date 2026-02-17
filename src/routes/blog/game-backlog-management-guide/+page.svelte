@@ -417,12 +417,12 @@
 		margin-bottom: 0.375rem;
 		line-height: 1.75;
 	}
-	.prose-custom :global(:not(.not-prose) > a) {
+	.prose-custom :global(:not(.not-prose) > a:not([data-slot='button'])) {
 		color: var(--primary);
 		text-decoration: underline;
 		text-underline-offset: 2px;
 	}
-	.prose-custom :global(:not(.not-prose) > a:hover) {
+	.prose-custom :global(:not(.not-prose) > a:not([data-slot='button']):hover) {
 		opacity: 0.8;
 	}
 	.prose-custom :global(strong) {
@@ -436,5 +436,12 @@
 	.prose-custom :global(th),
 	.prose-custom :global(td) {
 		white-space: nowrap;
+	}
+
+	@media (max-width: 639px) {
+		.prose-custom :global(th),
+		.prose-custom :global(td) {
+			white-space: normal;
+		}
 	}
 </style>

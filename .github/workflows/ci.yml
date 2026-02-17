@@ -16,6 +16,20 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        options: >-
+          --health-cmd "pg_isready -U ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
 
@@ -52,5 +66,14 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Push DB schema
+        run: pnpm drizzle-kit push --force
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
       - name: E2E tests
         run: pnpm exec playwright test
+        env:
+          BETTER_AUTH_SECRET: ci-test-secret-not-for-production
+          BETTER_AUTH_URL: http://localhost:4173
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
