@@ -92,9 +92,16 @@
 		subtitle: string | null;
 		imageUrl: string | null;
 		status: CustomListStatus;
+		fieldValues: Array<{ fieldId: string; value: string }>;
 	}) {
 		try {
-			await addItem({ slug, ...data });
+			const { fieldValues, ...itemData } = data;
+			const item = await addItem({ slug, ...itemData });
+
+			if (fieldValues.length > 0 && item) {
+				await setFieldValues({ slug, itemId: item.id, values: fieldValues });
+			}
+
 			getBoardItems(slug).refresh();
 		} catch (err) {
 			if (handleSubscriptionError(err)) return;
@@ -299,7 +306,12 @@
 	</svelte:boundary>
 </div>
 
-<AddCustomItemModal open={addModalOpen} onClose={() => (addModalOpen = false)} onAdd={handleAdd} />
+<AddCustomItemModal
+	open={addModalOpen}
+	fields={listFields}
+	onClose={() => (addModalOpen = false)}
+	onAdd={handleAdd}
+/>
 
 <CustomItemDetailPanel
 	item={selectedItem}

@@ -208,9 +208,13 @@
 					</div>
 
 					{#each fields as field (field.id)}
-						<div class="flex items-center gap-2">
+						<div
+							class="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2"
+						>
 							<span class="flex-1 truncate text-sm">{field.name}</span>
-							<span class="text-xs text-muted-foreground">{field.fieldType}</span>
+							<span class="rounded bg-background px-1.5 py-0.5 text-xs text-muted-foreground">
+								{field.fieldType}
+							</span>
 							<Button
 								variant="ghost"
 								size="icon"

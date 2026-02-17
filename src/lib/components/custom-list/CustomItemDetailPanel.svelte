@@ -126,9 +126,9 @@
 		if (!v) onClose();
 	}}
 >
-	<Sheet.Content side="right" class="w-full sm:max-w-lg">
+	<Sheet.Content side="right" class="flex w-full flex-col p-0 sm:max-w-lg">
 		{#if item}
-			<Sheet.Header class="flex flex-row items-start gap-3">
+			<Sheet.Header class="flex flex-row items-start gap-3 px-5 pt-5 pb-0">
 				<MediaCover title={item.title} coverUrl={item.imageUrl} size="lg" />
 				<div class="min-w-0">
 					<Sheet.Title class="text-base leading-snug">{item.title}</Sheet.Title>
@@ -138,7 +138,7 @@
 				</div>
 			</Sheet.Header>
 
-			<div bind:this={scrollRef} class="flex-1 space-y-5 overflow-y-auto py-4">
+			<div bind:this={scrollRef} class="flex-1 space-y-5 overflow-y-auto px-5 py-4">
 				<!-- Status -->
 				<div class="space-y-1.5">
 					<Label>Status</Label>
