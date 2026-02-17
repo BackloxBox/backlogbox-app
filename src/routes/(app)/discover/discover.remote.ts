@@ -60,6 +60,7 @@ export interface DebugStats {
 }
 
 export const getDebugStats = query(async (): Promise<DebugStats | null> => {
+	requireSubscription();
 	if (!dev) return null;
 	return {
 		cache: getCacheStats(),

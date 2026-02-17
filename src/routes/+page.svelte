@@ -144,6 +144,31 @@
 	}
 </script>
 
+<svelte:head>
+	<meta
+		name="description"
+		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything."
+	/>
+	<meta
+		property="og:title"
+		content="Media Tracker & Backlog Manager - Books, Movies, Games | BacklogBox"
+	/>
+	<meta
+		property="og:description"
+		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything."
+	/>
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta
+		name="twitter:title"
+		content="Media Tracker & Backlog Manager - Books, Movies, Games | BacklogBox"
+	/>
+	<meta
+		name="twitter:description"
+		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything."
+	/>
+	<meta name="twitter:image" content="https://backlogbox.com/og.png" />
+</svelte:head>
+
 <div class="relative min-h-screen bg-background">
 	<!-- Ambient background -->
 	<div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">

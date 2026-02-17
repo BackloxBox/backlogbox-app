@@ -131,13 +131,21 @@ export async function updateMediaItemFields(
 	return updated;
 }
 
-/** Update type-specific metadata (upsert) */
+/** Update type-specific metadata (upsert). Verifies item ownership first. */
 export async function updateMediaItemMeta<T extends MediaType>(
 	itemId: string,
+	userId: string,
 	type: T,
 	meta: Partial<MetaFieldsFor<T>>
 ) {
 	if (Object.keys(meta).length === 0) return;
+
+	// Verify ownership before touching metadata
+	const item = await db.query.mediaItem.findFirst({
+		where: and(eq(mediaItem.id, itemId), eq(mediaItem.userId, userId)),
+		columns: { id: true }
+	});
+	if (!item) return;
 
 	// Dispatch to the correct table — the switch narrows `type` so each
 	// branch can safely pass `meta` to the concrete table's insert.
@@ -391,22 +399,51 @@ export async function reorderMediaItems(
 
 export type MediaNoteRow = typeof mediaNote.$inferSelect;
 
-/** Get all notes for a media item, newest first */
-export async function getNotesByItem(mediaItemId: string): Promise<MediaNoteRow[]> {
+/** Verify a media item belongs to a user. Returns the item id or null. */
+async function verifyItemOwnership(mediaItemId: string, userId: string): Promise<string | null> {
+	const item = await db.query.mediaItem.findFirst({
+		where: and(eq(mediaItem.id, mediaItemId), eq(mediaItem.userId, userId)),
+		columns: { id: true }
+	});
+	return item?.id ?? null;
+}
+
+/** Get all notes for a media item, newest first. Verifies item ownership. */
+export async function getNotesByItem(mediaItemId: string, userId: string): Promise<MediaNoteRow[]> {
+	const itemId = await verifyItemOwnership(mediaItemId, userId);
+	if (!itemId) return [];
+
 	return db.query.mediaNote.findMany({
 		where: eq(mediaNote.mediaItemId, mediaItemId),
 		orderBy: [desc(mediaNote.createdAt)]
 	});
 }
 
-/** Add a note to a media item */
-export async function createNote(mediaItemId: string, content: string): Promise<MediaNoteRow> {
+/** Add a note to a media item. Verifies item ownership. Returns null if item not owned. */
+export async function createNote(
+	mediaItemId: string,
+	userId: string,
+	content: string
+): Promise<MediaNoteRow | null> {
+	const itemId = await verifyItemOwnership(mediaItemId, userId);
+	if (!itemId) return null;
+
 	const [note] = await db.insert(mediaNote).values({ mediaItemId, content }).returning();
 	return note;
 }
 
-/** Delete a note by id */
-export async function deleteNoteById(noteId: string): Promise<boolean> {
+/** Delete a note by id. Verifies item ownership via the note's mediaItem. */
+export async function deleteNoteById(noteId: string, userId: string): Promise<boolean> {
+	// Look up the note to get its mediaItemId, then verify ownership
+	const note = await db.query.mediaNote.findFirst({
+		where: eq(mediaNote.id, noteId),
+		columns: { id: true, mediaItemId: true }
+	});
+	if (!note) return false;
+
+	const itemId = await verifyItemOwnership(note.mediaItemId, userId);
+	if (!itemId) return false;
+
 	const [deleted] = await db.delete(mediaNote).where(eq(mediaNote.id, noteId)).returning();
 	return !!deleted;
 }

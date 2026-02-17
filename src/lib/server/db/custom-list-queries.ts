@@ -362,12 +362,25 @@ export async function deleteCustomListField(
 // Field values
 // ---------------------------------------------------------------------------
 
-/** Upsert field values for an item (bulk) */
+/** Verify an item belongs to a list. Returns true if valid. */
+async function verifyItemInList(itemId: string, listId: string): Promise<boolean> {
+	const item = await db.query.customListItem.findFirst({
+		where: and(eq(customListItem.id, itemId), eq(customListItem.listId, listId)),
+		columns: { id: true }
+	});
+	return !!item;
+}
+
+/** Upsert field values for an item (bulk). Verifies item belongs to list. */
 export async function upsertFieldValues(
 	itemId: string,
+	listId: string,
 	values: Array<{ fieldId: string; value: string }>
 ) {
 	if (values.length === 0) return;
+
+	const valid = await verifyItemInList(itemId, listId);
+	if (!valid) return;
 
 	await db.transaction(async (tx) => {
 		for (const { fieldId, value } of values) {
@@ -382,8 +395,11 @@ export async function upsertFieldValues(
 	});
 }
 
-/** Delete a specific field value */
-export async function deleteFieldValue(itemId: string, fieldId: string) {
+/** Delete a specific field value. Verifies item belongs to list. */
+export async function deleteFieldValue(itemId: string, listId: string, fieldId: string) {
+	const valid = await verifyItemInList(itemId, listId);
+	if (!valid) return;
+
 	await db
 		.delete(customListItemFieldValue)
 		.where(

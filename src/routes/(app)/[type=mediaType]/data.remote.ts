@@ -311,7 +311,7 @@ export const updateItem = command(updateItemSchema, async (data) => {
 	}
 
 	if (data.meta && Object.keys(data.meta).length > 0) {
-		await updateMediaItemMeta(data.id, type, data.meta);
+		await updateMediaItemMeta(data.id, userId, type, data.meta);
 	}
 });
 
@@ -333,8 +333,8 @@ export const reorderItems = command(reorderSchema, async (data) => {
 // --- Notes ---
 
 export const getItemNotes = query(v.pipe(v.string(), v.nonEmpty()), async (mediaItemId) => {
-	requireSubscription();
-	return getNotesByItem(mediaItemId);
+	const userId = requireSubscription();
+	return getNotesByItem(mediaItemId, userId);
 });
 
 const addNoteSchema = v.object({
@@ -343,8 +343,10 @@ const addNoteSchema = v.object({
 });
 
 export const addNote = command(addNoteSchema, async (data) => {
-	requireSubscription();
-	return createNote(data.mediaItemId, data.content);
+	const userId = requireSubscription();
+	const note = await createNote(data.mediaItemId, userId, data.content);
+	if (!note) error(404, 'Item not found');
+	return note;
 });
 
 const deleteNoteSchema = v.object({
@@ -352,7 +354,7 @@ const deleteNoteSchema = v.object({
 });
 
 export const removeNote = command(deleteNoteSchema, async (data) => {
-	requireSubscription();
-	const deleted = await deleteNoteById(data.noteId);
+	const userId = requireSubscription();
+	const deleted = await deleteNoteById(data.noteId, userId);
 	if (!deleted) error(404, 'Note not found');
 });

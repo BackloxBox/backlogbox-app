@@ -263,13 +263,13 @@ export const removeField = command(deleteFieldSchema, async (data) => {
 /** Upsert field values for an item (bulk) */
 export const setFieldValues = command(upsertFieldValuesSchema, async (data) => {
 	const userId = requireSubscription();
-	await resolveList(userId, data.slug);
-	await upsertFieldValues(data.itemId, data.values);
+	const listId = await resolveList(userId, data.slug);
+	await upsertFieldValues(data.itemId, listId, data.values);
 });
 
 /** Remove a field value from an item */
 export const removeFieldValue = command(deleteFieldValueSchema, async (data) => {
 	const userId = requireSubscription();
-	await resolveList(userId, data.slug);
-	await deleteFieldValue(data.itemId, data.fieldId);
+	const listId = await resolveList(userId, data.slug);
+	await deleteFieldValue(data.itemId, listId, data.fieldId);
 });

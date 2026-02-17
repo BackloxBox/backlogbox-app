@@ -21,25 +21,16 @@
 	<link rel="icon" href="/backlogbox-logo.svg" />
 	<link rel="canonical" href={canonicalUrl} />
 
-	<!-- SEO -->
+	<!-- Defaults — child pages override title/description/og/twitter via their own <svelte:head> -->
 	<title>{defaultTitle}</title>
-	<meta name="description" content={defaultDescription} />
 
-	<!-- Open Graph -->
+	<!-- Open Graph (site-wide defaults, pages override per-page fields) -->
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="BacklogBox" />
 	<meta property="og:url" content={canonicalUrl} />
-	<meta property="og:title" content={defaultTitle} />
-	<meta property="og:description" content={defaultDescription} />
 	<meta property="og:image" content={defaultImage} />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
-
-	<!-- Twitter -->
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={defaultTitle} />
-	<meta name="twitter:description" content={defaultDescription} />
-	<meta name="twitter:image" content={defaultImage} />
 
 	<!-- Structured data: SoftwareApplication -->
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD, no user input -->
