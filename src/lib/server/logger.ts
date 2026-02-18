@@ -40,7 +40,7 @@ function createLogger(): pino.Logger {
 			options: {
 				dataset: process.env.AXIOM_DATASET,
 				token: process.env.AXIOM_TOKEN,
-				url: 'https://api.eu.axiom.co'
+				url: 'https://eu-central-1.aws.edge.axiom.co'
 			}
 		});
 	}
