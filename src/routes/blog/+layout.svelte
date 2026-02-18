@@ -12,7 +12,7 @@
 
 <div class="min-h-screen bg-background">
 	<!-- Nav -->
-	<nav class="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+	<nav class="sticky top-0 z-50 border-b border-border/40 bg-background">
 		<div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
 			<a href="/" class="flex items-center gap-2 text-sm font-bold tracking-tight text-foreground">
 				<img src="/backlogbox-logo.svg" alt="" class="size-5" />
@@ -70,7 +70,7 @@
 		</div>
 
 		{#if mobileMenuOpen}
-			<div class="border-t border-border/40 bg-background/95 px-6 py-4 backdrop-blur-xl md:hidden">
+			<div class="border-t border-border/40 bg-background px-6 py-4 md:hidden">
 				<div class="flex flex-col gap-1">
 					<a
 						href="/blog"
