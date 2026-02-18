@@ -37,13 +37,14 @@
 </script>
 
 {#if genres.length > 0}
-	<Chart.Container config={chartConfig} class="h-[220px] w-full">
+	<Chart.Container config={chartConfig} class="h-[260px] w-full">
 		<BarChart
 			data={chartData}
 			xScale={scaleBand().padding(0.3)}
 			x="label"
 			axis="x"
 			series={[{ key: 'count', label: 'Items', color: 'var(--chart-1)' }]}
+			padding={{ bottom: 60 }}
 			props={{
 				bars: {
 					stroke: 'none',
@@ -53,7 +54,13 @@
 				},
 				highlight: { area: { fill: 'none' } },
 				xAxis: {
-					format: (d: string) => (d.length > 10 ? d.slice(0, 9) + '\u2026' : d)
+					format: (d: string) => (d.length > 12 ? d.slice(0, 11) + '\u2026' : d),
+					tickLabelProps: {
+						rotate: -45,
+						textAnchor: 'end' as const,
+						dy: 4,
+						class: 'text-[10px]'
+					}
 				}
 			}}
 		>

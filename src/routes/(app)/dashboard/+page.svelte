@@ -155,7 +155,7 @@
 	</div>
 
 	<!-- Media type cards -->
-	<div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+	<div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
 		{#each typeCards as card (card.type)}
 			<a
 				href="/{card.slug}"
@@ -196,46 +196,42 @@
 				</div>
 			</a>
 		{/each}
-	</div>
 
-	<!-- Custom lists summary -->
-	{#if customListStats.totalLists > 0}
-		<div class="rounded-xl border border-border bg-card p-3">
-			<div class="flex items-center gap-2">
-				<div
-					class="flex size-7 items-center justify-center rounded-lg"
-					style:background="#8B5CF615"
-					style:color="#8B5CF6"
-				>
-					<ListIcon class="size-3.5" />
+		<!-- Custom lists -->
+		{#if customListStats.totalLists > 0}
+			{@const listsCompleted =
+				customListStats.statusCounts.find((s) => s.status === 'completed')?.count ?? 0}
+			<div class="relative overflow-hidden rounded-xl border border-border bg-card p-3">
+				<div class="flex items-center gap-2">
+					<div
+						class="flex size-7 items-center justify-center rounded-lg"
+						style:background="#8B5CF615"
+						style:color="#8B5CF6"
+					>
+						<ListIcon class="size-3.5" />
+					</div>
+					<span class="text-xs font-medium text-muted-foreground">Lists</span>
 				</div>
-				<span class="text-xs font-medium text-muted-foreground">Custom Lists</span>
-			</div>
-			<div class="mt-2 flex items-baseline gap-3">
-				<span class="text-lg font-bold text-foreground tabular-nums"
-					>{customListStats.totalItems}</span
-				>
-				<span class="text-xs text-muted-foreground"
-					>items across {customListStats.totalLists} list{customListStats.totalLists !== 1
-						? 's'
-						: ''}</span
-				>
-			</div>
-			{#if customListStats.statusCounts.length > 0}
-				{@const completed =
-					customListStats.statusCounts.find((s) => s.status === 'completed')?.count ?? 0}
+				<div class="mt-2 flex items-baseline gap-2">
+					<span class="text-lg font-bold text-foreground tabular-nums"
+						>{customListStats.totalItems}</span
+					>
+					{#if listsCompleted > 0}
+						<span class="text-xs text-muted-foreground">{listsCompleted} done</span>
+					{/if}
+				</div>
 				{#if customListStats.totalItems > 0}
 					<div class="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
 						<div
 							class="h-full rounded-full transition-all duration-500"
 							style:background="#8B5CF6"
-							style:width="{Math.round((completed / customListStats.totalItems) * 100)}%"
+							style:width="{Math.round((listsCompleted / customListStats.totalItems) * 100)}%"
 						></div>
 					</div>
 				{/if}
-			{/if}
-		</div>
-	{/if}
+			</div>
+		{/if}
+	</div>
 
 	<!-- Activity heatmap -->
 	<div class="rounded-xl border border-border bg-card p-3 sm:p-4">
@@ -254,14 +250,14 @@
 	<!-- Charts row: status + completions (wider) -->
 	<div class="grid gap-3 lg:grid-cols-5">
 		<!-- Status distribution — donut -->
-		<div class="rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-2">
+		<div class="min-w-0 rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-2">
 			<h2 class="mb-0.5 text-sm font-medium text-foreground">Status Breakdown</h2>
 			<p class="mb-1.5 text-xs text-muted-foreground">Across all media types</p>
 			<StatusDonut statusCounts={stats.statusCounts} totalItems={stats.totalItems} />
 		</div>
 
 		<!-- Completions over time — area chart -->
-		<div class="rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-3">
+		<div class="min-w-0 rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-3">
 			<h2 class="mb-0.5 text-sm font-medium text-foreground">Completions</h2>
 			<p class="mb-1.5 text-xs text-muted-foreground">Last 6 months by media type</p>
 			{#if chartData.length > 0}
@@ -295,14 +291,14 @@
 	<!-- Genres row -->
 	<div class="grid gap-3 lg:grid-cols-5">
 		<!-- Top genres -->
-		<div class="rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-3">
+		<div class="min-w-0 rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-3">
 			<h2 class="mb-0.5 text-sm font-medium text-foreground">Top Genres</h2>
 			<p class="mb-1.5 text-xs text-muted-foreground">Most tracked genres across your collection</p>
 			<GenreChart genres={stats.topGenres} />
 		</div>
 
 		<!-- Recently added -->
-		<div class="rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-2">
+		<div class="min-w-0 rounded-xl border border-border bg-card p-3 sm:p-4 lg:col-span-2">
 			<h2 class="mb-2 text-sm font-medium text-foreground">Recently Added</h2>
 			{#if stats.recentItems.length > 0}
 				<div class="space-y-1">
@@ -317,10 +313,14 @@
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-sm font-medium text-foreground">{item.title}</p>
 								<p class="text-xs text-muted-foreground">
-									<span style:color={TYPE_COLORS[item.type]}>
+									<a
+										href="/{mediaTypeToSlug(item.type)}"
+										style:color={TYPE_COLORS[item.type]}
+										class="hover:underline"
+									>
 										{MEDIA_TYPE_LABELS[item.type]
 											.singular}{#if item.currentSeason}&nbsp;S{item.currentSeason}{/if}
-									</span>
+									</a>
 									&middot; {timeAgo(item.createdAt)}
 								</p>
 							</div>

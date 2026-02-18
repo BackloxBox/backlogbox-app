@@ -28,6 +28,7 @@
 	import Gamepad2 from '@lucide/svelte/icons/gamepad-2';
 	import Podcast from '@lucide/svelte/icons/podcast';
 	import Compass from '@lucide/svelte/icons/compass';
+	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 	import Plus from '@lucide/svelte/icons/plus';
 	import type { Component } from 'svelte';
 
@@ -53,6 +54,7 @@
 	});
 
 	let sidebarOpen = $state(false);
+	const dashboardActive = $derived(page.url.pathname === '/dashboard');
 	const discoverActive = $derived(page.url.pathname === '/discover');
 	let copied = $state(false);
 
@@ -162,6 +164,19 @@
 					<Compass class="size-4" />
 				</span>
 				Discover
+			</a>
+			<a
+				href="/dashboard"
+				class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+				{dashboardActive
+					? 'bg-sidebar-accent text-sidebar-accent-foreground'
+					: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+				onclick={() => (sidebarOpen = false)}
+			>
+				<span class="shrink-0" style:color="#f59e0b">
+					<LayoutDashboard class="size-4" />
+				</span>
+				Dashboard
 			</a>
 			<Separator class="my-1.5" />
 			{#each navItems as item (item.slug)}
