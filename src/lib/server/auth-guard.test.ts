@@ -86,4 +86,32 @@ describe('requireSubscription', () => {
 
 		expect(id).toBe('user-456');
 	});
+
+	// Trial-related cases: locals.subscribed is set by hooks.server.ts
+	// using hasAccess(), so these verify the guard respects that flag
+	// regardless of how it was computed.
+
+	it('grants access when subscribed is true (trial user)', () => {
+		// hooks.server.ts sets subscribed=true for active trial users
+		mockLocals.user = { id: 'trial-user' };
+		mockLocals.subscribed = true;
+
+		const id = requireSubscription();
+
+		expect(id).toBe('trial-user');
+	});
+
+	it('denies access when subscribed is false (expired trial)', () => {
+		// hooks.server.ts sets subscribed=false for expired trial users
+		mockLocals.user = { id: 'expired-user' };
+		mockLocals.subscribed = false;
+
+		expect.assertions(2);
+		try {
+			requireSubscription();
+		} catch (e) {
+			expect(isHttpError(e)).toBe(true);
+			if (isHttpError(e)) expect(e.status).toBe(403);
+		}
+	});
 });

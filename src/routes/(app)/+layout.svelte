@@ -32,6 +32,7 @@
 	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 	import Plus from '@lucide/svelte/icons/plus';
 	import X from '@lucide/svelte/icons/x';
+	import Clock from '@lucide/svelte/icons/clock';
 	import type { Component } from 'svelte';
 
 	let { children, data } = $props();
@@ -113,6 +114,10 @@
 			.slice(0, 2)
 			.toUpperCase()
 	);
+
+	/** Trial state — null means no active trial (subscribed or grandfathered) */
+	const trialDaysLeft = $derived(data.trialDaysLeft);
+	const trialUrgent = $derived(trialDaysLeft !== null && trialDaysLeft <= 3);
 </script>
 
 <div class="flex h-screen bg-background text-foreground">
@@ -275,6 +280,26 @@
 				{/if}
 			{/if}
 		</div>
+
+		<!-- Trial banner -->
+		{#if trialDaysLeft !== null}
+			<div class="px-2">
+				<a
+					href="/subscribe"
+					class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition
+					{trialUrgent
+						? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400'
+						: 'text-muted-foreground hover:bg-sidebar-accent'}"
+				>
+					<Clock class="size-3.5 shrink-0" />
+					{#if trialDaysLeft === 0}
+						Trial ends today
+					{:else}
+						{trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'} left in trial
+					{/if}
+				</a>
+			</div>
+		{/if}
 
 		<!-- Bottom nav -->
 		<div class="space-y-0.5 p-2">
