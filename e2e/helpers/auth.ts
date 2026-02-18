@@ -8,7 +8,7 @@
  */
 import postgres from 'postgres';
 import type { BrowserContext } from '@playwright/test';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHmac } from 'crypto';
 
 // ---------------------------------------------------------------------------
 // DB connection (lazy, shared across tests in a worker)
@@ -106,17 +106,28 @@ export async function createTestUser(options: TestUserOptions = {}): Promise<Tes
 }
 
 /**
+ * Sign a session token with HMAC-SHA256, matching Better Auth's cookie format.
+ * Cookie value = encodeURIComponent("<token>.<base64-signature>")
+ */
+function signSessionToken(token: string, secret: string): string {
+	const signature = createHmac('sha256', secret).update(token).digest('base64');
+	return encodeURIComponent(`${token}.${signature}`);
+}
+
+/**
  * Inject a Better Auth session cookie into a Playwright browser context.
  * After calling this, page navigations will be authenticated as the user.
  */
 export async function authenticate(context: BrowserContext, sessionToken: string): Promise<void> {
 	const baseUrl = process.env.BETTER_AUTH_URL ?? 'http://localhost:4173';
+	const secret = process.env.BETTER_AUTH_SECRET;
+	if (!secret) throw new Error('BETTER_AUTH_SECRET not set — required for E2E cookie signing');
 	const url = new URL(baseUrl);
 
 	await context.addCookies([
 		{
 			name: 'better-auth.session_token',
-			value: sessionToken,
+			value: signSessionToken(sessionToken, secret),
 			domain: url.hostname,
 			path: '/',
 			httpOnly: true,
