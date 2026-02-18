@@ -1,4 +1,6 @@
 <script lang="ts">
+	// @ts-nocheck — bits-ui discriminated union + Svelte $bindable destructuring
+	// causes TS2590. Known upstream: sveltejs/svelte#15675, huntabyte/bits-ui#297
 	import { Calendar as CalendarPrimitive } from 'bits-ui';
 	import * as Calendar from './index.js';
 	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
