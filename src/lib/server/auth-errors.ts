@@ -35,6 +35,10 @@ const ERROR_MAP: ReadonlyArray<{ match: (err: APIError) => boolean; message: str
 		message: 'This link has expired or is invalid. Please try again.'
 	},
 	{
+		match: (e) => e.message?.includes('is not a valid email address') ?? false,
+		message: 'Please use a valid email address with a real domain.'
+	},
+	{
 		match: (e) => e.message?.includes('Polar customer creation failed') ?? false,
 		message: 'Registration failed. Please try again or contact support.'
 	}
