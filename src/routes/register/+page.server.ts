@@ -3,6 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { auth } from '$lib/server/auth';
 import { APIError } from 'better-auth';
 import { friendlyAuthError } from '$lib/server/auth-errors';
+import { log } from '$lib/server/logger';
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
@@ -32,6 +33,7 @@ export const actions: Actions = {
 					message: friendlyAuthError(error, { action: 'signUp', email, username })
 				});
 			}
+			log.error({ err: error, action: 'signUp', email, username }, 'signup failed (non-APIError)');
 			return fail(500, { message: 'Something went wrong. Please try again.' });
 		}
 

@@ -18,25 +18,34 @@ import { dev } from '$app/environment';
  *   log.error({ err, userId, tmdbId }, 'tmdb fetch failed');
  */
 
-export const log = dev
-	? pino({
+function createLogger(): pino.Logger {
+	if (dev) {
+		return pino({
 			level: 'debug',
 			transport: {
 				target: 'pino-pretty',
 				options: { colorize: true, translateTime: 'HH:MM:ss', ignore: 'pid,hostname' }
 			}
-		})
-	: pino(
-			{ level: 'info' },
-			...(process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET
-				? [
-						pino.transport({
-							target: '@axiomhq/pino',
-							options: {
-								dataset: process.env.AXIOM_DATASET,
-								token: process.env.AXIOM_TOKEN
-							}
-						})
-					]
-				: [])
-		);
+		});
+	}
+
+	// Production: always stdout. Axiom as additional destination when configured.
+	const targets: pino.TransportTargetOptions[] = [
+		{ target: 'pino/file', options: { destination: 1 } } // fd 1 = stdout
+	];
+
+	if (process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET) {
+		targets.push({
+			target: '@axiomhq/pino',
+			options: {
+				dataset: process.env.AXIOM_DATASET,
+				token: process.env.AXIOM_TOKEN,
+				url: 'https://api.eu.axiom.co'
+			}
+		});
+	}
+
+	return pino({ level: 'info' }, pino.transport({ targets }));
+}
+
+export const log = createLogger();

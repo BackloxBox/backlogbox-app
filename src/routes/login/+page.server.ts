@@ -3,6 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { auth } from '$lib/server/auth';
 import { APIError } from 'better-auth';
 import { friendlyAuthError } from '$lib/server/auth-errors';
+import { log } from '$lib/server/logger';
 
 /** Resolve post-login redirect, defaulting to /dashboard. Only allows relative paths. */
 function safeRedirect(value: string | null | undefined): string {
@@ -33,6 +34,7 @@ export const actions: Actions = {
 					message: friendlyAuthError(error, { action: 'signIn', email })
 				});
 			}
+			log.error({ err: error, action: 'signIn', email }, 'login failed (non-APIError)');
 			return fail(500, { message: 'Something went wrong. Please try again.' });
 		}
 
