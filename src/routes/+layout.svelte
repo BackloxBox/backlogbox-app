@@ -2,11 +2,28 @@
 	import './layout.css';
 	import { dev } from '$app/environment';
 	import { page } from '$app/state';
+	import { env } from '$env/dynamic/public';
 	import { ModeWatcher } from 'mode-watcher';
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import CacheDebugOverlay from '$lib/components/dev/CacheDebugOverlay.svelte';
+	import { initPostHog, identifyUser, resetUser } from '$lib/analytics';
 
-	let { children } = $props();
+	let { children, data } = $props();
+
+	// --- Analytics (pageviews auto-tracked via defaults: '2026-01-30') ---
+	initPostHog(env.PUBLIC_POSTHOG_KEY, env.PUBLIC_POSTHOG_HOST);
+
+	let prevUserId: string | null = null;
+	$effect(() => {
+		const user = data.user;
+		if (user && user.id !== prevUserId) {
+			identifyUser(user.id, { name: user.name, email: user.email });
+			prevUserId = user.id;
+		} else if (!user && prevUserId) {
+			resetUser();
+			prevUserId = null;
+		}
+	});
 
 	const siteUrl = 'https://backlogbox.com';
 	const defaultTitle = 'Media Tracker & Backlog Manager - Books, Movies, Games | BacklogBox';

@@ -55,6 +55,8 @@ services:
       - PUBLIC_SENTRY_DSN
       - RESEND_API_KEY
       - EMAIL_FROM
+      - PUBLIC_POSTHOG_KEY
+      - PUBLIC_POSTHOG_HOST
     environment:
       PORT: '3000'
       HOST: '0.0.0.0'
@@ -123,6 +125,10 @@ secrets:
   RESEND_API_KEY:
     external: true
   EMAIL_FROM:
+    external: true
+  PUBLIC_POSTHOG_KEY:
+    external: true
+  PUBLIC_POSTHOG_HOST:
     external: true
 
 networks:
