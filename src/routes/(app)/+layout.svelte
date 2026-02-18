@@ -12,6 +12,7 @@
 	} from '$lib/types';
 	import { toggleMode } from 'mode-watcher';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { getIconComponent } from '$lib/components/custom-list/icon-map';
 	import { addList } from './lists/lists.remote';
@@ -30,6 +31,7 @@
 	import Compass from '@lucide/svelte/icons/compass';
 	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 	import Plus from '@lucide/svelte/icons/plus';
+	import X from '@lucide/svelte/icons/x';
 	import type { Component } from 'svelte';
 
 	let { children, data } = $props();
@@ -228,21 +230,38 @@
 				{/each}
 				{#if canCreateList}
 					{#if showNewListInput}
-						<div class="px-3 py-1">
-							<input
+						<div class="flex items-center gap-1 px-1.5 py-1">
+							<Input
 								type="text"
 								bind:value={newListName}
 								onkeydown={handleNewListKeydown}
-								onblur={() => {
-									if (!newListName.trim()) {
-										showNewListInput = false;
-										newListName = '';
-									}
-								}}
 								placeholder="List name…"
 								disabled={creatingList}
-								class="w-full rounded border border-border bg-transparent px-2 py-1 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:opacity-50"
+								class="h-7 text-xs"
+								autofocus
 							/>
+							<Button
+								variant="ghost"
+								size="icon"
+								class="size-7 shrink-0 text-emerald-500 hover:text-emerald-600"
+								disabled={!newListName.trim() || creatingList}
+								onclick={handleCreateList}
+								aria-label="Create list"
+							>
+								<Check class="size-3.5" />
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								class="size-7 shrink-0 text-muted-foreground hover:text-foreground"
+								onclick={() => {
+									showNewListInput = false;
+									newListName = '';
+								}}
+								aria-label="Cancel"
+							>
+								<X class="size-3.5" />
+							</Button>
 						</div>
 					{:else}
 						<button
