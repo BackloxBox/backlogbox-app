@@ -94,9 +94,25 @@
 	<!-- Subscription section -->
 	<div class="space-y-4">
 		<h2 class="text-sm font-medium text-foreground">Subscription</h2>
-		<p class="text-xs text-muted-foreground">
-			Manage your billing, update payment method, or cancel.
-		</p>
+		{#if data.trialDaysLeft !== null && data.trialDaysLeft !== undefined}
+			<div
+				class="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm
+				{data.trialDaysLeft <= 3
+					? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+					: 'border-border bg-muted/40 text-muted-foreground'}"
+			>
+				{#if data.trialDaysLeft === 0}
+					Trial ends today — <a href="/subscribe" class="font-medium underline">subscribe</a> to keep
+					access.
+				{:else}
+					{data.trialDaysLeft} day{data.trialDaysLeft === 1 ? '' : 's'} left in your free trial.
+				{/if}
+			</div>
+		{:else}
+			<p class="text-xs text-muted-foreground">
+				Manage your billing, update payment method, or cancel.
+			</p>
+		{/if}
 		<Button variant="outline" class="gap-2" disabled={portalLoading} onclick={openPortal}>
 			<CreditCard class="size-3.5" />
 			{portalLoading ? 'Opening...' : 'Manage Subscription'}

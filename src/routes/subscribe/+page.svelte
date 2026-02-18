@@ -14,8 +14,15 @@
 	import Gamepad2 from '@lucide/svelte/icons/gamepad-2';
 	import Podcast from '@lucide/svelte/icons/podcast';
 
+	let { data } = $props();
+
 	let billing = $state<'monthly' | 'yearly'>('yearly');
 	let loading = $state<'monthly' | 'yearly' | null>(null);
+
+	/** null = no trial (never had one, or grandfathered), 0 = expired, >0 = active */
+	const trialDaysLeft = $derived(data.trialDaysLeft);
+	const trialExpired = $derived(trialDaysLeft !== null && trialDaysLeft <= 0);
+	const trialActive = $derived(trialDaysLeft !== null && trialDaysLeft > 0);
 
 	const plans = {
 		monthly: { price: '$9.99', period: '/mo', slug: 'monthly' },
@@ -105,13 +112,33 @@
 			{/each}
 		</div>
 
+		{#if trialExpired}
+			<div
+				class="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400"
+			>
+				Your trial has ended
+			</div>
+		{/if}
+
 		<h1 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-			One plan.
-			<span class="subscribe-gradient bg-clip-text text-transparent">Everything included.</span>
+			{#if trialExpired}
+				Your data is safe.
+				<span class="subscribe-gradient bg-clip-text text-transparent">Subscribe to continue.</span>
+			{:else}
+				One plan.
+				<span class="subscribe-gradient bg-clip-text text-transparent">Everything included.</span>
+			{/if}
 		</h1>
 
 		<p class="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground sm:text-base">
-			Track your books, movies, series, games, and podcasts — all in one beautiful kanban board.
+			{#if trialExpired}
+				Pick up right where you left off — your boards, lists, and tracking data are waiting.
+			{:else if trialActive}
+				You have {trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'} left in your trial. Subscribe now
+				to keep uninterrupted access.
+			{:else}
+				Track your books, movies, series, games, and podcasts — all in one beautiful kanban board.
+			{/if}
 		</p>
 
 		<!-- Billing toggle -->
@@ -169,6 +196,8 @@
 			>
 				{#if loading}
 					Redirecting...
+				{:else if trialExpired}
+					Continue with {billing === 'yearly' ? 'Yearly' : 'Monthly'} Plan
 				{:else}
 					Subscribe {billing === 'yearly' ? 'Yearly' : 'Monthly'}
 				{/if}

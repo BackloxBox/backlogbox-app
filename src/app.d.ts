@@ -13,6 +13,7 @@ declare global {
 			user?: User;
 			session?: Session;
 			subscribed: boolean;
+			trialEndsAt: Date | null;
 		}
 
 		// interface PageData {}

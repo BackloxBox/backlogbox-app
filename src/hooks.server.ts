@@ -6,6 +6,7 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { log } from '$lib/server/logger';
 import { getUserProfile } from '$lib/server/db/queries';
+import { hasAccess } from '$lib/server/access';
 
 // ---------------------------------------------------------------------------
 // Sentry — errors only, no performance tracing. No-op when DSN is unset.
@@ -25,19 +26,24 @@ if (process.env.SENTRY_DSN) {
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
 	if (building) {
 		event.locals.subscribed = false;
+		event.locals.trialEndsAt = null;
 		return resolve(event);
 	}
 
 	const session = await auth.api.getSession({ headers: event.request.headers });
 
 	event.locals.subscribed = false;
+	event.locals.trialEndsAt = null;
 
 	if (session) {
 		event.locals.session = session.session;
 		event.locals.user = session.user;
 
 		const profile = await getUserProfile(session.user.id);
-		event.locals.subscribed = profile?.subscribed === true || profile?.freeAccess === true;
+		if (profile) {
+			event.locals.subscribed = hasAccess(profile);
+			event.locals.trialEndsAt = profile.trialEndsAt;
+		}
 	}
 
 	return svelteKitHandler({ event, resolve, auth, building });

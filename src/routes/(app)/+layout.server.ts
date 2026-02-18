@@ -2,6 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 import { getUserProfile } from '$lib/server/db/queries';
 import { getCustomListsByUser } from '$lib/server/db/custom-list-queries';
+import { trialDaysRemaining } from '$lib/server/access';
 
 export const load: LayoutServerLoad = async (event) => {
 	if (!event.locals.user) {
@@ -17,6 +18,7 @@ export const load: LayoutServerLoad = async (event) => {
 	return {
 		user: event.locals.user,
 		profile: profile ?? null,
-		customLists
+		customLists,
+		trialDaysLeft: trialDaysRemaining(event.locals.trialEndsAt)
 	};
 };

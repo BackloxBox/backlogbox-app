@@ -164,3 +164,21 @@ export function emailVerificationTemplate(params: { url: string; name: string })
 		buttonUrl: params.url
 	});
 }
+
+export function trialExpiryWarningTemplate(params: {
+	name: string;
+	daysLeft: number;
+	subscribeUrl: string;
+}): string {
+	return baseTemplate({
+		preheader: `Your BacklogBox data will be deleted in ${params.daysLeft} days`,
+		heading: 'Your data will be deleted soon',
+		body: `<p style="margin:0 0 16px 0;">Hey ${params.name},</p>
+<p style="margin:0 0 16px 0;">Your free trial ended a while ago, and your BacklogBox data (boards, lists, and tracking history) will be permanently deleted in <strong>${params.daysLeft} days</strong>.</p>
+<p style="margin:0;">Subscribe now to keep everything — pick up right where you left off.</p>`,
+		buttonText: 'Subscribe Now',
+		buttonUrl: params.subscribeUrl,
+		footer:
+			'You received this email because your BacklogBox trial has expired.<br>Subscribe to keep your data, or it will be removed after the retention period.'
+	});
+}

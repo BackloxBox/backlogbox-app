@@ -8,7 +8,7 @@ import { env } from '$env/dynamic/private';
 import { building, dev } from '$app/environment';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
-import { setUserSubscribed } from '$lib/server/db/queries';
+import { setUserSubscribed, setTrialStarted } from '$lib/server/db/queries';
 import { log } from '$lib/server/logger';
 import { sendEmail } from '$lib/server/email';
 import { passwordResetTemplate, emailVerificationTemplate } from '$lib/server/email-templates';
@@ -50,7 +50,11 @@ function createAuth() {
 				});
 			},
 			sendOnSignUp: true,
-			autoSignInAfterVerification: true
+			autoSignInAfterVerification: true,
+			async afterEmailVerification(verifiedUser) {
+				log.info({ userId: verifiedUser.id }, 'email verified, starting trial');
+				await setTrialStarted(verifiedUser.id);
+			}
 		},
 		...(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET
 			? {

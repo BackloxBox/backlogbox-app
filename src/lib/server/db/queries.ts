@@ -550,7 +550,9 @@ export async function getUserProfile(userId: string) {
 			username: true,
 			profilePublic: true,
 			subscribed: true,
-			freeAccess: true
+			freeAccess: true,
+			trialEndsAt: true,
+			deletedAt: true
 		}
 	});
 }
@@ -558,6 +560,21 @@ export async function getUserProfile(userId: string) {
 /** Set user subscription status (called from Polar webhooks) */
 export async function setUserSubscribed(userId: string, subscribed: boolean) {
 	await db.update(user).set({ subscribed }).where(eq(user.id, userId));
+}
+
+/** TRIAL_DURATION_DAYS — number of days for the free trial */
+const TRIAL_DURATION_DAYS = 14;
+
+/** Start the free trial for a user (called after email verification) */
+export async function setTrialStarted(userId: string) {
+	const trialEndsAt = new Date();
+	trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DURATION_DAYS);
+	await db.update(user).set({ trialEndsAt }).where(eq(user.id, userId));
+}
+
+/** Soft-delete a user (sets deletedAt, preserves data) */
+export async function softDeleteUser(userId: string) {
+	await db.update(user).set({ deletedAt: new Date() }).where(eq(user.id, userId));
 }
 
 // ---------------------------------------------------------------------------

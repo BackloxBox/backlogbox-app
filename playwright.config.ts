@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+if (!process.env.CI) process.loadEnvFile();
+
 export default defineConfig({
 	webServer: {
 		command: process.env.CI ? 'pnpm preview' : 'pnpm build && pnpm preview',

@@ -1,53 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { pgCoreMock, drizzleOrmMock } from './test-helpers';
 
 // ---------------------------------------------------------------------------
-// Mock drizzle-orm and drizzle-orm/pg-core so schema files can be imported
+// Mock drizzle-orm and drizzle-orm/pg-core via shared helpers
 // ---------------------------------------------------------------------------
 
-function colStub(): Record<string, unknown> {
-	const self: Record<string, unknown> = {};
-	const chain = () => self;
-	self.notNull = chain;
-	self.default = chain;
-	self.defaultRandom = chain;
-	self.defaultNow = chain;
-	self.unique = chain;
-	self.primaryKey = chain;
-	self.references = chain;
-	self.$onUpdate = chain;
-	return self;
-}
-
-vi.mock('drizzle-orm/pg-core', () => {
-	const col = () => colStub();
-	return {
-		pgTable: (name: string, columns: Record<string, unknown>) => {
-			return { _tableName: name, ...columns };
-		},
-		pgEnum: (_name: string, values: string[]) => {
-			const fn = () => colStub();
-			fn.enumValues = values;
-			return fn;
-		},
-		text: col,
-		integer: col,
-		boolean: col,
-		timestamp: col,
-		uuid: col,
-		index: () => ({ on: () => ({}) }),
-		unique: () => ({ on: () => ({}) })
-	};
-});
-
-vi.mock('drizzle-orm', () => ({
-	relations: () => ({}),
-	and: (...args: unknown[]) => ({ _op: 'and', args }),
-	eq: (a: unknown, b: unknown) => ({ _op: 'eq', a, b }),
-	asc: (a: unknown) => ({ _op: 'asc', a }),
-	desc: (a: unknown) => ({ _op: 'desc', a }),
-	like: (a: unknown, b: unknown) => ({ _op: 'like', a, b }),
-	count: () => ({ _op: 'count' })
-}));
+vi.mock('drizzle-orm/pg-core', () => pgCoreMock());
+vi.mock('drizzle-orm', () => drizzleOrmMock());
 
 // ---------------------------------------------------------------------------
 // Mock the db singleton
