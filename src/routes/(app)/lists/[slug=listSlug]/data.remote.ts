@@ -46,6 +46,16 @@ const addItemSchema = v.object({
 	notes: optStr
 });
 
+/** Nullable ISO date string → Date | null */
+const dateField = v.optional(
+	v.nullable(
+		v.pipe(
+			v.string(),
+			v.transform((s) => new Date(s))
+		)
+	)
+);
+
 const updateItemSchema = v.object({
 	slug: v.string(),
 	itemId: v.pipe(v.string(), v.nonEmpty()),
@@ -55,7 +65,9 @@ const updateItemSchema = v.object({
 	status: v.optional(customListStatusSchema),
 	sortOrder: v.optional(v.number()),
 	rating: v.optional(v.nullable(v.number())),
-	notes: v.optional(v.nullable(v.string()))
+	notes: v.optional(v.nullable(v.string())),
+	startedAt: dateField,
+	completedAt: dateField
 });
 
 const deleteItemSchema = v.object({
@@ -171,6 +183,8 @@ export const updateItem = command(updateItemSchema, async (data) => {
 		sortOrder: number;
 		rating: number | null;
 		notes: string | null;
+		startedAt: Date | null;
+		completedAt: Date | null;
 	}> = {};
 	if (data.title !== undefined) fields.title = data.title;
 	if (data.subtitle !== undefined) fields.subtitle = data.subtitle;
@@ -179,6 +193,8 @@ export const updateItem = command(updateItemSchema, async (data) => {
 	if (data.sortOrder !== undefined) fields.sortOrder = data.sortOrder;
 	if (data.rating !== undefined) fields.rating = data.rating;
 	if (data.notes !== undefined) fields.notes = data.notes;
+	if (data.startedAt !== undefined) fields.startedAt = data.startedAt;
+	if (data.completedAt !== undefined) fields.completedAt = data.completedAt;
 
 	const updated = await updateCustomListItem(data.itemId, listId, fields);
 	if (!updated) error(404, 'Item not found');

@@ -10,6 +10,7 @@
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import MediaCover from '$lib/components/board/MediaCover.svelte';
 	import StarRating from '$lib/components/board/StarRating.svelte';
+	import DatePicker from '$lib/components/board/DatePicker.svelte';
 	import {
 		CUSTOM_LIST_STATUSES,
 		CUSTOM_LIST_STATUS_LABELS,
@@ -33,6 +34,8 @@
 				status: CustomListStatus;
 				rating: number | null;
 				notes: string | null;
+				startedAt: string | null;
+				completedAt: string | null;
 			}>
 		) => Promise<void>;
 		onDelete: () => Promise<void>;
@@ -157,6 +160,22 @@
 							{/each}
 						</Select.Content>
 					</Select.Root>
+				</div>
+
+				<!-- Dates -->
+				<div class="grid grid-cols-2 gap-3">
+					<DatePicker
+						label="Started"
+						value={item.startedAt}
+						disabled={saving}
+						onchange={(d) => onUpdate({ startedAt: d?.toISOString() ?? null })}
+					/>
+					<DatePicker
+						label="Completed"
+						value={item.completedAt}
+						disabled={saving}
+						onchange={(d) => onUpdate({ completedAt: d?.toISOString() ?? null })}
+					/>
 				</div>
 
 				<!-- Rating -->

@@ -121,6 +121,16 @@ type AddItemInput = v.InferOutput<typeof addItemSchema>;
 
 // --- Update-item discriminated union (keyed on `slug`) ---
 
+/** Nullable ISO date string → Date | null */
+const dateField = v.optional(
+	v.nullable(
+		v.pipe(
+			v.string(),
+			v.transform((s) => new Date(s))
+		)
+	)
+);
+
 const updateFieldsSchema = v.object({
 	title: v.optional(v.string()),
 	status: v.optional(mediaStatusSchema),
@@ -129,7 +139,9 @@ const updateFieldsSchema = v.object({
 	notes: v.optional(v.nullable(v.string())),
 	coverUrl: v.optional(v.nullable(v.string())),
 	releaseYear: v.optional(v.nullable(v.number())),
-	pinned: v.optional(v.boolean())
+	pinned: v.optional(v.boolean()),
+	startedAt: dateField,
+	completedAt: dateField
 });
 
 const updateItemSchema = v.variant('slug', [

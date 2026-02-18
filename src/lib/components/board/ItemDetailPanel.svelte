@@ -13,6 +13,7 @@
 	import PinOff from '@lucide/svelte/icons/pin-off';
 	import MediaCover from './MediaCover.svelte';
 	import StarRating from './StarRating.svelte';
+	import DatePicker from './DatePicker.svelte';
 	import { getSeasonBadge, formatRuntime } from './card-utils';
 	import {
 		MEDIA_STATUSES,
@@ -404,6 +405,22 @@
 							{/each}
 						</Select.Content>
 					</Select.Root>
+				</div>
+
+				<!-- Dates -->
+				<div class="mt-5 grid grid-cols-2 gap-3">
+					<DatePicker
+						label="Started"
+						value={item.startedAt}
+						disabled={saving}
+						onchange={(d) => onUpdate({ startedAt: d?.toISOString() ?? null })}
+					/>
+					<DatePicker
+						label="Completed"
+						value={item.completedAt}
+						disabled={saving}
+						onchange={(d) => onUpdate({ completedAt: d?.toISOString() ?? null })}
+					/>
 				</div>
 
 				<!-- Season selector (series only) -->

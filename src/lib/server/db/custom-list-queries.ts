@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, like } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, like } from 'drizzle-orm';
 import { db } from './index';
 import { customList, customListField, customListItem, customListItemFieldValue } from './schema';
 import { MAX_CUSTOM_FIELDS, MAX_CUSTOM_LISTS, type CustomListStatus } from '$lib/types';
@@ -227,7 +227,15 @@ export async function createCustomListItem(
 	return item;
 }
 
-/** Update a custom list item's fields. Auto-manages completedAt. */
+/** Update a custom list item's fields.
+ *
+ * Date auto-management on status transitions (only when dates aren't explicitly provided):
+ * - → doing: set startedAt = now (preserves existing)
+ * - → completed: set completedAt = now (preserves existing)
+ * - → other status: clear both dates
+ *
+ * Explicit startedAt/completedAt values always win (for manual edits).
+ */
 export async function updateCustomListItem(
 	itemId: string,
 	listId: string,
@@ -239,12 +247,40 @@ export async function updateCustomListItem(
 		sortOrder: number;
 		rating: number | null;
 		notes: string | null;
+		startedAt: Date | null;
+		completedAt: Date | null;
 	}>
 ): Promise<CustomListItemRow | undefined> {
-	// Auto-manage completedAt on status transitions
-	const completedAt =
-		fields.status === 'completed' ? new Date() : fields.status !== undefined ? null : undefined;
-	const setFields = completedAt !== undefined ? { ...fields, completedAt } : fields;
+	const { startedAt: explicitStarted, completedAt: explicitCompleted, ...rest } = fields;
+
+	const setFields: Record<string, unknown> = { ...rest };
+
+	if (explicitStarted !== undefined) setFields.startedAt = explicitStarted;
+	if (explicitCompleted !== undefined) setFields.completedAt = explicitCompleted;
+
+	if (
+		fields.status !== undefined &&
+		explicitStarted === undefined &&
+		explicitCompleted === undefined
+	) {
+		if (fields.status === 'doing') {
+			const existing = await db.query.customListItem.findFirst({
+				columns: { startedAt: true },
+				where: and(eq(customListItem.id, itemId), eq(customListItem.listId, listId))
+			});
+			if (!existing?.startedAt) setFields.startedAt = new Date();
+		} else if (fields.status === 'completed') {
+			const existing = await db.query.customListItem.findFirst({
+				columns: { startedAt: true, completedAt: true },
+				where: and(eq(customListItem.id, itemId), eq(customListItem.listId, listId))
+			});
+			if (!existing?.startedAt) setFields.startedAt = new Date();
+			if (!existing?.completedAt) setFields.completedAt = new Date();
+		} else {
+			setFields.startedAt = null;
+			setFields.completedAt = null;
+		}
+	}
 
 	const [updated] = await db
 		.update(customListItem)
@@ -268,17 +304,42 @@ export async function deleteCustomListItem(
 	return deleted;
 }
 
-/** Batch reorder items (after drag-and-drop) */
+/** Batch reorder items (after drag-and-drop).
+ * Only sets date fields on actual status transitions.
+ */
 export async function reorderCustomListItems(
 	listId: string,
 	updates: Array<{ id: string; status: CustomListStatus; sortOrder: number }>
 ) {
 	await db.transaction(async (tx) => {
+		const ids = updates.map((u) => u.id);
+		const existing = await tx.query.customListItem.findMany({
+			columns: { id: true, status: true, startedAt: true, completedAt: true },
+			where: and(inArray(customListItem.id, ids), eq(customListItem.listId, listId))
+		});
+		const byId = new Map(existing.map((e) => [e.id, e]));
+
 		for (const { id, status, sortOrder } of updates) {
-			const completedAt = status === 'completed' ? new Date() : null;
+			const prev = byId.get(id);
+			const statusChanged = prev?.status !== status;
+
+			const setFields: Record<string, unknown> = { status, sortOrder };
+
+			if (statusChanged) {
+				if (status === 'doing') {
+					if (!prev?.startedAt) setFields.startedAt = new Date();
+				} else if (status === 'completed') {
+					if (!prev?.startedAt) setFields.startedAt = new Date();
+					if (!prev?.completedAt) setFields.completedAt = new Date();
+				} else {
+					setFields.startedAt = null;
+					setFields.completedAt = null;
+				}
+			}
+
 			await tx
 				.update(customListItem)
-				.set({ status, sortOrder, completedAt })
+				.set(setFields)
 				.where(and(eq(customListItem.id, id), eq(customListItem.listId, listId)));
 		}
 	});

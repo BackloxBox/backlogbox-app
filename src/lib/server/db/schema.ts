@@ -48,6 +48,7 @@ export const mediaItem = pgTable(
 			.defaultNow()
 			.$onUpdate(() => new Date())
 			.notNull(),
+		startedAt: timestamp('started_at'),
 		completedAt: timestamp('completed_at'),
 		pinned: boolean('pinned').notNull().default(false)
 	},
@@ -258,6 +259,7 @@ export const customListItem = pgTable(
 			.defaultNow()
 			.$onUpdate(() => new Date())
 			.notNull(),
+		startedAt: timestamp('started_at'),
 		completedAt: timestamp('completed_at')
 	},
 	(table) => [

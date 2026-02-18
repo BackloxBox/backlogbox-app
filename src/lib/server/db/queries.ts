@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, isNotNull, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, inArray, isNotNull, sql } from 'drizzle-orm';
 import { db } from './index';
 import {
 	bookMeta,
@@ -102,7 +102,16 @@ function insertMetaTx(
 	}
 }
 
-/** Update a media item's shared fields */
+/** Update a media item's shared fields.
+ *
+ * Date auto-management on status transitions (only when dates aren't explicitly provided):
+ * - → in_progress: set startedAt = now (preserves existing)
+ * - → completed: set completedAt = now (preserves existing)
+ * - → other status: clear both dates
+ * - no status change: leave dates untouched
+ *
+ * Explicit startedAt/completedAt values always win (for manual edits).
+ */
 export async function updateMediaItemFields(
 	itemId: string,
 	userId: string,
@@ -115,12 +124,44 @@ export async function updateMediaItemFields(
 		coverUrl: string | null;
 		releaseYear: number | null;
 		pinned: boolean;
+		startedAt: Date | null;
+		completedAt: Date | null;
 	}>
 ) {
-	// Auto-manage completedAt on status transitions
-	const completedAt =
-		fields.status === 'completed' ? new Date() : fields.status !== undefined ? null : undefined;
-	const setFields = completedAt !== undefined ? { ...fields, completedAt } : fields;
+	const { startedAt: explicitStarted, completedAt: explicitCompleted, ...rest } = fields;
+
+	// Build the set payload starting from non-date fields
+	const setFields: Record<string, unknown> = { ...rest };
+
+	// Explicit date values always win
+	if (explicitStarted !== undefined) setFields.startedAt = explicitStarted;
+	if (explicitCompleted !== undefined) setFields.completedAt = explicitCompleted;
+
+	// Auto-manage dates on status transitions (only for fields not explicitly provided)
+	if (
+		fields.status !== undefined &&
+		explicitStarted === undefined &&
+		explicitCompleted === undefined
+	) {
+		if (fields.status === 'in_progress') {
+			// Preserve existing startedAt — only set if null
+			const existing = await db.query.mediaItem.findFirst({
+				columns: { startedAt: true },
+				where: and(eq(mediaItem.id, itemId), eq(mediaItem.userId, userId))
+			});
+			if (!existing?.startedAt) setFields.startedAt = new Date();
+		} else if (fields.status === 'completed') {
+			const existing = await db.query.mediaItem.findFirst({
+				columns: { startedAt: true, completedAt: true },
+				where: and(eq(mediaItem.id, itemId), eq(mediaItem.userId, userId))
+			});
+			if (!existing?.startedAt) setFields.startedAt = new Date();
+			if (!existing?.completedAt) setFields.completedAt = new Date();
+		} else {
+			setFields.startedAt = null;
+			setFields.completedAt = null;
+		}
+	}
 
 	const [updated] = await db
 		.update(mediaItem)
@@ -377,17 +418,45 @@ export async function deleteMediaItem(itemId: string, userId: string) {
 	return deleted;
 }
 
-/** Batch update sortOrder for multiple items (used after drag-and-drop) */
+/** Batch update sortOrder for multiple items (used after drag-and-drop).
+ *
+ * Only sets date fields when the item's status actually changes — preserves
+ * existing startedAt/completedAt when re-sorting within the same column.
+ */
 export async function reorderMediaItems(
 	userId: string,
 	updates: Array<{ id: string; status: MediaStatus; sortOrder: number }>
 ) {
 	await db.transaction(async (tx) => {
+		// Fetch current statuses/dates in one query
+		const ids = updates.map((u) => u.id);
+		const existing = await tx.query.mediaItem.findMany({
+			columns: { id: true, status: true, startedAt: true, completedAt: true },
+			where: and(inArray(mediaItem.id, ids), eq(mediaItem.userId, userId))
+		});
+		const byId = new Map(existing.map((e) => [e.id, e]));
+
 		for (const { id, status, sortOrder } of updates) {
-			const completedAt = status === 'completed' ? new Date() : null;
+			const prev = byId.get(id);
+			const statusChanged = prev?.status !== status;
+
+			const setFields: Record<string, unknown> = { status, sortOrder };
+
+			if (statusChanged) {
+				if (status === 'in_progress') {
+					if (!prev?.startedAt) setFields.startedAt = new Date();
+				} else if (status === 'completed') {
+					if (!prev?.startedAt) setFields.startedAt = new Date();
+					if (!prev?.completedAt) setFields.completedAt = new Date();
+				} else {
+					setFields.startedAt = null;
+					setFields.completedAt = null;
+				}
+			}
+
 			await tx
 				.update(mediaItem)
-				.set({ status, sortOrder, completedAt })
+				.set(setFields)
 				.where(and(eq(mediaItem.id, id), eq(mediaItem.userId, userId)));
 		}
 	});
