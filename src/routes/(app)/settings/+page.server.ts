@@ -2,6 +2,8 @@ import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { getUserProfile, updateUserProfile } from '$lib/server/db/queries';
 import { auth } from '$lib/server/auth';
+import { APIError } from 'better-auth';
+import { friendlyAuthError } from '$lib/server/auth-errors';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { user } = await parent();
@@ -64,8 +66,12 @@ export const actions: Actions = {
 				body: { currentPassword, newPassword },
 				headers: event.request.headers
 			});
-		} catch {
-			return fail(400, { passwordMessage: 'Current password is incorrect' });
+		} catch (error) {
+			const message =
+				error instanceof APIError
+					? friendlyAuthError(error, { action: 'changePassword' })
+					: 'Failed to update password. Please try again.';
+			return fail(400, { passwordMessage: message });
 		}
 
 		return { passwordMessage: 'Password updated', passwordSuccess: true };

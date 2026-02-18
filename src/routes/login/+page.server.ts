@@ -45,12 +45,21 @@ export const actions: Actions = {
 		const redirectTo = safeRedirect(formData.get('redirect')?.toString());
 		const provider = formData.get('provider')?.toString() ?? 'github';
 
-		const result = await auth.api.signInSocial({
-			body: { provider: provider as 'github', callbackURL: redirectTo }
-		});
+		try {
+			const result = await auth.api.signInSocial({
+				body: { provider: provider as 'github', callbackURL: redirectTo }
+			});
 
-		if (result.url) {
-			redirect(302, result.url);
+			if (result.url) {
+				redirect(302, result.url);
+			}
+		} catch (error) {
+			if (error instanceof APIError) {
+				return fail(400, {
+					message: friendlyAuthError(error, { action: 'signInSocial', provider })
+				});
+			}
+			throw error; // re-throw SvelteKit redirects
 		}
 		return fail(400, { message: 'Social sign-in failed' });
 	}

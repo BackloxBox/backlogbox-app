@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { toggleMode } from 'mode-watcher';
-	import { authClient } from '$lib/auth-client';
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
+
 	import Sun from '@lucide/svelte/icons/sun';
 	import Moon from '@lucide/svelte/icons/moon';
 	import BookOpen from '@lucide/svelte/icons/book-open';
@@ -27,7 +25,6 @@
 
 	let mobileMenuOpen = $state(false);
 	let billing = $state<'monthly' | 'yearly'>('yearly');
-	let loading = $state<'monthly' | 'yearly' | null>(null);
 
 	const pills = [
 		{ icon: BookOpen, label: 'Books', color: '#3B82F6' },
@@ -125,19 +122,6 @@
 		{ name: 'Completed', color: '#22C55E', cards: ['Oppenheimer', 'Poor Things'] }
 	] as const;
 
-	async function subscribe(slug: 'monthly' | 'yearly') {
-		if (!page.data.user) {
-			await goto('/login?redirect=/subscribe');
-			return;
-		}
-		loading = slug;
-		try {
-			await authClient.checkout({ slug });
-		} finally {
-			loading = null;
-		}
-	}
-
 	function scrollTo(id: string) {
 		document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 		mobileMenuOpen = false;
@@ -215,7 +199,7 @@
 				</Button>
 				<div class="mx-1 h-4 w-px bg-border/60"></div>
 				<Button variant="ghost" size="sm" href="/login">Sign in</Button>
-				<Button size="sm" href="/register">Get Started</Button>
+				<Button size="sm" href="/register">Start Free Trial</Button>
 			</div>
 
 			<!-- Mobile -->
@@ -277,7 +261,7 @@
 						Sign in
 					</a>
 					<div class="pt-1">
-						<Button size="sm" href="/register" class="w-full">Get Started</Button>
+						<Button size="sm" href="/register" class="w-full">Start Free Trial</Button>
 					</div>
 				</div>
 			</div>
@@ -313,6 +297,7 @@
 			>
 				The all-in-one media backlog tracker. Kanban boards for books, movies, series, games, and
 				podcasts — plus custom lists for anything else.
+				<span class="font-medium text-foreground">14-day free trial, no card required.</span>
 			</p>
 
 			<div
@@ -320,7 +305,7 @@
 				style="animation-delay: 200ms"
 			>
 				<Button size="lg" href="/register" class="w-full gap-2 sm:w-auto">
-					Start Tracking
+					Start Free Trial
 					<ArrowRight class="size-4" />
 				</Button>
 				<Button variant="outline" size="lg" href="/login" class="w-full sm:w-auto">Sign in</Button>
@@ -519,7 +504,7 @@
 					>
 				</h2>
 				<p class="mt-3 text-sm text-muted-foreground sm:text-base">
-					No tiers, no feature gates. Full access to everything.
+					Start with a 14-day free trial. No tiers, no feature gates.
 				</p>
 			</div>
 
@@ -571,21 +556,10 @@
 					{/each}
 				</ul>
 
-				<Button
-					class="mt-8 w-full"
-					size="lg"
-					disabled={loading !== null}
-					onclick={() => subscribe(billing)}
-				>
-					{#if loading}
-						Redirecting...
-					{:else}
-						Subscribe {billing === 'yearly' ? 'Yearly' : 'Monthly'}
-					{/if}
-				</Button>
+				<Button class="mt-8 w-full" size="lg" href="/register">Start 14-Day Free Trial</Button>
 
 				<p class="mt-3 text-center text-[11px] text-muted-foreground/40">
-					Cancel anytime. Powered by Polar.
+					No credit card required. Cancel anytime.
 				</p>
 			</div>
 		</div>

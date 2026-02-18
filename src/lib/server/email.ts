@@ -19,9 +19,16 @@ interface SendEmailParams {
  * Send a transactional email via Resend.
  * Logs errors but never throws — callers should fire-and-forget with `void`.
  * No-ops during SvelteKit build.
+ * Logs to console when RESEND_API_KEY is unset (local dev).
  */
 export async function sendEmail({ to, subject, html }: SendEmailParams): Promise<void> {
 	if (building) return;
+
+	if (!env.RESEND_API_KEY) {
+		log.info({ to, subject }, 'email (dev mode, not sent)');
+		log.debug({ html }, 'email html body');
+		return;
+	}
 
 	const from = env.EMAIL_FROM ?? 'BacklogBox <noreply@backlogbox.com>';
 

@@ -102,8 +102,8 @@
 			</a>
 		{:else}
 			<div class="text-center">
-				<h1 class="text-2xl font-semibold tracking-tight text-foreground">Create an account</h1>
-				<p class="mt-1 text-sm text-muted-foreground">Start tracking your media backlog</p>
+				<h1 class="text-2xl font-semibold tracking-tight text-foreground">Start your free trial</h1>
+				<p class="mt-1 text-sm text-muted-foreground">14 days free, no credit card required</p>
 			</div>
 
 			<form
@@ -165,7 +165,14 @@
 				</div>
 				<div class="space-y-1.5">
 					<Label for="password">Password</Label>
-					<Input id="password" type="password" name="password" required />
+					<Input
+						id="password"
+						type="password"
+						name="password"
+						required
+						minlength={8}
+						placeholder="At least 8 characters"
+					/>
 				</div>
 
 				<Button type="submit" class="w-full" disabled={usernameStatus === 'taken'}>
