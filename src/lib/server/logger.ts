@@ -39,8 +39,7 @@ function createLogger(): pino.Logger {
 			target: '@axiomhq/pino',
 			options: {
 				dataset: process.env.AXIOM_DATASET,
-				token: process.env.AXIOM_TOKEN,
-				url: 'https://eu-central-1.aws.edge.axiom.co'
+				token: process.env.AXIOM_TOKEN
 			}
 		});
 	}
