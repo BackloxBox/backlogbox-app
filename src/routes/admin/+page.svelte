@@ -187,6 +187,18 @@
 		color: PROVIDER_COLORS[p]
 	}));
 
+	const cachedChartData = $derived(
+		apiMetrics
+			? apiMetrics.hourlyCached.map((h) => ({
+					date: new Date(h.hour + ':00:00Z'),
+					tmdb: h.tmdb,
+					igdb: h.igdb,
+					openlibrary: h.openlibrary,
+					apple: h.apple
+				}))
+			: []
+	);
+
 	// --- Helpers ---
 
 	function pct(n: number): string {
@@ -506,7 +518,7 @@
 						API Calls (7d)
 					</div>
 					<p class="mt-1 text-2xl font-bold">{apiMetrics.totals.uncached}</p>
-					<p class="text-xs text-muted-foreground">{apiMetrics.totals.callsPerHour}/hr avg</p>
+					<p class="text-xs text-muted-foreground">{apiMetrics.totals.totalCallsPerHour}/hr avg</p>
 				</div>
 				<div class="rounded-lg border bg-card p-4">
 					<div class="flex items-center gap-2 text-sm text-muted-foreground">
@@ -537,6 +549,7 @@
 			<!-- API Calls Over Time Chart -->
 			{#if metricsChartData.length > 1}
 				<div class="rounded-lg border bg-card p-4">
+					<p class="mb-2 text-sm font-medium text-muted-foreground">External API Calls Over Time</p>
 					<Chart.Container config={metricsChartConfig} class="h-[250px] w-full">
 						<AreaChart
 							data={metricsChartData}
@@ -588,6 +601,55 @@
 				</div>
 			{/if}
 
+			<!-- Cache Hits Over Time Chart -->
+			{#if cachedChartData.length > 1}
+				<div class="rounded-lg border bg-card p-4">
+					<p class="mb-2 text-sm font-medium text-muted-foreground">Cache Hits Over Time</p>
+					<Chart.Container config={metricsChartConfig} class="h-[200px] w-full">
+						<AreaChart
+							data={cachedChartData}
+							x="date"
+							xScale={scaleUtc()}
+							yPadding={[0, 25]}
+							series={metricsSeries}
+							seriesLayout="stack"
+							props={{
+								area: {
+									curve: curveMonotoneX,
+									'fill-opacity': 0.4,
+									line: { class: 'stroke-1' },
+									motion: 'tween'
+								},
+								xAxis: {
+									format: (v: Date) =>
+										v.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+								},
+								yAxis: { format: () => '' }
+							}}
+						>
+							{#snippet tooltip()}
+								<Chart.Tooltip indicator="dot" />
+							{/snippet}
+							{#snippet marks({ series, getAreaProps })}
+								{#each series as s, i (s.key)}
+									<LinearGradient
+										stops={[
+											s.color ?? '',
+											'color-mix(in lch, ' + (s.color ?? '') + ' 10%, transparent)'
+										]}
+										vertical
+									>
+										{#snippet children({ gradient })}
+											<Area {...getAreaProps(s, i)} fill={gradient} />
+										{/snippet}
+									</LinearGradient>
+								{/each}
+							{/snippet}
+						</AreaChart>
+					</Chart.Container>
+				</div>
+			{/if}
+
 			<!-- Per-Provider Breakdown Table -->
 			<div class="overflow-x-auto rounded-lg border bg-card">
 				<table class="w-full text-sm">
@@ -597,6 +659,9 @@
 							<th class="px-4 py-3 text-right font-medium">API Calls</th>
 							<th class="px-4 py-3 text-right font-medium">Cache Hits</th>
 							<th class="px-4 py-3 text-right font-medium">Hit Rate</th>
+							<th class="px-4 py-3 text-right font-medium">/hr</th>
+							<th class="px-4 py-3 text-right font-medium">/min</th>
+							<th class="px-4 py-3 text-right font-medium">/sec</th>
 							<th class="px-4 py-3 text-right font-medium">Avg Latency</th>
 							<th class="px-4 py-3 text-right font-medium">Errors</th>
 						</tr>
@@ -617,6 +682,9 @@
 								<td class="px-4 py-3 text-right tabular-nums">{pm.uncached}</td>
 								<td class="px-4 py-3 text-right tabular-nums">{pm.cached}</td>
 								<td class="px-4 py-3 text-right tabular-nums">{pm.hitRate}</td>
+								<td class="px-4 py-3 text-right tabular-nums">{pm.callsPerHour}</td>
+								<td class="px-4 py-3 text-right tabular-nums">{pm.callsPerMinute}</td>
+								<td class="px-4 py-3 text-right tabular-nums">{pm.callsPerSecond}</td>
 								<td class="px-4 py-3 text-right tabular-nums">{pm.avgLatencyMs}ms</td>
 								<td class="px-4 py-3 text-right tabular-nums">{pm.errors}</td>
 							</tr>

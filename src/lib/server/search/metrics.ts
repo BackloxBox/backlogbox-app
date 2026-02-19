@@ -93,6 +93,10 @@ export interface ProviderMetrics {
 	errors: number;
 	avgLatencyMs: number;
 	hitRate: string;
+	/** Calls per hour / minute / second (based on query window) */
+	callsPerHour: number;
+	callsPerMinute: number;
+	callsPerSecond: number;
 }
 
 export interface HourlyDataPoint {
@@ -105,9 +109,11 @@ export interface HourlyDataPoint {
 
 export interface ApiMetricsSummary {
 	providers: Record<Provider, ProviderMetrics>;
-	totals: ProviderMetrics & { callsPerHour: number };
-	/** Hourly uncached call counts for the chart, sorted chronologically */
+	totals: ProviderMetrics & { totalCallsPerHour: number };
+	/** Hourly uncached call counts, sorted chronologically */
 	hourly: HourlyDataPoint[];
+	/** Hourly cached hit counts, sorted chronologically */
+	hourlyCached: HourlyDataPoint[];
 }
 
 /** Generate hour keys for the last N hours */
@@ -125,14 +131,18 @@ function emptyBucket(): BucketFields {
 	return { cached: 0, uncached: 0, errors: 0, latency_sum: 0, latency_count: 0 };
 }
 
-function toProviderMetrics(b: BucketFields): ProviderMetrics {
+function toProviderMetrics(b: BucketFields, hours: number): ProviderMetrics {
 	const total = b.cached + b.uncached;
+	const totalSeconds = hours * 3600;
 	return {
 		cached: b.cached,
 		uncached: b.uncached,
 		errors: b.errors,
 		avgLatencyMs: b.latency_count > 0 ? Math.round(b.latency_sum / b.latency_count) : 0,
-		hitRate: total > 0 ? `${Math.round((b.cached / total) * 100)}%` : '0%'
+		hitRate: total > 0 ? `${Math.round((b.cached / total) * 100)}%` : '0%',
+		callsPerHour: hours > 0 ? Math.round((total / hours) * 10) / 10 : 0,
+		callsPerMinute: hours > 0 ? Math.round((total / (hours * 60)) * 100) / 100 : 0,
+		callsPerSecond: totalSeconds > 0 ? Math.round((total / totalSeconds) * 1000) / 1000 : 0
 	};
 }
 
@@ -165,10 +175,18 @@ export async function getApiMetrics(hours: number): Promise<ApiMetricsSummary | 
 		apple: emptyBucket()
 	};
 
-	// Per-hour uncached calls for the chart
-	const hourlyMap = new Map<string, Record<Provider, number>>();
+	// Per-hour counts for charts
+	const emptyHourRow = (): Record<Provider, number> => ({
+		tmdb: 0,
+		igdb: 0,
+		openlibrary: 0,
+		apple: 0
+	});
+	const hourlyUncachedMap = new Map<string, Record<Provider, number>>();
+	const hourlyCachedMap = new Map<string, Record<Provider, number>>();
 	for (const hour of hourSlots) {
-		hourlyMap.set(hour, { tmdb: 0, igdb: 0, openlibrary: 0, apple: 0 });
+		hourlyUncachedMap.set(hour, emptyHourRow());
+		hourlyCachedMap.set(hour, emptyHourRow());
 	}
 
 	let idx = 0;
@@ -193,10 +211,10 @@ export async function getApiMetrics(hours: number): Promise<ApiMetricsSummary | 
 			pt.latency_sum += latencySum;
 			pt.latency_count += latencyCount;
 
-			const hourEntry = hourlyMap.get(hour);
-			if (hourEntry) {
-				hourEntry[provider] = uncached;
-			}
+			const uncachedEntry = hourlyUncachedMap.get(hour);
+			if (uncachedEntry) uncachedEntry[provider] = uncached;
+			const cachedEntry = hourlyCachedMap.get(hour);
+			if (cachedEntry) cachedEntry[provider] = cached;
 		}
 	}
 
@@ -212,24 +230,28 @@ export async function getApiMetrics(hours: number): Promise<ApiMetricsSummary | 
 	}
 
 	const totals = {
-		...toProviderMetrics(totalBucket),
-		callsPerHour:
+		...toProviderMetrics(totalBucket, hours),
+		totalCallsPerHour:
 			hours > 0 ? Math.round(((totalBucket.cached + totalBucket.uncached) / hours) * 10) / 10 : 0
 	};
 
-	// Build hourly array sorted chronologically (oldest first)
+	const defaultRow = { tmdb: 0, igdb: 0, openlibrary: 0, apple: 0 };
+
+	// Build hourly arrays sorted chronologically (oldest first)
 	const hourly: HourlyDataPoint[] = hourSlots
-		.map((hour) => ({
-			hour,
-			...(hourlyMap.get(hour) ?? { tmdb: 0, igdb: 0, openlibrary: 0, apple: 0 })
-		}))
+		.map((hour) => ({ hour, ...(hourlyUncachedMap.get(hour) ?? defaultRow) }))
+		.reverse();
+
+	const hourlyCached: HourlyDataPoint[] = hourSlots
+		.map((hour) => ({ hour, ...(hourlyCachedMap.get(hour) ?? defaultRow) }))
 		.reverse();
 
 	return {
 		providers: Object.fromEntries(
-			PROVIDERS.map((p) => [p, toProviderMetrics(providerTotals[p])])
+			PROVIDERS.map((p) => [p, toProviderMetrics(providerTotals[p], hours)])
 		) as Record<Provider, ProviderMetrics>,
 		totals,
-		hourly
+		hourly,
+		hourlyCached
 	};
 }
