@@ -199,6 +199,21 @@
 			: []
 	);
 
+	const errorsChartData = $derived(
+		apiMetrics
+			? apiMetrics.hourlyErrors.map((h) => ({
+					date: new Date(h.hour + ':00:00Z'),
+					tmdb: h.tmdb,
+					igdb: h.igdb,
+					openlibrary: h.openlibrary,
+					apple: h.apple
+				}))
+			: []
+	);
+
+	/** Whether any errors exist at all (to conditionally show the chart) */
+	const hasErrors = $derived(apiMetrics ? apiMetrics.totals.errors > 0 : false);
+
 	// --- Helpers ---
 
 	function pct(n: number): string {
@@ -608,6 +623,55 @@
 					<Chart.Container config={metricsChartConfig} class="h-[200px] w-full">
 						<AreaChart
 							data={cachedChartData}
+							x="date"
+							xScale={scaleUtc()}
+							yPadding={[0, 25]}
+							series={metricsSeries}
+							seriesLayout="stack"
+							props={{
+								area: {
+									curve: curveMonotoneX,
+									'fill-opacity': 0.4,
+									line: { class: 'stroke-1' },
+									motion: 'tween'
+								},
+								xAxis: {
+									format: (v: Date) =>
+										v.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+								},
+								yAxis: { format: () => '' }
+							}}
+						>
+							{#snippet tooltip()}
+								<Chart.Tooltip indicator="dot" />
+							{/snippet}
+							{#snippet marks({ series, getAreaProps })}
+								{#each series as s, i (s.key)}
+									<LinearGradient
+										stops={[
+											s.color ?? '',
+											'color-mix(in lch, ' + (s.color ?? '') + ' 10%, transparent)'
+										]}
+										vertical
+									>
+										{#snippet children({ gradient })}
+											<Area {...getAreaProps(s, i)} fill={gradient} />
+										{/snippet}
+									</LinearGradient>
+								{/each}
+							{/snippet}
+						</AreaChart>
+					</Chart.Container>
+				</div>
+			{/if}
+
+			<!-- Errors Over Time Chart (only shown when errors exist) -->
+			{#if hasErrors && errorsChartData.length > 1}
+				<div class="rounded-lg border border-red-500/20 bg-card p-4">
+					<p class="mb-2 text-sm font-medium text-red-400">Errors Over Time</p>
+					<Chart.Container config={metricsChartConfig} class="h-[200px] w-full">
+						<AreaChart
+							data={errorsChartData}
 							x="date"
 							xScale={scaleUtc()}
 							yPadding={[0, 25]}

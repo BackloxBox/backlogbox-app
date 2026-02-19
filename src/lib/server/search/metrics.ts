@@ -114,6 +114,8 @@ export interface ApiMetricsSummary {
 	hourly: HourlyDataPoint[];
 	/** Hourly cached hit counts, sorted chronologically */
 	hourlyCached: HourlyDataPoint[];
+	/** Hourly error counts, sorted chronologically */
+	hourlyErrors: HourlyDataPoint[];
 }
 
 /** Generate hour keys for the last N hours */
@@ -184,9 +186,11 @@ export async function getApiMetrics(hours: number): Promise<ApiMetricsSummary | 
 	});
 	const hourlyUncachedMap = new Map<string, Record<Provider, number>>();
 	const hourlyCachedMap = new Map<string, Record<Provider, number>>();
+	const hourlyErrorsMap = new Map<string, Record<Provider, number>>();
 	for (const hour of hourSlots) {
 		hourlyUncachedMap.set(hour, emptyHourRow());
 		hourlyCachedMap.set(hour, emptyHourRow());
+		hourlyErrorsMap.set(hour, emptyHourRow());
 	}
 
 	let idx = 0;
@@ -215,6 +219,8 @@ export async function getApiMetrics(hours: number): Promise<ApiMetricsSummary | 
 			if (uncachedEntry) uncachedEntry[provider] = uncached;
 			const cachedEntry = hourlyCachedMap.get(hour);
 			if (cachedEntry) cachedEntry[provider] = cached;
+			const errorsEntry = hourlyErrorsMap.get(hour);
+			if (errorsEntry) errorsEntry[provider] = errors;
 		}
 	}
 
@@ -246,12 +252,17 @@ export async function getApiMetrics(hours: number): Promise<ApiMetricsSummary | 
 		.map((hour) => ({ hour, ...(hourlyCachedMap.get(hour) ?? defaultRow) }))
 		.reverse();
 
+	const hourlyErrors: HourlyDataPoint[] = hourSlots
+		.map((hour) => ({ hour, ...(hourlyErrorsMap.get(hour) ?? defaultRow) }))
+		.reverse();
+
 	return {
 		providers: Object.fromEntries(
 			PROVIDERS.map((p) => [p, toProviderMetrics(providerTotals[p], hours)])
 		) as Record<Provider, ProviderMetrics>,
 		totals,
 		hourly,
-		hourlyCached
+		hourlyCached,
+		hourlyErrors
 	};
 }
