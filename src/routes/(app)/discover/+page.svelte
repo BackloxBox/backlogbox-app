@@ -275,8 +275,12 @@
 												>
 													<Info class="size-3" />
 												</Popover.Trigger>
-												<Popover.Content class="w-64 text-xs" side="bottom" align="end">
-													<p class="line-clamp-4">{result.description}</p>
+												<Popover.Content
+													class="max-h-64 w-64 overflow-y-auto text-xs"
+													side="bottom"
+													align="end"
+												>
+													<p>{result.description}</p>
 												</Popover.Content>
 											</Popover.Root>
 										{/if}
@@ -380,8 +384,12 @@
 									>
 										<Info class="size-3" />
 									</Popover.Trigger>
-									<Popover.Content class="w-64 text-xs" side="bottom" align="end">
-										<p class="line-clamp-4">{result.description}</p>
+									<Popover.Content
+										class="max-h-64 w-64 overflow-y-auto text-xs"
+										side="bottom"
+										align="end"
+									>
+										<p>{result.description}</p>
 									</Popover.Content>
 								</Popover.Root>
 							{/if}
