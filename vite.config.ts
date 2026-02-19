@@ -50,6 +50,7 @@ export default defineConfig({
 			},
 			workbox: {
 				globPatterns: ['client/**/*.{js,css,html,svg,png,woff2}'],
+				navigateFallbackDenylist: [/^\/admin/],
 				runtimeCaching: [
 					{
 						urlPattern: /^https:\/\/image\.tmdb\.org\/.*/i,
