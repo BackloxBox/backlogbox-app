@@ -75,7 +75,7 @@ jobs:
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.workflow_run.head_sha }} \
               node scripts/migrate.mjs
 
-      - name: Deploy to Docker Swarm
+      - name: Extract static assets and deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -86,6 +86,14 @@ jobs:
 
             export IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.workflow_run.head_sha }}
             export DEPLOY_SHA=${{ github.event.workflow_run.head_sha }}
+
+            # Extract client static assets from the new image so Caddy
+            # can serve them directly — avoids 404s during rolling deploy
+            # when replicas run different builds.
+            mkdir -p ~/backlogbox/static-assets
+            docker create --name extract-assets-$DEPLOY_SHA $IMAGE true
+            docker cp extract-assets-$DEPLOY_SHA:/app/build/client/. ~/backlogbox/static-assets/
+            docker rm extract-assets-$DEPLOY_SHA
 
             cd ~/backlogbox
             docker stack deploy --with-registry-auth -c docker-stack.yml backlogbox

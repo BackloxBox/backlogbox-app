@@ -7,6 +7,7 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { Switch } from '$lib/components/ui/switch/index.js';
 	import { authClient } from '$lib/auth-client';
+	import { toast } from 'svelte-sonner';
 	import Link from '@lucide/svelte/icons/link';
 	import Check from '@lucide/svelte/icons/check';
 	import CreditCard from '@lucide/svelte/icons/credit-card';
@@ -38,12 +39,21 @@
 	}
 </script>
 
-<div class="mx-auto max-w-lg p-6 pl-14 lg:p-8">
+<div class="mx-auto max-w-lg p-4 pt-14 lg:p-8 lg:pt-8">
 	<h1 class="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
 	<p class="mt-1 text-sm text-muted-foreground">Manage your profile and account</p>
 
 	<!-- Profile section -->
-	<form method="post" action="?/updateProfile" use:enhance class="mt-8 space-y-5">
+	<form
+		method="post"
+		action="?/updateProfile"
+		use:enhance={() =>
+			async ({ result, update }) => {
+				await update({ reset: false });
+				if (result.type === 'success') toast.success('Profile updated');
+			}}
+		class="mt-8 space-y-5"
+	>
 		<h2 class="text-sm font-medium text-foreground">Profile</h2>
 
 		<div class="space-y-1.5">
@@ -80,8 +90,8 @@
 			</div>
 		{/if}
 
-		{#if form?.profileMessage}
-			<p class="text-sm {form?.profileSuccess ? 'text-green-500' : 'text-destructive'}">
+		{#if form?.profileMessage && !form?.profileSuccess}
+			<p class="text-sm text-destructive">
 				{form.profileMessage}
 			</p>
 		{/if}

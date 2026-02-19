@@ -129,30 +129,30 @@
 </script>
 
 <div class="space-y-4 p-4 pt-14 lg:p-6 lg:pt-6">
-	<!-- Header row: title + summary stats -->
-	<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-		<div>
-			<h1 class="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
-			<p class="mt-0.5 text-sm text-muted-foreground">Your collection at a glance</p>
+	<!-- Header row -->
+	<div>
+		<h1 class="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+		<p class="mt-0.5 text-sm text-muted-foreground">Your collection at a glance</p>
+	</div>
+
+	<!-- Summary stats -->
+	<div class="grid grid-cols-3 gap-2">
+		<div class="rounded-xl border border-border bg-card p-3">
+			<p class="text-xs font-medium text-muted-foreground">Total items</p>
+			<p class="mt-1 text-2xl font-bold text-foreground tabular-nums">{stats.totalItems}</p>
 		</div>
-		<div class="flex gap-6">
-			<div class="text-right">
-				<p class="text-2xl font-bold text-foreground tabular-nums">{stats.totalItems}</p>
-				<p class="text-xs text-muted-foreground">total items</p>
+		<div class="rounded-xl border border-border bg-card p-3">
+			<p class="text-xs font-medium text-muted-foreground">Completed</p>
+			<div class="mt-1 flex items-center gap-1.5">
+				<TrendingUp class="size-4 text-emerald-500" />
+				<p class="text-2xl font-bold text-foreground tabular-nums">{completionRate}%</p>
 			</div>
-			<div class="text-right">
-				<div class="flex items-center justify-end gap-1.5">
-					<TrendingUp class="size-3.5 text-emerald-500" />
-					<p class="text-2xl font-bold text-foreground tabular-nums">{completionRate}%</p>
-				</div>
-				<p class="text-xs text-muted-foreground">completed</p>
-			</div>
-			<div class="text-right">
-				<div class="flex items-center justify-end gap-1.5">
-					<Flame class="size-3.5 text-amber-500" />
-					<p class="text-2xl font-bold text-foreground tabular-nums">{recentlyAddedCount}</p>
-				</div>
-				<p class="text-xs text-muted-foreground">added (30d)</p>
+		</div>
+		<div class="rounded-xl border border-border bg-card p-3">
+			<p class="text-xs font-medium text-muted-foreground">Added (30d)</p>
+			<div class="mt-1 flex items-center gap-1.5">
+				<Flame class="size-4 text-amber-500" />
+				<p class="text-2xl font-bold text-foreground tabular-nums">{recentlyAddedCount}</p>
 			</div>
 		</div>
 	</div>

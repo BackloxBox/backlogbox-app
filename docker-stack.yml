@@ -23,6 +23,7 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+      - /root/backlogbox/static-assets:/srv/static:ro
     networks:
       - app_network
     deploy:

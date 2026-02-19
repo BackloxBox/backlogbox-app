@@ -1,4 +1,6 @@
 backlogbox.com {
+	encode gzip
+
 	handle_path /t/* {
 		rewrite * {path}
 		reverse_proxy https://eu.i.posthog.com {
@@ -6,8 +8,23 @@ backlogbox.com {
 		}
 	}
 
+	# Serve immutable hashed assets directly from disk — avoids 404s
+	# during rolling deploys when replicas run different builds.
+	handle /_app/immutable/* {
+		root * /srv/static
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# Other static assets (favicon, manifest, fonts, PWA service worker, etc.)
+	@static path /favicon.ico /robots.txt /fonts/* /og.png /*.png /*.svg /manifest.webmanifest /sw.js /sw.js.map /workbox-*.js /workbox-*.js.map
+	handle @static {
+		root * /srv/static
+		header Cache-Control "public, max-age=3600"
+		file_server
+	}
+
 	reverse_proxy app:3000
-	encode gzip
 }
 
 www.backlogbox.com {
