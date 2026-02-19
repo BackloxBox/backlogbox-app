@@ -30,6 +30,8 @@
 			value = '';
 			expanded = false;
 			inputEl?.blur();
+		} else if (e.key === 'Enter') {
+			inputEl?.blur();
 		}
 	}
 
@@ -52,7 +54,8 @@
 			<input
 				bind:this={inputEl}
 				bind:value
-				type="text"
+				type="search"
+				enterkeyhint="search"
 				placeholder="Search..."
 				onblur={collapseIfEmpty}
 				onkeydown={handleKeydown}

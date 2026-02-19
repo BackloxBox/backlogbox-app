@@ -523,10 +523,14 @@
 			{:else}
 				<!-- Search input -->
 				<Input
-					type="text"
+					type="search"
+					enterkeyhint="search"
 					placeholder="Search by title..."
 					bind:value={searchQuery}
 					oninput={handleInput}
+					onkeydown={(e: KeyboardEvent) => {
+						if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+					}}
 				/>
 
 				<!-- Provider attribution -->
