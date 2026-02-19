@@ -163,47 +163,12 @@ export async function fetchTrendingGames(): Promise<TypedSearchResult<'game'>[]>
 
 // --- Discover: Anticipated ---
 
-interface IGDBPopularityPrimitive {
-	id: number;
-	game_id: number;
-	popularity_type: number;
-	value: number;
-}
-
-/** Fetch most anticipated (want-to-play) unreleased games via IGDB PopScore */
+/** Fetch most anticipated unreleased games, sorted by pre-release hype */
 export async function fetchAnticipatedGames(): Promise<TypedSearchResult<'game'>[]> {
-	const { clientId, accessToken } = await getAccessToken();
-
-	// Step 1: Get top "Want to Play" game IDs from popularity_primitives
-	await igdbLimiter.acquire();
-	const popResponse = await fetch('https://api.igdb.com/v4/popularity_primitives', {
-		method: 'POST',
-		headers: {
-			'Client-ID': clientId,
-			Authorization: `Bearer ${accessToken}`,
-			'Content-Type': 'text/plain',
-			Accept: 'application/json'
-		},
-		body: 'fields game_id, value, popularity_type; where popularity_type = 2; sort value desc; limit 40;'
-	});
-	if (!popResponse.ok) return [];
-
-	const primitives: IGDBPopularityPrimitive[] = await popResponse.json();
-	if (primitives.length === 0) return [];
-
-	const gameIds = primitives.map((p) => p.game_id);
-
-	// Step 2: Hydrate full game details, filtering to unreleased only
 	const now = Math.floor(Date.now() / 1000);
-	const idList = gameIds.join(',');
-	const body = `fields ${IGDB_GAME_FIELDS}; where id = (${idList}) & (first_release_date > ${now} | first_release_date = null); limit 40;`;
+	const body = `fields ${IGDB_GAME_FIELDS}; where first_release_date > ${now} & hypes != null; sort hypes desc; limit 20;`;
 	const games = await igdbFetch(body);
-
-	// Preserve popularity ordering from primitives
-	const orderMap = new Map(gameIds.map((id, i) => [id, i]));
-	games.sort((a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999));
-
-	return games.slice(0, 20).map((g) => mapGame(g, { includeReleaseDate: true }));
+	return games.map((g) => mapGame(g, { includeReleaseDate: true }));
 }
 
 // --- Discover: Similar ---
