@@ -3,15 +3,26 @@
 	import { dev } from '$app/environment';
 	import { page } from '$app/state';
 	import { env } from '$env/dynamic/public';
+	import { onMount } from 'svelte';
 	import { ModeWatcher } from 'mode-watcher';
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import CacheDebugOverlay from '$lib/components/dev/CacheDebugOverlay.svelte';
+	import IosInstallHint from '$lib/components/pwa/IosInstallHint.svelte';
 	import { initPostHog, identifyUser, resetUser } from '$lib/analytics';
+	import { pwaInfo } from 'virtual:pwa-info';
 
 	let { children, data } = $props();
 
 	// --- Analytics (pageviews auto-tracked via defaults: '2026-01-30') ---
 	initPostHog(env.PUBLIC_POSTHOG_KEY, env.PUBLIC_POSTHOG_HOST);
+
+	// --- PWA service worker registration ---
+	onMount(async () => {
+		if (pwaInfo) {
+			const { registerSW } = await import('virtual:pwa-register');
+			registerSW({ immediate: true });
+		}
+	});
 
 	let prevUserId: string | null = null;
 	$effect(() => {
@@ -35,7 +46,10 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href="/backlogbox-logo.svg" />
+	<link rel="icon" href="/backlogbox-logo.svg" type="image/svg+xml" sizes="any" />
+	{#if pwaInfo?.webManifest?.href}
+		<link rel="manifest" href={pwaInfo.webManifest.href} />
+	{/if}
 	<link rel="canonical" href={canonicalUrl} />
 
 	<!-- Defaults — child pages override title/description/og/twitter via their own <svelte:head> -->
@@ -80,6 +94,7 @@
 
 <ModeWatcher defaultMode="dark" />
 <Toaster richColors />
+<IosInstallHint />
 {#if dev}
 	<CacheDebugOverlay />
 {/if}

@@ -57,7 +57,8 @@ services:
       - RESEND_API_KEY
       - EMAIL_FROM
       - PUBLIC_POSTHOG_KEY
-      - PUBLIC_POSTHOG_HOST
+      - source: PUBLIC_POSTHOG_HOST_v2
+        target: PUBLIC_POSTHOG_HOST
       - ADMIN_USER
       - ADMIN_PASS
     environment:
@@ -131,7 +132,7 @@ secrets:
     external: true
   PUBLIC_POSTHOG_KEY:
     external: true
-  PUBLIC_POSTHOG_HOST:
+  PUBLIC_POSTHOG_HOST_v2:
     external: true
   ADMIN_USER:
     external: true
