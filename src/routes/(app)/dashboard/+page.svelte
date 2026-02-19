@@ -27,6 +27,9 @@
 	let { data }: { data: PageData } = $props();
 	const stats = $derived(data.stats);
 	const customListStats = $derived(data.customListStats);
+	const listsCompleted = $derived(
+		customListStats.statusCounts.find((s) => s.status === 'completed')?.count ?? 0
+	);
 
 	// --- Media type cards config ---
 
@@ -198,39 +201,35 @@
 		{/each}
 
 		<!-- Custom lists -->
-		{#if customListStats.totalLists > 0}
-			{@const listsCompleted =
-				customListStats.statusCounts.find((s) => s.status === 'completed')?.count ?? 0}
-			<div class="relative overflow-hidden rounded-xl border border-border bg-card p-3">
-				<div class="flex items-center gap-2">
-					<div
-						class="flex size-7 items-center justify-center rounded-lg"
-						style:background="#8B5CF615"
-						style:color="#8B5CF6"
-					>
-						<ListIcon class="size-3.5" />
-					</div>
-					<span class="text-xs font-medium text-muted-foreground">Lists</span>
+		<div class="relative overflow-hidden rounded-xl border border-border bg-card p-3">
+			<div class="flex items-center gap-2">
+				<div
+					class="flex size-7 items-center justify-center rounded-lg"
+					style:background="#8B5CF615"
+					style:color="#8B5CF6"
+				>
+					<ListIcon class="size-3.5" />
 				</div>
-				<div class="mt-2 flex items-baseline gap-2">
-					<span class="text-lg font-bold text-foreground tabular-nums"
-						>{customListStats.totalItems}</span
-					>
-					{#if listsCompleted > 0}
-						<span class="text-xs text-muted-foreground">{listsCompleted} done</span>
-					{/if}
-				</div>
-				{#if customListStats.totalItems > 0}
-					<div class="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
-						<div
-							class="h-full rounded-full transition-all duration-500"
-							style:background="#8B5CF6"
-							style:width="{Math.round((listsCompleted / customListStats.totalItems) * 100)}%"
-						></div>
-					</div>
+				<span class="text-xs font-medium text-muted-foreground">Lists</span>
+			</div>
+			<div class="mt-2 flex items-baseline gap-2">
+				<span class="text-lg font-bold text-foreground tabular-nums"
+					>{customListStats.totalItems}</span
+				>
+				{#if listsCompleted > 0}
+					<span class="text-xs text-muted-foreground">{listsCompleted} done</span>
 				{/if}
 			</div>
-		{/if}
+			{#if customListStats.totalItems > 0}
+				<div class="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
+					<div
+						class="h-full rounded-full transition-all duration-500"
+						style:background="#8B5CF6"
+						style:width="{Math.round((listsCompleted / customListStats.totalItems) * 100)}%"
+					></div>
+				</div>
+			{/if}
+		</div>
 	</div>
 
 	<!-- Activity heatmap -->
