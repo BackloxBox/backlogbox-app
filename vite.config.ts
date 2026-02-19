@@ -49,8 +49,10 @@ export default defineConfig({
 				]
 			},
 			workbox: {
-				globPatterns: ['client/**/*.{js,css,html,svg,png,woff2}'],
-				navigateFallbackDenylist: [/^\/admin/],
+				// SSR app (adapter-node): no precached HTML to fall back to.
+				// Disable navigateFallback so the SW doesn't intercept navigations.
+				navigateFallback: null,
+				globPatterns: ['client/**/*.{js,css,svg,png,woff2}'],
 				runtimeCaching: [
 					{
 						urlPattern: /^https:\/\/image\.tmdb\.org\/.*/i,
