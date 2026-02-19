@@ -38,7 +38,7 @@
 	}
 </script>
 
-<div class="mx-auto max-w-lg p-6 lg:p-8">
+<div class="mx-auto max-w-lg p-6 pl-14 lg:p-8">
 	<h1 class="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
 	<p class="mt-1 text-sm text-muted-foreground">Manage your profile and account</p>
 
