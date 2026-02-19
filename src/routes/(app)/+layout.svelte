@@ -148,7 +148,7 @@
 		{sidebarOpen ? 'translate-x-0' : '-translate-x-full'}"
 	>
 		<!-- Logo -->
-		<div class="flex h-14 items-center gap-2 px-4">
+		<div class="flex h-14 items-center gap-2 px-4 pl-14 lg:pl-4">
 			<a href="/dashboard" class="flex items-center gap-2 text-foreground">
 				<img src="/backlogbox-logo.svg" alt="" class="size-5" />
 				<span class="text-sm font-semibold tracking-tight">BacklogBox</span>

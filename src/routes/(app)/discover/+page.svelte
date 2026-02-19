@@ -11,11 +11,13 @@
 	import { addItem } from '../[type=mediaType]/data.remote';
 	import { debugMode } from '$lib/components/dev/debug-state.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Popover from '$lib/components/ui/popover/index.js';
 	import { toast } from 'svelte-sonner';
 	import { handleSubscriptionError } from '$lib/subscription-guard';
 	import type { SearchResult } from '$lib/server/search';
 	import type { CacheDebugMeta } from '$lib/server/search/cache';
 	import Plus from '@lucide/svelte/icons/plus';
+	import Info from '@lucide/svelte/icons/info';
 	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
@@ -213,7 +215,7 @@
 				{/each}
 			{:else if recsData.length === 0}
 				<div
-					class="flex h-40 items-center justify-center rounded-lg border border-dashed bg-muted/40 text-sm text-muted-foreground"
+					class="flex h-40 items-center justify-center rounded-lg border border-dashed bg-muted/40 text-center text-sm text-muted-foreground"
 				>
 					Add some {type ? MEDIA_TYPE_LABELS[type].plural.toLowerCase() : 'items'} to your library to
 					get personalized recommendations.
@@ -266,8 +268,20 @@
 												{result.title.trim().charAt(0).toUpperCase()}
 											</div>
 										{/if}
+										{#if result.description}
+											<Popover.Root>
+												<Popover.Trigger
+													class="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/50 text-white/80 transition-opacity hover:bg-black/70 sm:opacity-0 sm:group-hover:opacity-100"
+												>
+													<Info class="size-3" />
+												</Popover.Trigger>
+												<Popover.Content class="w-64 text-xs" side="bottom" align="end">
+													<p class="line-clamp-4">{result.description}</p>
+												</Popover.Content>
+											</Popover.Root>
+										{/if}
 										<div
-											class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-0 transition-opacity group-hover:opacity-100"
+											class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
 										>
 											<Button
 												variant="secondary"
@@ -359,8 +373,20 @@
 									{result.title.trim().charAt(0).toUpperCase()}
 								</div>
 							{/if}
+							{#if result.description}
+								<Popover.Root>
+									<Popover.Trigger
+										class="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/50 text-white/80 transition-opacity hover:bg-black/70 sm:opacity-0 sm:group-hover:opacity-100"
+									>
+										<Info class="size-3" />
+									</Popover.Trigger>
+									<Popover.Content class="w-64 text-xs" side="bottom" align="end">
+										<p class="line-clamp-4">{result.description}</p>
+									</Popover.Content>
+								</Popover.Root>
+							{/if}
 							<div
-								class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-0 transition-opacity group-hover:opacity-100"
+								class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
 							>
 								<Button
 									variant="secondary"
