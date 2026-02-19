@@ -61,7 +61,8 @@ const SKIP_PREFIXES = [
 	'/@vite/',
 	'/@id/',
 	'/__data',
-	'/node_modules'
+	'/node_modules',
+	'/healthz'
 ];
 
 const handleRequestLog: Handle = async ({ event, resolve }) => {
