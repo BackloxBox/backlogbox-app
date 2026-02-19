@@ -59,7 +59,8 @@ export default defineConfig({
 						handler: 'CacheFirst',
 						options: {
 							cacheName: 'tmdb-images',
-							expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 }
+							expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+							fetchOptions: { mode: 'cors' }
 						}
 					},
 					{
@@ -67,7 +68,8 @@ export default defineConfig({
 						handler: 'CacheFirst',
 						options: {
 							cacheName: 'igdb-images',
-							expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 }
+							expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+							fetchOptions: { mode: 'cors' }
 						}
 					},
 					{
@@ -75,7 +77,8 @@ export default defineConfig({
 						handler: 'CacheFirst',
 						options: {
 							cacheName: 'openlibrary-covers',
-							expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 }
+							expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+							fetchOptions: { mode: 'cors' }
 						}
 					}
 				]

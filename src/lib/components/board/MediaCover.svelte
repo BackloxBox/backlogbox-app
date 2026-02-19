@@ -43,6 +43,7 @@
 		<img
 			src={coverUrl}
 			alt={title}
+			crossorigin="anonymous"
 			loading="lazy"
 			onload={() => (loadedUrl = coverUrl)}
 			onerror={() => (failedUrl = coverUrl)}
