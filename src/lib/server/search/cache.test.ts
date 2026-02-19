@@ -122,11 +122,16 @@ describe('getCacheStats', () => {
 
 describe('eviction', () => {
 	it('expired entries are not returned by getCached', async () => {
-		const fetcher = vi
-			.fn()
-			.mockResolvedValue([
-				{ externalId: '1', title: 'T', coverUrl: null, releaseYear: 2024, meta: {} }
-			]);
+		const fetcher = vi.fn().mockResolvedValue([
+			{
+				externalId: '1',
+				title: 'T',
+				coverUrl: null,
+				releaseYear: 2024,
+				description: null,
+				meta: {}
+			}
+		]);
 
 		await cacheModule.getOrFetch('exp:1', 'search', 'test', fetcher);
 		expect(cacheModule.getCacheStats().size).toBe(1);
@@ -157,21 +162,48 @@ describe('legacy API', () => {
 	});
 
 	it('setCache + getCached roundtrip', () => {
-		const results = [{ externalId: '1', title: 'T', coverUrl: null, releaseYear: 2024, meta: {} }];
+		const results = [
+			{
+				externalId: '1',
+				title: 'T',
+				coverUrl: null,
+				releaseYear: 2024,
+				description: null,
+				meta: {}
+			}
+		];
 		cacheModule.setCache('movie', 'test', results);
 		const cached = cacheModule.getCached('movie', 'test');
 		expect(cached).toEqual(results);
 	});
 
 	it('getCached returns null after expiry', () => {
-		const results = [{ externalId: '1', title: 'T', coverUrl: null, releaseYear: 2024, meta: {} }];
+		const results = [
+			{
+				externalId: '1',
+				title: 'T',
+				coverUrl: null,
+				releaseYear: 2024,
+				description: null,
+				meta: {}
+			}
+		];
 		cacheModule.setCache('movie', 'test', results);
 		vi.advanceTimersByTime(6 * 60 * 1000); // past 5 min
 		expect(cacheModule.getCached('movie', 'test')).toBeNull();
 	});
 
 	it('getCached normalizes query case and whitespace', () => {
-		const results = [{ externalId: '1', title: 'T', coverUrl: null, releaseYear: 2024, meta: {} }];
+		const results = [
+			{
+				externalId: '1',
+				title: 'T',
+				coverUrl: null,
+				releaseYear: 2024,
+				description: null,
+				meta: {}
+			}
+		];
 		cacheModule.setCache('movie', '  Test  ', results);
 		expect(cacheModule.getCached('movie', 'test')).toEqual(results);
 	});

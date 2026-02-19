@@ -140,6 +140,7 @@ export const tmdbMovieProvider: SearchProvider<'movie'> = {
 			title: movie.title,
 			coverUrl: posterUrl(movie.poster_path),
 			releaseYear: yearFromDate(movie.release_date),
+			description: movie.overview ?? null,
 			meta: {
 				tmdbId: movie.id,
 				director: null, // Would need a separate /credits call; skip for search
@@ -170,6 +171,7 @@ export const tmdbSeriesProvider: SearchProvider<'series'> = {
 			title: tv.name,
 			coverUrl: posterUrl(tv.poster_path),
 			releaseYear: yearFromDate(tv.first_air_date),
+			description: tv.overview ?? null,
 			meta: {
 				tmdbId: tv.id,
 				genre: genreLabel(tv.genre_ids),
@@ -229,6 +231,7 @@ export async function fetchTrendingMovies(): Promise<TypedSearchResult<'movie'>[
 		title: movie.title,
 		coverUrl: posterUrl(movie.poster_path),
 		releaseYear: yearFromDate(movie.release_date),
+		description: movie.overview ?? null,
 		meta: {
 			tmdbId: movie.id,
 			director: null,
@@ -250,6 +253,7 @@ export async function fetchTrendingSeries(): Promise<TypedSearchResult<'series'>
 		title: tv.name,
 		coverUrl: posterUrl(tv.poster_path),
 		releaseYear: yearFromDate(tv.first_air_date),
+		description: tv.overview ?? null,
 		meta: {
 			tmdbId: tv.id,
 			genre: genreLabel(tv.genre_ids),
@@ -274,6 +278,7 @@ export async function fetchSimilarMovies(tmdbId: number): Promise<TypedSearchRes
 		title: movie.title,
 		coverUrl: posterUrl(movie.poster_path),
 		releaseYear: yearFromDate(movie.release_date),
+		description: movie.overview ?? null,
 		meta: {
 			tmdbId: movie.id,
 			director: null,
@@ -295,6 +300,7 @@ export async function fetchSimilarSeries(tmdbId: number): Promise<TypedSearchRes
 		title: tv.name,
 		coverUrl: posterUrl(tv.poster_path),
 		releaseYear: yearFromDate(tv.first_air_date),
+		description: tv.overview ?? null,
 		meta: {
 			tmdbId: tv.id,
 			genre: genreLabel(tv.genre_ids),

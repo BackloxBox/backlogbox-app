@@ -112,6 +112,7 @@ function mapGame(game: IGDBGame): TypedSearchResult<'game'> {
 		title: game.name,
 		coverUrl: coverUrl(game.cover?.image_id),
 		releaseYear: yearFromTimestamp(game.first_release_date),
+		description: game.summary ?? null,
 		meta: {
 			igdbId: game.id,
 			platform: game.platforms?.map((p) => normalizePlatformName(p.name)).join(', ') ?? null,
