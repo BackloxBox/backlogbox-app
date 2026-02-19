@@ -1,3 +1,4 @@
+import { env } from '$env/dynamic/private';
 import { log } from '$lib/server/logger';
 
 /**
@@ -19,7 +20,7 @@ export function getRedis(): RedisClient | null {
 	if (client !== undefined) return client;
 	if (connecting) return null;
 
-	const url = process.env.REDIS_URL;
+	const url = env.REDIS_URL;
 	if (!url) {
 		log.info('REDIS_URL not set — Redis disabled, using in-memory fallbacks');
 		client = null;
