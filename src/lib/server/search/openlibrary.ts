@@ -1,5 +1,7 @@
 import type { SearchProvider, SearchResult, TypedSearchResult } from './types';
 import { openLibraryLimiter } from './rate-limiter';
+import { getRedis } from '$lib/server/redis';
+import { log } from '$lib/server/logger';
 
 const OL_USER_AGENT = 'BacklogBox/1.0 (https://github.com/backlogbox)';
 
@@ -147,11 +149,16 @@ export async function fetchBookDescription(workKey: string): Promise<string | nu
 }
 
 /**
- * Look up a book's primary genre/subject by title.
- * Used as fallback when a book was added without genre metadata
- * (e.g. from the trending endpoint which doesn't return subjects).
+ * Look up a book's primary genre/subject by work key or title.
+ * Results are cached for 7 days (genre is static metadata).
  */
 export async function fetchGenreByTitle(title: string): Promise<string | null> {
+	const cacheKey = `genre:${title.toLowerCase().trim()}`;
+
+	// Check cache first
+	const cached = await genreCacheGet(cacheKey);
+	if (cached !== undefined) return cached;
+
 	const params = new URLSearchParams({
 		q: title,
 		fields: 'subject',
@@ -166,10 +173,62 @@ export async function fetchGenreByTitle(title: string): Promise<string | null> {
 		const data: OpenLibraryResponse = await response.json();
 		const doc = data.docs[0];
 		if (!doc) return null;
-		return extractGenres(doc.subject, 1);
+		const genre = extractGenres(doc.subject, 1);
+
+		// Cache the result (even null — avoids re-fetching for books with no genre)
+		void genreCacheSet(cacheKey, genre);
+
+		return genre;
 	} catch {
 		return null;
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Genre cache — Redis with in-memory fallback (7 day TTL)
+// ---------------------------------------------------------------------------
+
+const GENRE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const GENRE_REDIS_PREFIX = 'genre:';
+/** Sentinel value to cache "no genre found" in Redis */
+const GENRE_NULL_SENTINEL = '__null__';
+
+/** In-memory fallback for genre lookups */
+const genreMemCache = new Map<string, { value: string | null; expiresAt: number }>();
+
+/** Returns `undefined` on cache miss, `null` for "known no-genre", or the genre string */
+async function genreCacheGet(key: string): Promise<string | null | undefined> {
+	const redis = getRedis();
+	if (redis) {
+		try {
+			const raw = await redis.get(GENRE_REDIS_PREFIX + key);
+			if (raw === null) return undefined; // cache miss
+			return raw === GENRE_NULL_SENTINEL ? null : raw;
+		} catch (err) {
+			log.debug({ err: err instanceof Error ? err.message : err, key }, 'genre cache get failed');
+		}
+	}
+
+	const entry = genreMemCache.get(key);
+	if (!entry || entry.expiresAt <= Date.now()) {
+		if (entry) genreMemCache.delete(key);
+		return undefined;
+	}
+	return entry.value;
+}
+
+function genreCacheSet(key: string, value: string | null): void {
+	const redis = getRedis();
+	if (redis) {
+		redis
+			.set(GENRE_REDIS_PREFIX + key, value ?? GENRE_NULL_SENTINEL, 'PX', GENRE_TTL_MS)
+			.catch((err) => {
+				log.debug({ err: err instanceof Error ? err.message : err, key }, 'genre cache set failed');
+			});
+		return;
+	}
+
+	genreMemCache.set(key, { value, expiresAt: Date.now() + GENRE_TTL_MS });
 }
 
 // --- Discover: Trending ---
