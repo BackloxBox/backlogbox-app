@@ -12,6 +12,7 @@
 	import { debugMode } from '$lib/components/dev/debug-state.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
+	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { toast } from 'svelte-sonner';
 	import { handleSubscriptionError } from '$lib/subscription-guard';
 	import type { SearchResult } from '$lib/server/search';
@@ -338,6 +339,7 @@
 				{/each}
 			{/if}
 		</section>
+		<Separator />
 	{/if}
 
 	<!-- Anticipated / Upcoming -->
@@ -448,6 +450,7 @@
 				</div>
 			{/if}
 		</section>
+		<Separator />
 	{/if}
 
 	<!-- Trending -->
