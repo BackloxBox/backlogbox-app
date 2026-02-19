@@ -58,6 +58,8 @@ services:
       - EMAIL_FROM
       - PUBLIC_POSTHOG_KEY
       - PUBLIC_POSTHOG_HOST
+      - ADMIN_USER
+      - ADMIN_PASS
     environment:
       PORT: '3000'
       HOST: '0.0.0.0'
@@ -130,6 +132,10 @@ secrets:
   PUBLIC_POSTHOG_KEY:
     external: true
   PUBLIC_POSTHOG_HOST:
+    external: true
+  ADMIN_USER:
+    external: true
+  ADMIN_PASS:
     external: true
 
 networks:

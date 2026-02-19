@@ -29,6 +29,7 @@
 	import type { SearchResult } from '$lib/server/search';
 	import { toast } from 'svelte-sonner';
 	import { handleSubscriptionError } from '$lib/subscription-guard';
+	import { trackEvent } from '$lib/analytics';
 
 	/** Param matcher guarantees this is a valid slug — narrow the type */
 	function asSlug(s: string): MediaTypeSlug {
@@ -154,6 +155,7 @@
 				status: 'backlog',
 				...meta
 			});
+			trackEvent('item_added', { type: mediaType, source: 'search' });
 			getBoardItems(slug).refresh();
 		} catch (err) {
 			if (handleSubscriptionError(err)) return;
@@ -166,6 +168,7 @@
 	async function handleManualAdd(data: Record<string, unknown>) {
 		try {
 			await addItem({ slug, status: 'backlog', ...data } as Parameters<typeof addItem>[0]);
+			trackEvent('item_added', { type: mediaType, source: 'manual' });
 			getBoardItems(slug).refresh();
 		} catch (err) {
 			if (handleSubscriptionError(err)) return;

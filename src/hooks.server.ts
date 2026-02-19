@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/sveltekit';
 import { sequence } from '@sveltejs/kit/hooks';
-import { building } from '$app/environment';
+import { building, dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
@@ -18,6 +19,38 @@ if (process.env.SENTRY_DSN) {
 		tracesSampleRate: 0
 	});
 }
+
+// ---------------------------------------------------------------------------
+// Admin — HTTP Basic Auth for /admin routes (skipped in dev)
+// ---------------------------------------------------------------------------
+
+const handleAdminAuth: Handle = async ({ event, resolve }) => {
+	if (!event.url.pathname.startsWith('/admin')) return resolve(event);
+	if (dev) return resolve(event);
+
+	const adminUser = env.ADMIN_USER;
+	const adminPass = env.ADMIN_PASS;
+	if (!adminUser || !adminPass) {
+		return new Response('Admin credentials not configured', { status: 503 });
+	}
+
+	const authHeader = event.request.headers.get('authorization');
+	if (authHeader) {
+		const [scheme, encoded] = authHeader.split(' ');
+		if (scheme === 'Basic' && encoded) {
+			const decoded = atob(encoded);
+			const [u, p] = decoded.split(':');
+			if (u === adminUser && p === adminPass) {
+				return resolve(event);
+			}
+		}
+	}
+
+	return new Response('Unauthorized', {
+		status: 401,
+		headers: { 'WWW-Authenticate': 'Basic realm="Admin"' }
+	});
+};
 
 // ---------------------------------------------------------------------------
 // Auth
@@ -101,7 +134,12 @@ const handleRequestLog: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-export const handle: Handle = sequence(Sentry.sentryHandle(), handleBetterAuth, handleRequestLog);
+export const handle: Handle = sequence(
+	Sentry.sentryHandle(),
+	handleAdminAuth,
+	handleBetterAuth,
+	handleRequestLog
+);
 
 // ---------------------------------------------------------------------------
 // Unexpected error handler — Sentry captures first, then Pino logs + errorId

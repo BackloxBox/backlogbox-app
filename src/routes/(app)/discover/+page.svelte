@@ -15,6 +15,7 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { toast } from 'svelte-sonner';
 	import { handleSubscriptionError } from '$lib/subscription-guard';
+	import { trackEvent } from '$lib/analytics';
 	import type { SearchResult } from '$lib/server/search';
 	import type { CacheDebugMeta } from '$lib/server/search/cache';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -168,6 +169,7 @@
 				status: 'backlog',
 				...result.meta
 			});
+			trackEvent('item_added', { type, source: 'discover' });
 			toast.success(`Added "${result.title}" to backlog`);
 		} catch (err) {
 			if (!handleSubscriptionError(err)) {
@@ -201,7 +203,10 @@
 					{isActive
 					? 'bg-background text-foreground shadow-sm'
 					: 'text-muted-foreground hover:text-foreground'}"
-				onclick={() => (activeTab = slug)}
+				onclick={() => {
+					activeTab = slug;
+					trackEvent('discover_tab_viewed', { tab: slug });
+				}}
 			>
 				<Icon class="size-4" />
 				<span class="hidden sm:inline">

@@ -16,6 +16,7 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { getIconComponent } from '$lib/components/custom-list/icon-map';
 	import { addList } from './lists/lists.remote';
+	import { trackEvent } from '$lib/analytics';
 	import Sun from '@lucide/svelte/icons/sun';
 	import Moon from '@lucide/svelte/icons/moon';
 	import Menu from '@lucide/svelte/icons/menu';
@@ -74,6 +75,7 @@
 		creatingList = true;
 		try {
 			await addList({ name });
+			trackEvent('custom_list_created');
 			newListName = '';
 			showNewListInput = false;
 			await invalidateAll();

@@ -35,3 +35,9 @@ export function resetUser(): void {
 	if (!initialized) return;
 	posthog.reset();
 }
+
+/** Capture a custom event. No-ops if PostHog isn't initialized. */
+export function trackEvent(name: string, properties?: Record<string, unknown>): void {
+	if (!initialized) return;
+	posthog.capture(name, properties);
+}
