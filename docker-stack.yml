@@ -1,5 +1,6 @@
 configs:
   caddyfile:
+    name: backlogbox_caddyfile_${DEPLOY_SHA:-latest}
     file: ./Caddyfile
 
 services:
