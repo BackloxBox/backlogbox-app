@@ -286,10 +286,10 @@
 			<div class="px-2">
 				<a
 					href="/subscribe"
-					class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition
-					{trialUrgent
-						? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400'
-						: 'text-muted-foreground hover:bg-sidebar-accent'}"
+					class="flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition
+				{trialUrgent
+						? 'border-red-400 bg-red-100 text-red-700 hover:bg-red-200 dark:border-red-500 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25'
+						: 'border-amber-400 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:border-amber-500 dark:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-500/25'}"
 				>
 					<Clock class="size-3.5 shrink-0" />
 					{#if trialDaysLeft === 0}
