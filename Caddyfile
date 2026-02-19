@@ -1,5 +1,5 @@
 backlogbox.com {
-	handle_path /ingest/* {
+	handle_path /t/* {
 		rewrite * {path}
 		reverse_proxy https://eu.i.posthog.com {
 			header_up Host eu.i.posthog.com
