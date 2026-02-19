@@ -1,4 +1,11 @@
 backlogbox.com {
+	handle_path /ingest/* {
+		rewrite * {path}
+		reverse_proxy https://eu.i.posthog.com {
+			header_up Host eu.i.posthog.com
+		}
+	}
+
 	reverse_proxy app:3000
 	encode gzip
 }
