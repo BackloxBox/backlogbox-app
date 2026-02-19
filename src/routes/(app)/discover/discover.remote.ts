@@ -10,9 +10,19 @@ import {
 	type CacheStats
 } from '$lib/server/search/cache';
 import { getRateLimiterStats } from '$lib/server/search/rate-limiter';
-import { fetchTrendingMovies, fetchSimilarMovies } from '$lib/server/search/tmdb';
-import { fetchTrendingSeries, fetchSimilarSeries } from '$lib/server/search/tmdb';
-import { fetchTrendingGames, fetchSimilarGames } from '$lib/server/search/igdb';
+import {
+	fetchTrendingMovies,
+	fetchSimilarMovies,
+	fetchUpcomingMovies,
+	fetchTrendingSeries,
+	fetchSimilarSeries,
+	fetchUpcomingSeries
+} from '$lib/server/search/tmdb';
+import {
+	fetchTrendingGames,
+	fetchSimilarGames,
+	fetchAnticipatedGames
+} from '$lib/server/search/igdb';
 import { fetchTrendingBooks, fetchBooksBySubject } from '$lib/server/search/openlibrary';
 import { fetchTopPodcasts } from '$lib/server/search/apple-podcasts';
 import { getSeedItems, getUserExternalIds } from '$lib/server/db/queries';
@@ -108,6 +118,44 @@ export const getTrending = query(slugSchema, async (slug): Promise<TrendingRespo
 		return { data: filtered, _debug: debug };
 	} catch (err) {
 		log.error({ err, mediaType: type }, 'trending fetch failed');
+		return { data: [], _debug: null };
+	}
+});
+
+// ---------------------------------------------------------------------------
+// Anticipated / Upcoming
+// ---------------------------------------------------------------------------
+
+const anticipatedFetchers: Partial<Record<string, TrendingFetcher>> = {
+	movie: fetchUpcomingMovies,
+	series: fetchUpcomingSeries,
+	game: fetchAnticipatedGames
+};
+
+const ANTICIPATED_PROVIDERS: Record<string, string> = {
+	movie: 'tmdb',
+	series: 'tmdb',
+	game: 'igdb'
+};
+
+/** Fetch anticipated/upcoming items for a media type */
+export const getAnticipated = query(slugSchema, async (slug): Promise<TrendingResponse> => {
+	const userId = requireSubscription();
+	const type = slugToMediaType(slug);
+	if (!type) error(400, `Invalid slug: ${slug}`);
+
+	const fetcher = anticipatedFetchers[type];
+	if (!fetcher) return { data: [], _debug: null };
+
+	const key = discoverKey('anticipated', type);
+	const provider = ANTICIPATED_PROVIDERS[type] ?? type;
+
+	try {
+		const { results, debug } = await getOrFetch(key, 'trending', provider, fetcher);
+		const filtered = await filterTracked(results, userId, type);
+		return { data: filtered, _debug: debug };
+	} catch (err) {
+		log.error({ err, mediaType: type }, 'anticipated fetch failed');
 		return { data: [], _debug: null };
 	}
 });

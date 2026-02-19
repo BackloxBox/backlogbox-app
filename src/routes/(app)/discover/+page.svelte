@@ -7,7 +7,7 @@
 		slugToMediaType,
 		type MediaTypeSlug
 	} from '$lib/types';
-	import { getTrending, getRecommendations } from './discover.remote';
+	import { getTrending, getRecommendations, getAnticipated } from './discover.remote';
 	import { addItem } from '../[type=mediaType]/data.remote';
 	import { debugMode } from '$lib/components/dev/debug-state.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -20,6 +20,7 @@
 	import Info from '@lucide/svelte/icons/info';
 	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
+	import Rocket from '@lucide/svelte/icons/rocket';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import type { Component } from 'svelte';
 	import BookOpen from '@lucide/svelte/icons/book-open';
@@ -41,14 +42,23 @@
 
 	const type = $derived(slugToMediaType(activeTab));
 
+	const ANTICIPATED_TABS = new Set<MediaTypeSlug>(['movies', 'series', 'games']);
+
 	// Fetch data reactively when tab changes
 	const trendingQuery = $derived(getTrending(activeTab));
 	const recsQuery = $derived(getRecommendations(activeTab));
+	const anticipatedQuery = $derived(
+		ANTICIPATED_TABS.has(activeTab) ? getAnticipated(activeTab) : null
+	);
 
 	// Unwrap response data
 	const trendingData = $derived(trendingQuery.current?.data ?? []);
 	const trendingDebug = $derived(trendingQuery.current?._debug ?? null);
 	const recsData = $derived(recsQuery.current?.data ?? []);
+	const anticipatedData = $derived(anticipatedQuery?.current?.data ?? []);
+	const anticipatedDebug = $derived(anticipatedQuery?.current?._debug ?? null);
+
+	const anticipatedLabel = $derived(activeTab === 'games' ? 'Anticipated' : 'Upcoming');
 
 	const showDebug = $derived(dev && debugMode.enabled);
 
@@ -312,6 +322,114 @@
 						</div>
 					</div>
 				{/each}
+			{/if}
+		</section>
+	{/if}
+
+	<!-- Anticipated / Upcoming -->
+	{#if anticipatedQuery}
+		<section
+			class="space-y-3 {showDebug && anticipatedDebug ? debugBorderClass(anticipatedDebug) : ''}"
+		>
+			<div class="flex items-center justify-between gap-2">
+				<div class="flex items-center gap-2">
+					<span style:color="#F97316"><Rocket class="size-5" /></span>
+					<h2 class="text-lg font-semibold">{anticipatedLabel}</h2>
+				</div>
+				{#if showDebug && anticipatedDebug}
+					<span
+						class="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] {debugBadgeClass(
+							anticipatedDebug
+						)}"
+					>
+						{debugLabel(anticipatedDebug)}
+					</span>
+				{/if}
+			</div>
+
+			{#if anticipatedQuery.error}
+				<p class="py-8 text-center text-sm text-muted-foreground">
+					Could not load {anticipatedLabel.toLowerCase()} items right now.
+				</p>
+			{:else if anticipatedQuery.loading}
+				<div
+					class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7"
+				>
+					{#each Array(10) as _, i (i)}
+						<div class="animate-pulse space-y-1.5">
+							<div class="aspect-[2/3] rounded-md bg-muted"></div>
+							<div class="h-3 w-3/4 rounded bg-muted"></div>
+							<div class="h-3 w-1/2 rounded bg-muted"></div>
+						</div>
+					{/each}
+				</div>
+			{:else if anticipatedData.length === 0}
+				<p class="py-8 text-center text-sm text-muted-foreground">
+					No {anticipatedLabel.toLowerCase()} items available right now.
+				</p>
+			{:else}
+				<div
+					class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7"
+				>
+					{#each anticipatedData.slice(0, 14) as result (result.externalId)}
+						{@const isAdding = addingIds.has(result.externalId)}
+						<div class="group space-y-1.5">
+							<div class="relative aspect-[2/3] overflow-hidden rounded-md">
+								{#if result.coverUrl}
+									<img
+										src={result.coverUrl}
+										alt={result.title}
+										loading="lazy"
+										class="h-full w-full object-cover"
+									/>
+								{:else}
+									<div
+										class="flex h-full w-full items-center justify-center text-xl font-semibold text-white/80 select-none"
+										style:background-color="hsl({titleToHue(result.title)} 40% 30%)"
+									>
+										{result.title.trim().charAt(0).toUpperCase()}
+									</div>
+								{/if}
+								{#if result.description}
+									<Popover.Root>
+										<Popover.Trigger
+											class="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/50 text-white/80 transition-opacity hover:bg-black/70 sm:opacity-0 sm:group-hover:opacity-100"
+										>
+											<Info class="size-3" />
+										</Popover.Trigger>
+										<Popover.Content
+											class="max-h-64 w-64 overflow-y-auto text-xs"
+											side="bottom"
+											align="end"
+										>
+											<p>{result.description}</p>
+										</Popover.Content>
+									</Popover.Root>
+								{/if}
+								<div
+									class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+								>
+									<Button
+										variant="secondary"
+										size="sm"
+										class="h-7 w-full text-xs"
+										disabled={isAdding}
+										onclick={() => handleAdd(result)}
+									>
+										{#if isAdding}
+											<LoaderCircle class="size-3 animate-spin" />
+										{:else}
+											<Plus class="size-3" />
+										{/if}
+										Add
+									</Button>
+								</div>
+							</div>
+							<p class="truncate text-xs font-medium">{result.title}</p>
+							<p class="truncate text-[11px] text-muted-foreground">{subtitle(result)}</p>
+						</div>
+					{/each}
+				</div>
 			{/if}
 		</section>
 	{/if}

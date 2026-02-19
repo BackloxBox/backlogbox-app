@@ -263,6 +263,82 @@ export async function fetchTrendingSeries(): Promise<TypedSearchResult<'series'>
 	}));
 }
 
+// --- Discover: Upcoming ---
+
+/** Format a Date as YYYY-MM-DD for TMDB API params */
+function tmdbDate(date: Date): string {
+	return date.toISOString().slice(0, 10);
+}
+
+/** Fetch upcoming movies (releasing in the next 6 months) sorted by popularity */
+export async function fetchUpcomingMovies(): Promise<TypedSearchResult<'movie'>[]> {
+	const now = new Date();
+	const tomorrow = new Date(now);
+	tomorrow.setDate(tomorrow.getDate() + 1);
+	const sixMonths = new Date(now);
+	sixMonths.setMonth(sixMonths.getMonth() + 6);
+
+	const params = new URLSearchParams({
+		api_key: getApiKey(),
+		sort_by: 'popularity.desc',
+		'primary_release_date.gte': tmdbDate(tomorrow),
+		'primary_release_date.lte': tmdbDate(sixMonths),
+		include_adult: 'false'
+	});
+	await tmdbLimiter.acquire();
+	const response = await fetch(`https://api.themoviedb.org/3/discover/movie?${params}`);
+	if (!response.ok) return [];
+
+	const data: TMDBSearchResponse<TMDBMovieResult> = await response.json();
+	return data.results.slice(0, 20).map((movie) => ({
+		externalId: String(movie.id),
+		title: movie.title,
+		coverUrl: posterUrl(movie.poster_path),
+		releaseYear: yearFromDate(movie.release_date),
+		description: movie.overview ?? null,
+		meta: {
+			tmdbId: movie.id,
+			director: null,
+			genre: genreLabel(movie.genre_ids)
+		}
+	}));
+}
+
+/** Fetch upcoming series (airing in the next 6 months) sorted by popularity */
+export async function fetchUpcomingSeries(): Promise<TypedSearchResult<'series'>[]> {
+	const now = new Date();
+	const tomorrow = new Date(now);
+	tomorrow.setDate(tomorrow.getDate() + 1);
+	const sixMonths = new Date(now);
+	sixMonths.setMonth(sixMonths.getMonth() + 6);
+
+	const params = new URLSearchParams({
+		api_key: getApiKey(),
+		sort_by: 'popularity.desc',
+		'first_air_date.gte': tmdbDate(tomorrow),
+		'first_air_date.lte': tmdbDate(sixMonths),
+		include_adult: 'false'
+	});
+	await tmdbLimiter.acquire();
+	const response = await fetch(`https://api.themoviedb.org/3/discover/tv?${params}`);
+	if (!response.ok) return [];
+
+	const data: TMDBSearchResponse<TMDBTVResult> = await response.json();
+	return data.results.slice(0, 20).map((tv) => ({
+		externalId: String(tv.id),
+		title: tv.name,
+		coverUrl: posterUrl(tv.poster_path),
+		releaseYear: yearFromDate(tv.first_air_date),
+		description: tv.overview ?? null,
+		meta: {
+			tmdbId: tv.id,
+			genre: genreLabel(tv.genre_ids),
+			totalSeasons: null,
+			currentSeason: null
+		}
+	}));
+}
+
 // --- Discover: Similar ---
 
 /** Fetch movies similar to a given TMDB movie ID */
