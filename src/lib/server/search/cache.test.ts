@@ -5,14 +5,55 @@ vi.mock('$lib/server/logger', () => ({
 	log: { debug: vi.fn(), warn: vi.fn(), info: vi.fn() }
 }));
 
+// ---------------------------------------------------------------------------
+// Mock Redis — in-memory Map that behaves like ioredis for get/set
+// ---------------------------------------------------------------------------
+
+const redisStore = new Map<string, { value: string; expiresAt: number }>();
+
+const mockRedis = {
+	get: vi.fn(async (key: string) => {
+		const entry = redisStore.get(key);
+		if (!entry) return null;
+		if (entry.expiresAt <= Date.now()) {
+			redisStore.delete(key);
+			return null;
+		}
+		return entry.value;
+	}),
+	set: vi.fn(async (key: string, value: string, _mode: string, ttlMs: number) => {
+		redisStore.set(key, { value, expiresAt: Date.now() + ttlMs });
+		return 'OK';
+	})
+};
+
+vi.mock('$lib/server/redis', () => ({
+	getRedis: () => mockRedis
+}));
+
+// Mock metrics — we just verify they're called, not their Redis internals
+const mockRecordCacheHit = vi.fn();
+const mockRecordApiCall = vi.fn();
+const mockRecordApiError = vi.fn();
+
+vi.mock('./metrics', () => ({
+	recordCacheHit: (...args: unknown[]) => mockRecordCacheHit(...args),
+	recordApiCall: (...args: unknown[]) => mockRecordApiCall(...args),
+	recordApiError: (...args: unknown[]) => mockRecordApiError(...args)
+}));
+
 // Dynamic import so mocks are in place before module executes.
-// Each test file gets its own module instance in vitest, but we
-// resetModules between tests to clear the module-level Map state.
 let cacheModule: typeof import('./cache');
 
 beforeEach(async () => {
 	vi.useFakeTimers();
 	vi.resetModules();
+	redisStore.clear();
+	mockRedis.get.mockClear();
+	mockRedis.set.mockClear();
+	mockRecordCacheHit.mockClear();
+	mockRecordApiCall.mockClear();
+	mockRecordApiError.mockClear();
 	cacheModule = await import('./cache');
 });
 
@@ -21,24 +62,31 @@ afterEach(() => {
 });
 
 describe('getOrFetch', () => {
-	it('calls fetcher on cache miss', async () => {
+	it('calls fetcher on cache miss and stores in redis', async () => {
 		const fetcher = vi.fn().mockResolvedValue([{ externalId: '1', title: 'Test' }]);
-		const result = await cacheModule.getOrFetch('key:1', 'search', 'test', fetcher);
+		const result = await cacheModule.getOrFetch('key:1', 'search', 'tmdb', fetcher);
 
 		expect(fetcher).toHaveBeenCalledOnce();
 		expect(result.results).toHaveLength(1);
 		expect(result.results[0].title).toBe('Test');
 		expect(result.debug?.source).toBe('fetch');
+		// Verify written to redis
+		expect(mockRedis.set).toHaveBeenCalledOnce();
+		expect(mockRedis.set.mock.calls[0][0]).toBe('cache:key:1');
+		// Verify metrics recorded
+		expect(mockRecordApiCall).toHaveBeenCalledWith('tmdb', expect.any(Number));
 	});
 
-	it('returns cached result on fresh hit', async () => {
+	it('returns cached result on fresh hit from redis', async () => {
 		const fetcher = vi.fn().mockResolvedValue([{ externalId: '1', title: 'Cached' }]);
 
-		await cacheModule.getOrFetch('key:fresh', 'search', 'test', fetcher);
-		const result = await cacheModule.getOrFetch('key:fresh', 'search', 'test', fetcher);
+		await cacheModule.getOrFetch('key:fresh', 'search', 'tmdb', fetcher);
+		const result = await cacheModule.getOrFetch('key:fresh', 'search', 'tmdb', fetcher);
 
 		expect(fetcher).toHaveBeenCalledOnce(); // not called again
 		expect(result.debug?.source).toBe('cache-fresh');
+		expect(mockRedis.get).toHaveBeenCalled();
+		expect(mockRecordCacheHit).toHaveBeenCalledWith('tmdb');
 	});
 
 	it('returns stale result and revalidates in background', async () => {
@@ -49,15 +97,16 @@ describe('getOrFetch', () => {
 		});
 
 		// populate cache with 'trending' tier (30 min stale, 2 hour expire)
-		await cacheModule.getOrFetch('key:swr', 'trending', 'test', fetcher);
+		await cacheModule.getOrFetch('key:swr', 'trending', 'tmdb', fetcher);
 		expect(callCount).toBe(1);
 
 		// advance past stale but before expire
 		vi.advanceTimersByTime(31 * 60 * 1000);
 
-		const result = await cacheModule.getOrFetch('key:swr', 'trending', 'test', fetcher);
+		const result = await cacheModule.getOrFetch('key:swr', 'trending', 'tmdb', fetcher);
 		expect(result.debug?.source).toBe('cache-stale');
 		expect(result.results[0].title).toBe('v1'); // still old data
+		expect(mockRecordCacheHit).toHaveBeenCalledWith('tmdb');
 
 		// let background revalidation complete
 		await vi.runAllTimersAsync();
@@ -66,16 +115,19 @@ describe('getOrFetch', () => {
 
 	it('coalesces concurrent requests for same key', async () => {
 		let resolveOuter: (v: Array<{ externalId: string; title: string }>) => void;
-		const fetcher = vi.fn().mockReturnValue(
-			new Promise<Array<{ externalId: string; title: string }>>((resolve) => {
-				resolveOuter = resolve;
-			})
-		);
+		const fetcherPromise = new Promise<Array<{ externalId: string; title: string }>>((resolve) => {
+			resolveOuter = resolve;
+		});
+		const fetcher = vi.fn().mockReturnValue(fetcherPromise);
 
-		const p1 = cacheModule.getOrFetch('key:coal', 'search', 'test', fetcher);
-		const p2 = cacheModule.getOrFetch('key:coal', 'search', 'test', fetcher);
+		// Start both requests — they'll both await cacheGet (async) first
+		const p1 = cacheModule.getOrFetch('key:coal', 'search', 'tmdb', fetcher);
+		// Flush microtasks so p1's cacheGet resolves and it reaches the fetch/inflight section
+		await vi.advanceTimersByTimeAsync(0);
+		const p2 = cacheModule.getOrFetch('key:coal', 'search', 'tmdb', fetcher);
 
-		expect(fetcher).toHaveBeenCalledOnce(); // only one fetch
+		// p1 should have called fetcher, p2 should coalesce onto p1's inflight
+		expect(fetcher).toHaveBeenCalledOnce();
 
 		resolveOuter!([{ externalId: '1', title: 'Coalesced' }]);
 		const [r1, r2] = await Promise.all([p1, p2]);
@@ -85,16 +137,17 @@ describe('getOrFetch', () => {
 		expect(r2.debug?.source).toBe('coalesced');
 	});
 
-	it('propagates fetcher errors and cleans up inflight', async () => {
+	it('propagates fetcher errors, cleans up inflight, records error metric', async () => {
 		const fetcher = vi.fn().mockRejectedValue(new Error('Network error'));
 
-		await expect(cacheModule.getOrFetch('key:err', 'search', 'test', fetcher)).rejects.toThrow(
+		await expect(cacheModule.getOrFetch('key:err', 'search', 'tmdb', fetcher)).rejects.toThrow(
 			'Network error'
 		);
+		expect(mockRecordApiError).toHaveBeenCalledWith('tmdb');
 
 		// subsequent call retries (not stuck in inflight)
 		fetcher.mockResolvedValue([]);
-		const result = await cacheModule.getOrFetch('key:err', 'search', 'test', fetcher);
+		const result = await cacheModule.getOrFetch('key:err', 'search', 'tmdb', fetcher);
 		expect(result.results).toEqual([]);
 	});
 });
@@ -121,7 +174,7 @@ describe('getCacheStats', () => {
 });
 
 describe('eviction', () => {
-	it('expired entries are not returned by getCached', async () => {
+	it('expired entries trigger fresh fetch', async () => {
 		const fetcher = vi.fn().mockResolvedValue([
 			{
 				externalId: '1',
@@ -135,7 +188,6 @@ describe('eviction', () => {
 		]);
 
 		await cacheModule.getOrFetch('exp:1', 'search', 'test', fetcher);
-		expect(cacheModule.getCacheStats().size).toBe(1);
 
 		// advance past search expire (5 min)
 		vi.advanceTimersByTime(6 * 60 * 1000);

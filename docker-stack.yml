@@ -34,6 +34,19 @@ services:
       restart_policy:
         condition: on-failure
 
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save "" --appendonly no --maxmemory 64mb --maxmemory-policy allkeys-lru
+    networks:
+      - app_network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
   app:
     image: ${IMAGE:-ghcr.io/backloxbox/backlogbox-app:latest}
     secrets:
@@ -67,6 +80,7 @@ services:
       HOST: '0.0.0.0'
       PROTOCOL_HEADER: 'x-forwarded-proto'
       HOST_HEADER: 'x-forwarded-host'
+      REDIS_URL: 'redis://redis:6379'
     networks:
       - app_network
     healthcheck:

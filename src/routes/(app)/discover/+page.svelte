@@ -232,7 +232,7 @@
 				{#each Array(2) as _, i (i)}
 					<div class="space-y-3">
 						<div class="h-4 w-48 animate-pulse rounded bg-muted"></div>
-						<div class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
+						<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
 							{#each Array(5) as _, j (j)}
 								<div class="animate-pulse space-y-1.5">
 									<div class="aspect-[2/3] rounded-md bg-muted"></div>
@@ -278,7 +278,7 @@
 								</span>
 							{/if}
 						</div>
-						<div class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
+						<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
 							{#each group.items as result (result.externalId)}
 								{@const isAdding = addingIds.has(result.externalId)}
 								<div class="group space-y-1.5">
@@ -376,7 +376,7 @@
 						Could not load {anticipatedLabel.toLowerCase()} items right now.
 					</p>
 				{:else if anticipatedQuery.loading}
-					<div class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
+					<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
 						{#each Array(10) as _, i (i)}
 							<div class="animate-pulse space-y-1.5">
 								<div class="aspect-[2/3] rounded-md bg-muted"></div>
@@ -390,7 +390,7 @@
 						No {anticipatedLabel.toLowerCase()} items available right now.
 					</p>
 				{:else}
-					<div class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
+					<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
 						{#each anticipatedData.slice(0, 20) as result (result.externalId)}
 							{@const isAdding = addingIds.has(result.externalId)}
 							<div class="group space-y-1.5">
@@ -486,7 +486,7 @@
 					Could not load trending items right now.
 				</p>
 			{:else if trendingQuery.loading}
-				<div class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
+				<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
 					{#each Array(10) as _, i (i)}
 						<div class="animate-pulse space-y-1.5">
 							<div class="aspect-[2/3] rounded-md bg-muted"></div>
@@ -500,7 +500,7 @@
 					No trending items available right now.
 				</p>
 			{:else}
-				<div class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
+				<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
 					{#each trendingData.slice(0, 20) as result (result.externalId)}
 						{@const isAdding = addingIds.has(result.externalId)}
 						<div class="group space-y-1.5">

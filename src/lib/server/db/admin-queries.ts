@@ -40,6 +40,7 @@ export type AdminStats = {
 	topUsers: Array<{
 		username: string | null;
 		name: string;
+		email: string;
 		itemCount: number;
 		lastActive: string | null;
 		status: string;
@@ -151,6 +152,7 @@ export async function getAdminStats(): Promise<AdminStats> {
 			.select({
 				username: user.username,
 				name: user.name,
+				email: user.email,
 				itemCount: count(),
 				lastActive: sql<string>`to_char(max(${mediaItem.updatedAt}), 'YYYY-MM-DD')`,
 				subscribed: user.subscribed,
@@ -225,6 +227,7 @@ export async function getAdminStats(): Promise<AdminStats> {
 		topUsers: topUserRows.map((r) => ({
 			username: r.username,
 			name: r.name,
+			email: r.email,
 			itemCount: Number(r.itemCount),
 			lastActive: r.lastActive,
 			status: userStatus({

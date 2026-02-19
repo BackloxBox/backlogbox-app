@@ -9,11 +9,17 @@
 	import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 	import Package from '@lucide/svelte/icons/package';
 	import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
+	import Zap from '@lucide/svelte/icons/zap';
+	import ShieldCheck from '@lucide/svelte/icons/shield-check';
+	import Timer from '@lucide/svelte/icons/timer';
+	import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import type { PageData } from './$types';
+	import type { Provider } from '$lib/server/search/metrics';
 
 	let { data }: { data: PageData } = $props();
 	const stats = $derived(data.stats);
+	const apiMetrics = $derived(data.apiMetrics);
 
 	// --- Time range filter (client-side) ---
 
@@ -54,7 +60,10 @@
 	// --- Signup area chart ---
 
 	const signupChartData = $derived(
-		filteredSignups.map((r) => ({ date: new Date(r.date), signups: r.count }))
+		filteredSignups.map((r) => ({
+			date: new Date(r.date),
+			signups: r.count
+		}))
 	);
 
 	const signupChartConfig = {
@@ -134,6 +143,49 @@
 			typeBarData.map((d) => [d.label, { label: d.label, color: d.color }])
 		) as Chart.ChartConfig
 	);
+
+	// --- API Metrics ---
+
+	const PROVIDER_LABELS: Record<Provider, string> = {
+		tmdb: 'TMDB',
+		igdb: 'IGDB',
+		openlibrary: 'OpenLibrary',
+		apple: 'Apple'
+	};
+
+	const PROVIDER_COLORS: Record<Provider, string> = {
+		tmdb: '#01B4E4',
+		igdb: '#9147FF',
+		openlibrary: '#E2573F',
+		apple: '#FC3C44'
+	};
+
+	const PROVIDERS: Provider[] = ['tmdb', 'igdb', 'openlibrary', 'apple'];
+
+	/** Whether selected time range exceeds metrics data window */
+	const metricsRangeLimited = $derived(range !== '7d');
+
+	const metricsChartData = $derived(
+		apiMetrics
+			? apiMetrics.hourly.map((h) => ({
+					date: new Date(h.hour + ':00:00Z'),
+					tmdb: h.tmdb,
+					igdb: h.igdb,
+					openlibrary: h.openlibrary,
+					apple: h.apple
+				}))
+			: []
+	);
+
+	const metricsChartConfig = Object.fromEntries(
+		PROVIDERS.map((p) => [p, { label: PROVIDER_LABELS[p], color: PROVIDER_COLORS[p] }])
+	) satisfies Chart.ChartConfig;
+
+	const metricsSeries = PROVIDERS.map((p) => ({
+		key: p,
+		label: PROVIDER_LABELS[p],
+		color: PROVIDER_COLORS[p]
+	}));
 
 	// --- Helpers ---
 
@@ -436,6 +488,147 @@
 
 	<Separator />
 
+	<!-- API Metrics Section -->
+	{#if apiMetrics}
+		<section class="space-y-4">
+			<div class="flex items-center justify-between">
+				<h2 class="text-lg font-semibold">API Metrics</h2>
+				{#if metricsRangeLimited}
+					<span class="text-xs text-muted-foreground">Showing last 7 days (max available)</span>
+				{/if}
+			</div>
+
+			<!-- API Summary Cards -->
+			<div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+				<div class="rounded-lg border bg-card p-4">
+					<div class="flex items-center gap-2 text-sm text-muted-foreground">
+						<Zap class="size-4" />
+						API Calls (7d)
+					</div>
+					<p class="mt-1 text-2xl font-bold">{apiMetrics.totals.uncached}</p>
+					<p class="text-xs text-muted-foreground">{apiMetrics.totals.callsPerHour}/hr avg</p>
+				</div>
+				<div class="rounded-lg border bg-card p-4">
+					<div class="flex items-center gap-2 text-sm text-muted-foreground">
+						<ShieldCheck class="size-4" />
+						Cache Hit Rate
+					</div>
+					<p class="mt-1 text-2xl font-bold">{apiMetrics.totals.hitRate}</p>
+					<p class="text-xs text-muted-foreground">{apiMetrics.totals.cached} hits</p>
+				</div>
+				<div class="rounded-lg border bg-card p-4">
+					<div class="flex items-center gap-2 text-sm text-muted-foreground">
+						<Timer class="size-4" />
+						Avg Latency
+					</div>
+					<p class="mt-1 text-2xl font-bold">{apiMetrics.totals.avgLatencyMs}ms</p>
+					<p class="text-xs text-muted-foreground">per external call</p>
+				</div>
+				<div class="rounded-lg border bg-card p-4">
+					<div class="flex items-center gap-2 text-sm text-muted-foreground">
+						<AlertTriangle class="size-4" />
+						Errors (7d)
+					</div>
+					<p class="mt-1 text-2xl font-bold">{apiMetrics.totals.errors}</p>
+					<p class="text-xs text-muted-foreground">fetch failures</p>
+				</div>
+			</div>
+
+			<!-- API Calls Over Time Chart -->
+			{#if metricsChartData.length > 1}
+				<div class="rounded-lg border bg-card p-4">
+					<Chart.Container config={metricsChartConfig} class="h-[250px] w-full">
+						<AreaChart
+							data={metricsChartData}
+							x="date"
+							xScale={scaleUtc()}
+							yPadding={[0, 25]}
+							series={metricsSeries}
+							seriesLayout="stack"
+							props={{
+								area: {
+									curve: curveMonotoneX,
+									'fill-opacity': 0.4,
+									line: { class: 'stroke-1' },
+									motion: 'tween'
+								},
+								xAxis: {
+									format: (v: Date) =>
+										v.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+								},
+								yAxis: { format: () => '' }
+							}}
+						>
+							{#snippet tooltip()}
+								<Chart.Tooltip indicator="dot" />
+							{/snippet}
+							{#snippet marks({ series, getAreaProps })}
+								{#each series as s, i (s.key)}
+									<LinearGradient
+										stops={[
+											s.color ?? '',
+											'color-mix(in lch, ' + (s.color ?? '') + ' 10%, transparent)'
+										]}
+										vertical
+									>
+										{#snippet children({ gradient })}
+											<Area {...getAreaProps(s, i)} fill={gradient} />
+										{/snippet}
+									</LinearGradient>
+								{/each}
+							{/snippet}
+						</AreaChart>
+					</Chart.Container>
+				</div>
+			{:else}
+				<div
+					class="flex h-[250px] items-center justify-center rounded-lg border bg-card text-sm text-muted-foreground"
+				>
+					No API metrics data yet
+				</div>
+			{/if}
+
+			<!-- Per-Provider Breakdown Table -->
+			<div class="overflow-x-auto rounded-lg border bg-card">
+				<table class="w-full text-sm">
+					<thead>
+						<tr class="border-b text-left text-muted-foreground">
+							<th class="px-4 py-3 font-medium">Provider</th>
+							<th class="px-4 py-3 text-right font-medium">API Calls</th>
+							<th class="px-4 py-3 text-right font-medium">Cache Hits</th>
+							<th class="px-4 py-3 text-right font-medium">Hit Rate</th>
+							<th class="px-4 py-3 text-right font-medium">Avg Latency</th>
+							<th class="px-4 py-3 text-right font-medium">Errors</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each PROVIDERS as provider (provider)}
+							{@const pm = apiMetrics.providers[provider]}
+							<tr class="border-b last:border-0">
+								<td class="px-4 py-3">
+									<span class="flex items-center gap-2">
+										<span
+											class="inline-block size-2.5 rounded-full"
+											style:background-color={PROVIDER_COLORS[provider]}
+										></span>
+										<span class="font-medium">{PROVIDER_LABELS[provider]}</span>
+									</span>
+								</td>
+								<td class="px-4 py-3 text-right tabular-nums">{pm.uncached}</td>
+								<td class="px-4 py-3 text-right tabular-nums">{pm.cached}</td>
+								<td class="px-4 py-3 text-right tabular-nums">{pm.hitRate}</td>
+								<td class="px-4 py-3 text-right tabular-nums">{pm.avgLatencyMs}ms</td>
+								<td class="px-4 py-3 text-right tabular-nums">{pm.errors}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		</section>
+
+		<Separator />
+	{/if}
+
 	<!-- Top Users Table -->
 	<section class="space-y-3">
 		<h2 class="text-lg font-semibold">Top Users</h2>
@@ -445,21 +638,25 @@
 					<tr class="border-b text-left text-muted-foreground">
 						<th class="px-4 py-3 font-medium">#</th>
 						<th class="px-4 py-3 font-medium">User</th>
+						<th class="px-4 py-3 font-medium">Email</th>
 						<th class="px-4 py-3 text-right font-medium">Items</th>
 						<th class="px-4 py-3 font-medium">Last Active</th>
 						<th class="px-4 py-3 font-medium">Status</th>
 					</tr>
 				</thead>
 				<tbody>
-					{#each stats.topUsers as row, i (row.username ?? row.name)}
+					{#each stats.topUsers as row, i (row.email)}
 						<tr class="border-b last:border-0">
 							<td class="px-4 py-3 text-muted-foreground">{i + 1}</td>
 							<td class="px-4 py-3 font-medium">
 								{row.username ?? row.name}
 							</td>
+							<td class="px-4 py-3 text-muted-foreground">
+								{row.email}
+							</td>
 							<td class="px-4 py-3 text-right tabular-nums">{row.itemCount}</td>
 							<td class="px-4 py-3 text-muted-foreground">
-								{row.lastActive ?? '—'}
+								{row.lastActive ?? '\u2014'}
 							</td>
 							<td class="px-4 py-3">
 								<span

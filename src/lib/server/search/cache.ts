@@ -1,5 +1,7 @@
 import { dev } from '$app/environment';
 import { log } from '$lib/server/logger';
+import { getRedis } from '$lib/server/redis';
+import { recordApiCall, recordApiError, recordCacheHit } from './metrics';
 import type { SearchResult } from './types';
 
 // ---------------------------------------------------------------------------
@@ -62,16 +64,20 @@ const TIER_CONFIG: Record<CacheTier, { staleMs: number; expireMs: number }> = {
 	similar: { staleMs: SIMILAR_STALE_MS, expireMs: SIMILAR_EXPIRE_MS }
 };
 
+/** Prefix for all cache keys in Redis (avoids collision with metrics etc.) */
+const REDIS_PREFIX = 'cache:';
+
 // ---------------------------------------------------------------------------
-// State
+// State (in-memory — per-replica)
 // ---------------------------------------------------------------------------
 
-const cache = new Map<string, CacheEntry>();
+/** In-memory fallback cache, used when Redis is unavailable */
+const memCache = new Map<string, CacheEntry>();
 
 /** In-flight requests for coalescing (multiple callers await same promise) */
 const inflight = new Map<string, Promise<SearchResult[]>>();
 
-/** Cumulative stats */
+/** Cumulative stats (per-replica) */
 const stats = {
 	hits: 0,
 	misses: 0,
@@ -82,60 +88,79 @@ const stats = {
 };
 
 // ---------------------------------------------------------------------------
-// Internal helpers
+// Storage abstraction — Redis with in-memory fallback
 // ---------------------------------------------------------------------------
 
-/** Prune all expired entries (past expiresAt) */
-function prune(): void {
-	const now = Date.now();
-	let evicted = 0;
-	for (const [key, entry] of cache) {
-		if (entry.expiresAt <= now) {
-			cache.delete(key);
-			evicted++;
+async function cacheGet(key: string): Promise<CacheEntry | null> {
+	const redis = getRedis();
+	if (redis) {
+		try {
+			const raw = await redis.get(REDIS_PREFIX + key);
+			if (!raw) return null;
+			return JSON.parse(raw) as CacheEntry;
+		} catch (err) {
+			log.debug({ err: err instanceof Error ? err.message : err, key }, 'redis cache get failed');
+			// Fall through to memCache
 		}
 	}
-	stats.evictions += evicted;
-	if (evicted > 0) {
-		log.debug({ evicted, remaining: cache.size }, 'cache prune');
-	}
+
+	return memCache.get(key) ?? null;
 }
 
-/**
- * Store a result in the cache.
- */
-function set(key: string, results: SearchResult[], tier: CacheTier): void {
-	if (cache.size >= MAX_ENTRIES) prune();
-	// Still full after prune — evict oldest entry
-	if (cache.size >= MAX_ENTRIES) {
+async function cacheSet(key: string, entry: CacheEntry): Promise<void> {
+	const redis = getRedis();
+	const ttlMs = entry.expiresAt - Date.now();
+	if (ttlMs <= 0) return;
+
+	if (redis) {
+		try {
+			await redis.set(REDIS_PREFIX + key, JSON.stringify(entry), 'PX', ttlMs);
+			log.debug({ key, ttlMs }, 'redis cache set');
+			return;
+		} catch (err) {
+			log.debug({ err: err instanceof Error ? err.message : err, key }, 'redis cache set failed');
+			// Fall through to memCache
+		}
+	}
+
+	// In-memory fallback
+	pruneMemCache();
+	if (memCache.size >= MAX_ENTRIES) {
 		let oldestKey: string | undefined;
 		let oldestTime = Infinity;
-		for (const [k, e] of cache) {
+		for (const [k, e] of memCache) {
 			if (e.createdAt < oldestTime) {
 				oldestTime = e.createdAt;
 				oldestKey = k;
 			}
 		}
 		if (oldestKey) {
-			cache.delete(oldestKey);
+			memCache.delete(oldestKey);
 			stats.evictions++;
 		}
 	}
+	memCache.set(key, entry);
+}
 
+/** Prune all expired entries from in-memory cache */
+function pruneMemCache(): void {
+	if (memCache.size < MAX_ENTRIES) return;
 	const now = Date.now();
-	const config = TIER_CONFIG[tier];
-	cache.set(key, {
-		results,
-		createdAt: now,
-		staleAt: now + config.staleMs,
-		expiresAt: now + config.expireMs
-	});
-
-	log.debug({ key, tier, size: cache.size }, 'cache set');
+	let evicted = 0;
+	for (const [key, entry] of memCache) {
+		if (entry.expiresAt <= now) {
+			memCache.delete(key);
+			evicted++;
+		}
+	}
+	stats.evictions += evicted;
+	if (evicted > 0) {
+		log.debug({ evicted, remaining: memCache.size }, 'memcache prune');
+	}
 }
 
 // ---------------------------------------------------------------------------
-// Public API: getOrFetch (coalescing + SWR)
+// Public API: getOrFetch (coalescing + SWR + metrics)
 // ---------------------------------------------------------------------------
 
 export interface FetchResult {
@@ -152,7 +177,7 @@ export interface FetchResult {
  *
  * @param key      Unique cache key
  * @param tier     Determines TTL/SWR window
- * @param provider Label for logging/debug
+ * @param provider Label for logging/debug/metrics
  * @param fetcher  Function to call on miss
  */
 export async function getOrFetch(
@@ -162,11 +187,12 @@ export async function getOrFetch(
 	fetcher: () => Promise<SearchResult[]>
 ): Promise<FetchResult> {
 	const now = Date.now();
-	const entry = cache.get(key);
+	const entry = await cacheGet(key);
 
 	// --- Cache fresh hit ---
 	if (entry && now < entry.staleAt) {
 		stats.hits++;
+		recordCacheHit(provider);
 		log.debug({ key, provider, ageMs: now - entry.createdAt }, 'cache hit (fresh)');
 		return {
 			results: entry.results,
@@ -185,6 +211,7 @@ export async function getOrFetch(
 	// --- Cache stale hit (SWR) ---
 	if (entry && now < entry.expiresAt) {
 		stats.staleHits++;
+		recordCacheHit(provider);
 		log.debug({ key, provider, ageMs: now - entry.createdAt }, 'cache hit (stale, revalidating)');
 
 		// Fire-and-forget background revalidation
@@ -220,8 +247,15 @@ export async function getOrFetch(
 	stats.misses++;
 	const start = performance.now();
 
-	const promise = fetcher().then((results) => {
-		set(key, results, tier);
+	const promise = fetcher().then(async (results) => {
+		const config = TIER_CONFIG[tier];
+		const fetchNow = Date.now();
+		await cacheSet(key, {
+			results,
+			createdAt: fetchNow,
+			staleAt: fetchNow + config.staleMs,
+			expiresAt: fetchNow + config.expireMs
+		});
 		inflight.delete(key);
 		return results;
 	});
@@ -232,6 +266,7 @@ export async function getOrFetch(
 	try {
 		const results = await promise;
 		const fetchDurationMs = Math.round(performance.now() - start);
+		recordApiCall(provider, fetchDurationMs);
 		log.debug(
 			{ key, provider, fetchDurationMs, resultCount: results.length },
 			'cache miss (fetched)'
@@ -243,6 +278,7 @@ export async function getOrFetch(
 		};
 	} catch (err) {
 		inflight.delete(key);
+		recordApiError(provider);
 		throw err;
 	}
 }
@@ -258,9 +294,19 @@ async function revalidateInBackground(
 	if (inflight.has(key)) return;
 
 	stats.backgroundRevalidations++;
-	const promise = fetcher().then((results) => {
-		set(key, results, tier);
+	const start = performance.now();
+	const promise = fetcher().then(async (results) => {
+		const config = TIER_CONFIG[tier];
+		const now = Date.now();
+		await cacheSet(key, {
+			results,
+			createdAt: now,
+			staleAt: now + config.staleMs,
+			expiresAt: now + config.expireMs
+		});
 		inflight.delete(key);
+		const latencyMs = Math.round(performance.now() - start);
+		recordApiCall(provider, latencyMs);
 		log.debug({ key, provider }, 'background revalidation complete');
 		return results;
 	});
@@ -271,6 +317,7 @@ async function revalidateInBackground(
 		await promise;
 	} catch (err) {
 		inflight.delete(key);
+		recordApiError(provider);
 		log.warn({ err, key, provider }, 'background revalidation failed');
 	}
 }
@@ -286,10 +333,11 @@ function searchKey(mediaType: string, query: string): string {
 /** @deprecated Use `getOrFetch()` instead */
 export function getCached(mediaType: string, query: string): SearchResult[] | null {
 	const key = searchKey(mediaType, query);
-	const entry = cache.get(key);
+	// Legacy API is sync — only reads from memCache (not Redis)
+	const entry = memCache.get(key);
 	if (!entry) return null;
 	if (entry.expiresAt <= Date.now()) {
-		cache.delete(key);
+		memCache.delete(key);
 		return null;
 	}
 	stats.hits++;
@@ -298,7 +346,15 @@ export function getCached(mediaType: string, query: string): SearchResult[] | nu
 
 /** @deprecated Use `getOrFetch()` instead */
 export function setCache(mediaType: string, query: string, results: SearchResult[]): void {
-	set(searchKey(mediaType, query), results, 'search');
+	const key = searchKey(mediaType, query);
+	const now = Date.now();
+	const config = TIER_CONFIG.search;
+	memCache.set(key, {
+		results,
+		createdAt: now,
+		staleAt: now + config.staleMs,
+		expiresAt: now + config.expireMs
+	});
 }
 
 // ---------------------------------------------------------------------------
@@ -311,13 +367,13 @@ export function discoverKey(category: string, mediaType: string, id?: string): s
 }
 
 // ---------------------------------------------------------------------------
-// Stats / observability
+// Stats / observability (per-replica)
 // ---------------------------------------------------------------------------
 
 export function getCacheStats(): CacheStats {
 	const total = stats.hits + stats.staleHits + stats.misses;
 	return {
-		size: cache.size,
+		size: memCache.size,
 		hits: stats.hits,
 		misses: stats.misses,
 		staleHits: stats.staleHits,

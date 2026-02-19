@@ -11,7 +11,7 @@ export default defineConfig({
 		allowedHosts: ['.ngrok-free.app']
 	},
 	ssr: {
-		external: ['pino', 'pino-pretty', '@axiomhq/pino']
+		external: ['pino', 'pino-pretty', '@axiomhq/pino', 'ioredis']
 	},
 	plugins: [
 		sentrySvelteKit({
