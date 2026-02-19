@@ -316,7 +316,8 @@ export async function getSeedItems(
 			return rows;
 		}
 		case 'book': {
-			// Books use genre for subject-based similar lookups
+			// Books use genre for subject-based similar lookups.
+			// Genre may be null for books added from trending — caller handles fallback.
 			const rows = await db
 				.select({
 					title: mediaItem.title,
@@ -325,9 +326,7 @@ export async function getSeedItems(
 				})
 				.from(mediaItem)
 				.innerJoin(bookMeta, eq(bookMeta.mediaItemId, mediaItem.id))
-				.where(
-					and(eq(mediaItem.userId, userId), eq(mediaItem.type, 'book'), isNotNull(bookMeta.genre))
-				)
+				.where(and(eq(mediaItem.userId, userId), eq(mediaItem.type, 'book')))
 				.orderBy(desc(mediaItem.createdAt))
 				.limit(limit);
 			return rows;

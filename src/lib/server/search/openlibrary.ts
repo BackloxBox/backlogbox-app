@@ -22,6 +22,7 @@ interface OpenLibraryResponse {
 
 interface OpenLibraryWork {
 	description?: string | { value: string };
+	subjects?: string[];
 }
 
 /** Map common ISO 639-2/3 language codes to human-readable names */
@@ -139,6 +140,32 @@ export async function fetchBookDescription(workKey: string): Promise<string | nu
 		if (!data.description) return null;
 		// description can be a string or { type: '/type/text', value: '...' }
 		return typeof data.description === 'string' ? data.description : data.description.value;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Look up a book's primary genre/subject by title.
+ * Used as fallback when a book was added without genre metadata
+ * (e.g. from the trending endpoint which doesn't return subjects).
+ */
+export async function fetchGenreByTitle(title: string): Promise<string | null> {
+	const params = new URLSearchParams({
+		q: title,
+		fields: 'subject',
+		limit: '1'
+	});
+	try {
+		await openLibraryLimiter.acquire();
+		const response = await fetch(`https://openlibrary.org/search.json?${params}`, {
+			headers: { 'User-Agent': OL_USER_AGENT }
+		});
+		if (!response.ok) return null;
+		const data: OpenLibraryResponse = await response.json();
+		const doc = data.docs[0];
+		if (!doc) return null;
+		return extractGenres(doc.subject, 1);
 	} catch {
 		return null;
 	}

@@ -23,7 +23,11 @@ import {
 	fetchSimilarGames,
 	fetchAnticipatedGames
 } from '$lib/server/search/igdb';
-import { fetchTrendingBooks, fetchBooksBySubject } from '$lib/server/search/openlibrary';
+import {
+	fetchTrendingBooks,
+	fetchBooksBySubject,
+	fetchGenreByTitle
+} from '$lib/server/search/openlibrary';
 import { fetchTopPodcasts } from '$lib/server/search/apple-podcasts';
 import { getSeedItems, getUserExternalIds } from '$lib/server/db/queries';
 import { slugToMediaType, MEDIA_TYPE_SLUGS } from '$lib/types';
@@ -190,24 +194,69 @@ export const getRecommendations = query(
 				return true;
 			});
 
+			// For books: resolve genre per seed (with fallback), then group seeds
+			// that share the same genre so we fetch once and show one merged group.
+			// For other types: each seed has a unique external ID, but we still
+			// deduplicate items across groups.
 			const trackedIds = await getUserExternalIds(userId, type);
 			const groups: RecommendationGroup[] = [];
+			const seenItems = new Set<string>();
 
-			for (const seed of seeds) {
-				const cacheKey = discoverKey('similar', type, seed.externalId);
+			if (type === 'book') {
+				// Group seeds by resolved genre to avoid duplicate fetches
+				const genreToSeeds = new Map<string, string[]>();
+				for (const seed of seeds) {
+					let genre = seed.genre?.split(',')[0]?.trim() ?? null;
+					if (!genre) {
+						genre = await fetchGenreByTitle(seed.externalId);
+					}
+					if (!genre) continue;
+					const key = genre.toLowerCase();
+					const existing = genreToSeeds.get(key);
+					if (existing) {
+						existing.push(seed.title);
+					} else {
+						genreToSeeds.set(key, [seed.title]);
+					}
+				}
 
-				const { results: items, debug } = await getOrFetch(cacheKey, 'similar', provider, () =>
-					fetchSimilarForType(type, seed)
-				);
+				for (const [genre, titles] of genreToSeeds) {
+					const cacheKey = discoverKey('similar', type, genre);
+					const { results: items, debug } = await getOrFetch(cacheKey, 'similar', provider, () =>
+						fetchBooksBySubject(genre)
+					);
 
-				// Filter out already-tracked items
-				const filtered =
-					type === 'book'
-						? items.filter((r) => !trackedIds.has(r.title.toLowerCase()))
-						: items.filter((r) => !trackedIds.has(r.externalId));
+					const filtered = items.filter((r) => {
+						const id = r.title.toLowerCase();
+						if (trackedIds.has(id) || seenItems.has(id)) return false;
+						seenItems.add(id);
+						return true;
+					});
 
-				if (filtered.length > 0) {
-					groups.push({ seedTitle: seed.title, items: filtered, _debug: debug });
+					if (filtered.length > 0) {
+						groups.push({
+							seedTitle: titles.join(' and '),
+							items: filtered,
+							_debug: debug
+						});
+					}
+				}
+			} else {
+				for (const seed of seeds) {
+					const cacheKey = discoverKey('similar', type, seed.externalId);
+					const { results: items, debug } = await getOrFetch(cacheKey, 'similar', provider, () =>
+						fetchSimilarForType(type, seed)
+					);
+
+					const filtered = items.filter((r) => {
+						if (trackedIds.has(r.externalId) || seenItems.has(r.externalId)) return false;
+						seenItems.add(r.externalId);
+						return true;
+					});
+
+					if (filtered.length > 0) {
+						groups.push({ seedTitle: seed.title, items: filtered, _debug: debug });
+					}
 				}
 			}
 
@@ -223,8 +272,9 @@ export const getRecommendations = query(
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** Fetch similar items for non-book types (books handled separately via genre grouping) */
 async function fetchSimilarForType(
-	type: import('$lib/types').MediaType,
+	type: 'movie' | 'series' | 'game',
 	seed: { externalId: string; genre: string | null }
 ): Promise<SearchResult[]> {
 	switch (type) {
@@ -234,14 +284,6 @@ async function fetchSimilarForType(
 			return fetchSimilarSeries(Number(seed.externalId));
 		case 'game':
 			return fetchSimilarGames([Number(seed.externalId)]);
-		case 'book': {
-			// Use first genre from the comma-separated genre string
-			const genre = seed.genre?.split(',')[0]?.trim();
-			if (!genre) return [];
-			return fetchBooksBySubject(genre);
-		}
-		case 'podcast':
-			return [];
 	}
 }
 

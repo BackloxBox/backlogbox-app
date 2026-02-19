@@ -186,7 +186,7 @@ export async function fetchAnticipatedGames(): Promise<TypedSearchResult<'game'>
 	// Step 2: Hydrate full game details, filtering to unreleased only
 	const now = Math.floor(Date.now() / 1000);
 	const idList = gameIds.join(',');
-	const body = `fields ${IGDB_GAME_FIELDS}; where id = (${idList}) & (first_release_date > ${now} | first_release_date = null) & category = 0; limit 40;`;
+	const body = `fields ${IGDB_GAME_FIELDS}; where id = (${idList}) & (first_release_date > ${now} | first_release_date = null); limit 40;`;
 	const games = await igdbFetch(body);
 
 	// Preserve popularity ordering from primitives
