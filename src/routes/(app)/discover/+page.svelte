@@ -68,8 +68,18 @@
 		return ((hash % 360) + 360) % 360;
 	}
 
+	/** Format ISO date (YYYY-MM-DD) as short localized string (e.g. "Mar 15, 2026") */
+	function formatDate(iso: string): string {
+		const [year, month, day] = iso.split('-').map(Number);
+		return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
+		});
+	}
+
 	/** Subtitle string for a search result based on its meta */
-	function subtitle(result: SearchResult): string {
+	function subtitle(result: SearchResult, options?: { showFullDate?: boolean }): string {
 		const meta = result.meta;
 		const parts: string[] = [];
 
@@ -79,7 +89,11 @@
 		if ('developer' in meta && meta.developer) parts.push(meta.developer as string);
 		if ('genre' in meta && meta.genre && parts.length === 0) parts.push(meta.genre as string);
 
-		if (result.releaseYear) parts.push(String(result.releaseYear));
+		if (options?.showFullDate && result.releaseDate) {
+			parts.push(formatDate(result.releaseDate));
+		} else if (result.releaseYear) {
+			parts.push(String(result.releaseYear));
+		}
 		return parts.join(' \u00b7 ');
 	}
 
@@ -426,7 +440,9 @@
 								</div>
 							</div>
 							<p class="truncate text-xs font-medium">{result.title}</p>
-							<p class="truncate text-[11px] text-muted-foreground">{subtitle(result)}</p>
+							<p class="truncate text-[11px] text-muted-foreground">
+								{subtitle(result, { showFullDate: true })}
+							</p>
 						</div>
 					{/each}
 				</div>

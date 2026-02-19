@@ -111,6 +111,7 @@ export const openLibraryProvider: SearchProvider<'book'> = {
 			title: doc.title,
 			coverUrl: coverUrl(doc.cover_i),
 			releaseYear: doc.first_publish_year ?? null,
+			releaseDate: null,
 			description: null,
 			meta: {
 				author: doc.author_name?.[0] ?? null,
@@ -202,6 +203,7 @@ export async function fetchTrendingBooks(): Promise<SearchResult[]> {
 			title: work.title,
 			coverUrl: coverUrl(work.cover_i),
 			releaseYear: work.first_publish_year ?? null,
+			releaseDate: null,
 			description: null,
 			meta: {
 				author: work.author_name?.[0] ?? null,
@@ -258,6 +260,7 @@ export async function fetchBooksBySubject(subject: string): Promise<SearchResult
 			title: work.title,
 			coverUrl: coverUrl(work.cover_id),
 			releaseYear: work.first_publish_year ?? null,
+			releaseDate: null,
 			description: null,
 			meta: {
 				author: work.authors?.[0]?.name ?? null,

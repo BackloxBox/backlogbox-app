@@ -44,6 +44,7 @@ export const applePodcastsProvider: SearchProvider<'podcast'> = {
 			title: pod.collectionName,
 			coverUrl: pod.artworkUrl600 ?? pod.artworkUrl100 ?? null,
 			releaseYear: yearFromDate(pod.releaseDate),
+			releaseDate: null,
 			description: null,
 			meta: {
 				host: pod.artistName ?? null,
@@ -87,6 +88,7 @@ export async function fetchTopPodcasts(): Promise<SearchResult[]> {
 			// Upscale artwork from 100x100 to 600x600
 			coverUrl: pod.artworkUrl100?.replace('100x100bb', '600x600bb') ?? null,
 			releaseYear: null,
+			releaseDate: null,
 			description: null,
 			meta: {
 				host: pod.artistName ?? null,

@@ -128,6 +128,7 @@ describe('eviction', () => {
 				title: 'T',
 				coverUrl: null,
 				releaseYear: 2024,
+				releaseDate: null,
 				description: null,
 				meta: {}
 			}
@@ -168,6 +169,7 @@ describe('legacy API', () => {
 				title: 'T',
 				coverUrl: null,
 				releaseYear: 2024,
+				releaseDate: null,
 				description: null,
 				meta: {}
 			}
@@ -184,6 +186,7 @@ describe('legacy API', () => {
 				title: 'T',
 				coverUrl: null,
 				releaseYear: 2024,
+				releaseDate: null,
 				description: null,
 				meta: {}
 			}
@@ -200,6 +203,7 @@ describe('legacy API', () => {
 				title: 'T',
 				coverUrl: null,
 				releaseYear: 2024,
+				releaseDate: null,
 				description: null,
 				meta: {}
 			}

@@ -9,6 +9,8 @@ export interface SearchResult<M extends Record<string, unknown> = Record<string,
 	title: string;
 	coverUrl: string | null;
 	releaseYear: number | null;
+	/** ISO date string (YYYY-MM-DD) when available, for upcoming/anticipated display */
+	releaseDate: string | null;
 	/** Short synopsis shown in discover info popovers (null when unavailable) */
 	description: string | null;
 	/** Type-specific metadata — shape determined by the provider's media type */

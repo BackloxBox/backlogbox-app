@@ -103,7 +103,16 @@ async function igdbFetch(body: string): Promise<IGDBGame[]> {
 }
 
 /** Map an IGDBGame to a typed search result */
-function mapGame(game: IGDBGame): TypedSearchResult<'game'> {
+/** Convert IGDB unix timestamp to ISO date string (YYYY-MM-DD) */
+function isoFromTimestamp(ts: number | undefined): string | null {
+	if (ts === undefined) return null;
+	return new Date(ts * 1000).toISOString().slice(0, 10);
+}
+
+function mapGame(
+	game: IGDBGame,
+	options?: { includeReleaseDate?: boolean }
+): TypedSearchResult<'game'> {
 	const developers = game.involved_companies?.filter((c) => c.developer).map((c) => c.company.name);
 	const publishers = game.involved_companies?.filter((c) => c.publisher).map((c) => c.company.name);
 
@@ -112,6 +121,7 @@ function mapGame(game: IGDBGame): TypedSearchResult<'game'> {
 		title: game.name,
 		coverUrl: coverUrl(game.cover?.image_id),
 		releaseYear: yearFromTimestamp(game.first_release_date),
+		releaseDate: options?.includeReleaseDate ? isoFromTimestamp(game.first_release_date) : null,
 		description: game.summary ?? null,
 		meta: {
 			igdbId: game.id,
@@ -134,7 +144,7 @@ export const igdbProvider: SearchProvider<'game'> = {
 		const escapedQuery = query.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 		const body = `search "${escapedQuery}"; fields id, name, cover.image_id, platforms.name, genres.name, first_release_date, summary, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, aggregated_rating, rating; limit 20;`;
 		const games = await igdbFetch(body);
-		return games.map(mapGame);
+		return games.map((g) => mapGame(g));
 	}
 };
 
@@ -148,7 +158,7 @@ export async function fetchTrendingGames(): Promise<TypedSearchResult<'game'>[]>
 	const ninetyDaysAgo = Math.floor((Date.now() - 90 * 24 * 60 * 60 * 1000) / 1000);
 	const body = `fields ${IGDB_GAME_FIELDS}; where first_release_date > ${ninetyDaysAgo} & total_rating_count > 5; sort total_rating_count desc; limit 20;`;
 	const games = await igdbFetch(body);
-	return games.map(mapGame);
+	return games.map((g) => mapGame(g));
 }
 
 // --- Discover: Anticipated ---
@@ -193,7 +203,7 @@ export async function fetchAnticipatedGames(): Promise<TypedSearchResult<'game'>
 	const orderMap = new Map(gameIds.map((id, i) => [id, i]));
 	games.sort((a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999));
 
-	return games.slice(0, 20).map(mapGame);
+	return games.slice(0, 20).map((g) => mapGame(g, { includeReleaseDate: true }));
 }
 
 // --- Discover: Similar ---
