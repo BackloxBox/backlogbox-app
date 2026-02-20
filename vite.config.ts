@@ -8,7 +8,7 @@ import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 
 export default defineConfig({
 	server: {
-		allowedHosts: ['.ngrok-free.app']
+		allowedHosts: ['.ngrok-free.app', '.ngrok-free.dev']
 	},
 	ssr: {
 		external: ['pino', 'pino-pretty', '@axiomhq/pino', 'ioredis']

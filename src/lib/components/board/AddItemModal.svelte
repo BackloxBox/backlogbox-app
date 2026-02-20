@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import * as Drawer from '$lib/components/ui/drawer/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -8,7 +9,9 @@
 	import MediaCover from './MediaCover.svelte';
 	import type { SearchResult } from '$lib/server/search';
 	import { STREAMING_PLATFORMS, PODCAST_PLATFORMS } from '$lib/types';
-	import { SvelteSet } from 'svelte/reactivity';
+	import { MediaQuery, SvelteSet } from 'svelte/reactivity';
+
+	const isDesktop = new MediaQuery('(min-width: 640px)');
 
 	type Props = {
 		slug: string;
@@ -345,434 +348,426 @@
 	}
 </script>
 
-<Dialog.Root
-	{open}
-	onOpenChange={(v) => {
-		if (!v) handleClose();
-	}}
->
-	<Dialog.Content class="max-h-[85vh] overflow-x-hidden overflow-y-auto">
-		<Dialog.Header>
-			<Dialog.Title>Add item</Dialog.Title>
-			<Dialog.Description class="sr-only">Search or manually add an item</Dialog.Description>
-		</Dialog.Header>
-
-		<div class="min-w-0 space-y-3">
-			{#if pendingPodcast}
-				<!-- Platform picker for podcasts -->
-				<div class="space-y-3">
-					<div class="flex items-center gap-3">
-						<MediaCover title={pendingPodcast.title} coverUrl={pendingPodcast.coverUrl} size="sm" />
-						<div class="min-w-0 flex-1">
-							<p class="truncate text-sm font-medium text-foreground">{pendingPodcast.title}</p>
-							{#if pendingPodcast.meta.host}
-								<p class="truncate text-xs text-muted-foreground">
-									{pendingPodcast.meta.host}
-								</p>
-							{/if}
-						</div>
+{#snippet modalBody()}
+	<div class="min-w-0 space-y-3">
+		{#if pendingPodcast}
+			<!-- Platform picker for podcasts -->
+			<div class="space-y-3">
+				<div class="flex items-center gap-3">
+					<MediaCover title={pendingPodcast.title} coverUrl={pendingPodcast.coverUrl} size="md" />
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-sm font-medium text-foreground">{pendingPodcast.title}</p>
+						{#if pendingPodcast.meta.host}
+							<p class="truncate text-xs text-muted-foreground">
+								{pendingPodcast.meta.host}
+							</p>
+						{/if}
 					</div>
+				</div>
 
+				<div class="space-y-1.5">
+					<Label>Listening on</Label>
+					<Select.Root type="single" bind:value={pendingListeningOn}>
+						<Select.Trigger class="w-full">
+							{pendingListeningOn ?? 'Select platform...'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each PODCAST_PLATFORMS as platform (platform)}
+								<Select.Item value={platform}>{platform}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+
+				<div class="flex gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						class="flex-1"
+						onclick={() => (pendingPodcast = null)}
+					>
+						Back
+					</Button>
+					<Button size="sm" class="flex-1" onclick={handleAddPodcast} disabled={adding}>
+						{adding ? 'Adding...' : 'Add'}
+					</Button>
+				</div>
+			</div>
+		{:else if pendingGame}
+			<!-- Platform picker for games -->
+			<div class="space-y-3">
+				<div class="flex items-center gap-3">
+					<MediaCover title={pendingGame.title} coverUrl={pendingGame.coverUrl} size="md" />
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-sm font-medium text-foreground">{pendingGame.title}</p>
+						{#if pendingGame.meta.developer}
+							<p class="truncate text-xs text-muted-foreground">
+								{pendingGame.meta.developer}
+							</p>
+						{/if}
+					</div>
+				</div>
+
+				{#if pendingGamePlatforms.length > 0}
 					<div class="space-y-1.5">
-						<Label>Listening on</Label>
-						<Select.Root type="single" bind:value={pendingListeningOn}>
+						<Label>Playing on</Label>
+						<Select.Root type="single" bind:value={pendingPlayingOn}>
 							<Select.Trigger class="w-full">
-								{pendingListeningOn ?? 'Select platform...'}
+								{pendingPlayingOn ?? 'Select platform...'}
 							</Select.Trigger>
 							<Select.Content>
-								{#each PODCAST_PLATFORMS as platform (platform)}
+								{#each pendingGamePlatforms as platform (platform)}
 									<Select.Item value={platform}>{platform}</Select.Item>
 								{/each}
 							</Select.Content>
 						</Select.Root>
 					</div>
+				{/if}
 
-					<div class="flex gap-2">
-						<Button
-							variant="outline"
-							size="sm"
-							class="flex-1"
-							onclick={() => (pendingPodcast = null)}
+				<div class="flex gap-2">
+					<Button variant="outline" size="sm" class="flex-1" onclick={() => (pendingGame = null)}>
+						Back
+					</Button>
+					<Button size="sm" class="flex-1" onclick={handleAddGame} disabled={adding}>
+						{adding ? 'Adding...' : 'Add'}
+					</Button>
+				</div>
+			</div>
+		{:else if pendingResult}
+			<!-- Season picker for series -->
+			<div class="space-y-3">
+				<div class="flex items-center gap-3">
+					<MediaCover title={pendingResult.title} coverUrl={pendingResult.coverUrl} size="md" />
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-sm font-medium text-foreground">{pendingResult.title}</p>
+						<p class="text-xs text-muted-foreground">Select seasons to add</p>
+					</div>
+				</div>
+
+				{#if loadingSeasons}
+					<p class="py-4 text-center text-sm text-muted-foreground">Loading seasons...</p>
+				{:else}
+					<div class="flex flex-wrap gap-1.5" role="group" aria-label="Seasons">
+						<button
+							aria-pressed={allSeasonsSelected}
+							class="rounded border px-2.5 py-1 text-xs font-medium transition
+							{allSeasonsSelected
+								? 'border-primary bg-primary text-primary-foreground'
+								: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
+							onclick={() => toggleSeason(0)}
 						>
-							Back
-						</Button>
-						<Button size="sm" class="flex-1" onclick={handleAddPodcast} disabled={adding}>
-							{adding ? 'Adding...' : 'Add'}
-						</Button>
-					</div>
-				</div>
-			{:else if pendingGame}
-				<!-- Platform picker for games -->
-				<div class="space-y-3">
-					<div class="flex items-center gap-3">
-						<MediaCover title={pendingGame.title} coverUrl={pendingGame.coverUrl} size="sm" />
-						<div class="min-w-0 flex-1">
-							<p class="truncate text-sm font-medium text-foreground">{pendingGame.title}</p>
-							{#if pendingGame.meta.developer}
-								<p class="truncate text-xs text-muted-foreground">
-									{pendingGame.meta.developer}
-								</p>
-							{/if}
-						</div>
-					</div>
-
-					{#if pendingGamePlatforms.length > 0}
-						<div class="space-y-1.5">
-							<Label>Playing on</Label>
-							<Select.Root type="single" bind:value={pendingPlayingOn}>
-								<Select.Trigger class="w-full">
-									{pendingPlayingOn ?? 'Select platform...'}
-								</Select.Trigger>
-								<Select.Content>
-									{#each pendingGamePlatforms as platform (platform)}
-										<Select.Item value={platform}>{platform}</Select.Item>
-									{/each}
-								</Select.Content>
-							</Select.Root>
-						</div>
-					{/if}
-
-					<div class="flex gap-2">
-						<Button variant="outline" size="sm" class="flex-1" onclick={() => (pendingGame = null)}>
-							Back
-						</Button>
-						<Button size="sm" class="flex-1" onclick={handleAddGame} disabled={adding}>
-							{adding ? 'Adding...' : 'Add'}
-						</Button>
-					</div>
-				</div>
-			{:else if pendingResult}
-				<!-- Season picker for series -->
-				<div class="space-y-3">
-					<div class="flex items-center gap-3">
-						<MediaCover title={pendingResult.title} coverUrl={pendingResult.coverUrl} size="sm" />
-						<div class="min-w-0 flex-1">
-							<p class="truncate text-sm font-medium text-foreground">{pendingResult.title}</p>
-							<p class="text-xs text-muted-foreground">Select seasons to add</p>
-						</div>
-					</div>
-
-					{#if loadingSeasons}
-						<p class="py-4 text-center text-sm text-muted-foreground">Loading seasons...</p>
-					{:else}
-						<div class="flex flex-wrap gap-1.5" role="group" aria-label="Seasons">
+							All
+						</button>
+						{#each Array.from({ length: pendingTotalSeasons }, (_, i) => i + 1) as season (season)}
+							{@const selected = selectedSeasons.has(season)}
 							<button
-								aria-pressed={allSeasonsSelected}
+								aria-pressed={selected}
 								class="rounded border px-2.5 py-1 text-xs font-medium transition
-								{allSeasonsSelected
+								{selected
 									? 'border-primary bg-primary text-primary-foreground'
 									: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
-								onclick={() => toggleSeason(0)}
+								onclick={() => toggleSeason(season)}
 							>
-								All
+								S{season}
 							</button>
-							{#each Array.from({ length: pendingTotalSeasons }, (_, i) => i + 1) as season (season)}
-								{@const selected = selectedSeasons.has(season)}
-								<button
-									aria-pressed={selected}
-									class="rounded border px-2.5 py-1 text-xs font-medium transition
-									{selected
-										? 'border-primary bg-primary text-primary-foreground'
-										: 'border-border bg-muted text-muted-foreground hover:border-foreground/30'}"
-									onclick={() => toggleSeason(season)}
-								>
-									S{season}
-								</button>
-							{/each}
-						</div>
-					{/if}
-
-					<!-- Watching on -->
-					<div class="space-y-1.5">
-						<Label>Watching on</Label>
-						<Select.Root type="single" bind:value={pendingWatchingOn}>
-							<Select.Trigger class="w-full">
-								{pendingWatchingOn ?? 'Select platform...'}
-							</Select.Trigger>
-							<Select.Content>
-								{#each STREAMING_PLATFORMS as platform (platform)}
-									<Select.Item value={platform}>{platform}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
+						{/each}
 					</div>
-
-					<div class="flex gap-2">
-						<Button
-							variant="outline"
-							size="sm"
-							class="flex-1"
-							onclick={() => (pendingResult = null)}
-						>
-							Back
-						</Button>
-						<Button
-							size="sm"
-							class="flex-1"
-							onclick={handleAddSeasons}
-							disabled={adding || selectedSeasons.size === 0}
-						>
-							{adding
-								? 'Adding...'
-								: allSeasonsSelected
-									? 'Add all seasons'
-									: `Add ${selectedSeasons.size} season${selectedSeasons.size !== 1 ? 's' : ''}`}
-						</Button>
-					</div>
-				</div>
-			{:else}
-				<!-- Search input -->
-				<Input
-					type="search"
-					enterkeyhint="search"
-					placeholder="Search by title..."
-					bind:value={searchQuery}
-					oninput={handleInput}
-					onkeydown={(e: KeyboardEvent) => {
-						if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-					}}
-				/>
-
-				<!-- Provider attribution -->
-				{#if results.length > 0}
-					{#if slug === 'movies' || slug === 'series'}
-						<p class="text-right text-[10px] text-muted-foreground/60">
-							Data by <a
-								href="https://www.themoviedb.org"
-								target="_blank"
-								rel="noopener noreferrer"
-								class="underline hover:text-muted-foreground">TMDB</a
-							>
-						</p>
-					{:else if slug === 'games'}
-						<p class="text-right text-[10px] text-muted-foreground/60">
-							Data by <a
-								href="https://www.igdb.com"
-								target="_blank"
-								rel="noopener noreferrer"
-								class="underline hover:text-muted-foreground">IGDB</a
-							>
-						</p>
-					{/if}
 				{/if}
 
-				<!-- Results list -->
-				<div class="max-h-72 overflow-y-auto">
-					{#if searching}
-						<p class="py-6 text-center text-sm text-muted-foreground">Searching...</p>
-					{:else if results.length > 0}
-						<div class="divide-y divide-border">
-							{#each results as result (result.externalId)}
-								<button
-									class="flex w-full items-center gap-3 px-1 py-2.5 text-left transition hover:bg-accent disabled:opacity-50"
-									onclick={() => handleSelect(result)}
-									disabled={adding}
-								>
-									<MediaCover title={result.title} coverUrl={result.coverUrl} size="sm" />
-									<div class="min-w-0 flex-1">
-										<p class="truncate text-sm font-medium text-foreground">{result.title}</p>
-										{#if resultDetail(result)}
-											<p class="truncate text-xs text-muted-foreground">
-												{resultDetail(result)}
-											</p>
-										{/if}
-									</div>
-								</button>
+				<!-- Watching on -->
+				<div class="space-y-1.5">
+					<Label>Watching on</Label>
+					<Select.Root type="single" bind:value={pendingWatchingOn}>
+						<Select.Trigger class="w-full">
+							{pendingWatchingOn ?? 'Select platform...'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each STREAMING_PLATFORMS as platform (platform)}
+								<Select.Item value={platform}>{platform}</Select.Item>
 							{/each}
-						</div>
-					{:else if searchQuery.trim().length >= 2 && !searching}
-						<p class="py-6 text-center text-sm text-muted-foreground">No results found</p>
-					{/if}
+						</Select.Content>
+					</Select.Root>
 				</div>
 
-				<!-- Manual add toggle -->
-				{#if !showManualForm}
-					<button
-						class="w-full rounded-md border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition hover:border-foreground/30 hover:text-foreground"
-						onclick={() => (showManualForm = true)}
+				<div class="flex gap-2">
+					<Button variant="outline" size="sm" class="flex-1" onclick={() => (pendingResult = null)}>
+						Back
+					</Button>
+					<Button
+						size="sm"
+						class="flex-1"
+						onclick={handleAddSeasons}
+						disabled={adding || selectedSeasons.size === 0}
 					>
-						Add manually
-					</button>
-				{:else}
-					<Separator />
-					<div class="space-y-3">
-						<div class="space-y-1.5">
-							<Label for="manual-title">Title *</Label>
-							<Input id="manual-title" placeholder="Title" bind:value={manual.title} />
-						</div>
+						{adding
+							? 'Adding...'
+							: allSeasonsSelected
+								? 'Add all seasons'
+								: `Add ${selectedSeasons.size} season${selectedSeasons.size !== 1 ? 's' : ''}`}
+					</Button>
+				</div>
+			</div>
+		{:else}
+			<!-- Search input -->
+			<Input
+				type="search"
+				enterkeyhint="search"
+				placeholder="Search by title..."
+				bind:value={searchQuery}
+				oninput={handleInput}
+				onkeydown={(e: KeyboardEvent) => {
+					if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+				}}
+			/>
 
-						{#if slug === 'books'}
-							<div class="space-y-1.5">
-								<Label for="manual-author">Author</Label>
-								<Input id="manual-author" placeholder="Author" bind:value={manual.author} />
-							</div>
-							<div class="space-y-1.5">
-								<Label for="manual-genre">Genre</Label>
-								<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
-							</div>
-							<div class="grid grid-cols-2 gap-3">
-								<div class="space-y-1.5">
-									<Label for="manual-pages">Pages</Label>
-									<Input
-										id="manual-pages"
-										type="number"
-										placeholder="320"
-										bind:value={manual.pageCount}
-									/>
-								</div>
-								<div class="space-y-1.5">
-									<Label for="manual-year">Year</Label>
-									<Input
-										id="manual-year"
-										type="number"
-										placeholder="2024"
-										bind:value={manual.year}
-									/>
-								</div>
-							</div>
-							<div class="space-y-1.5">
-								<Label for="manual-isbn">ISBN</Label>
-								<Input id="manual-isbn" placeholder="978-0-00-000000-0" bind:value={manual.isbn} />
-							</div>
-						{:else if slug === 'movies'}
-							<div class="space-y-1.5">
-								<Label for="manual-director">Director</Label>
-								<Input id="manual-director" placeholder="Director" bind:value={manual.director} />
-							</div>
-							<div class="space-y-1.5">
-								<Label for="manual-genre">Genre</Label>
-								<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
-							</div>
-							<div class="grid grid-cols-2 gap-3">
-								<div class="space-y-1.5">
-									<Label for="manual-runtime">Runtime (min)</Label>
-									<Input
-										id="manual-runtime"
-										type="number"
-										placeholder="120"
-										bind:value={manual.runtime}
-									/>
-								</div>
-								<div class="space-y-1.5">
-									<Label for="manual-year">Year</Label>
-									<Input
-										id="manual-year"
-										type="number"
-										placeholder="2024"
-										bind:value={manual.year}
-									/>
-								</div>
-							</div>
-						{:else if slug === 'series'}
-							<div class="space-y-1.5">
-								<Label for="manual-creator">Creator</Label>
-								<Input id="manual-creator" placeholder="Creator" bind:value={manual.creator} />
-							</div>
-							<div class="space-y-1.5">
-								<Label for="manual-genre">Genre</Label>
-								<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
-							</div>
-							<div class="grid grid-cols-2 gap-3">
-								<div class="space-y-1.5">
-									<Label for="manual-seasons">Total seasons</Label>
-									<Input
-										id="manual-seasons"
-										type="number"
-										placeholder="3"
-										bind:value={manual.totalSeasons}
-									/>
-								</div>
-								<div class="space-y-1.5">
-									<Label for="manual-year">Year</Label>
-									<Input
-										id="manual-year"
-										type="number"
-										placeholder="2024"
-										bind:value={manual.year}
-									/>
-								</div>
-							</div>
-						{:else if slug === 'games'}
-							<div class="grid grid-cols-2 gap-3">
-								<div class="space-y-1.5">
-									<Label for="manual-developer">Developer</Label>
-									<Input id="manual-developer" placeholder="Studio" bind:value={manual.developer} />
-								</div>
-								<div class="space-y-1.5">
-									<Label for="manual-publisher">Publisher</Label>
-									<Input
-										id="manual-publisher"
-										placeholder="Publisher"
-										bind:value={manual.publisher}
-									/>
-								</div>
-							</div>
-							<div class="space-y-1.5">
-								<Label for="manual-platform">Platforms</Label>
-								<Input
-									id="manual-platform"
-									placeholder="PC, PS5, Switch..."
-									bind:value={manual.platform}
-								/>
-							</div>
-							<div class="grid grid-cols-2 gap-3">
-								<div class="space-y-1.5">
-									<Label for="manual-genre">Genre</Label>
-									<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
-								</div>
-								<div class="space-y-1.5">
-									<Label for="manual-year">Year</Label>
-									<Input
-										id="manual-year"
-										type="number"
-										placeholder="2024"
-										bind:value={manual.year}
-									/>
-								</div>
-							</div>
-						{:else if slug === 'podcasts'}
-							<div class="grid grid-cols-2 gap-3">
-								<div class="space-y-1.5">
-									<Label for="manual-host">Host</Label>
-									<Input id="manual-host" placeholder="Host" bind:value={manual.host} />
-								</div>
-								<div class="space-y-1.5">
-									<Label for="manual-publisher">Publisher</Label>
-									<Input
-										id="manual-publisher"
-										placeholder="Publisher"
-										bind:value={manual.publisher}
-									/>
-								</div>
-							</div>
-							<div class="grid grid-cols-2 gap-3">
-								<div class="space-y-1.5">
-									<Label for="manual-genre">Genre</Label>
-									<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
-								</div>
-								<div class="space-y-1.5">
-									<Label for="manual-year">Year</Label>
-									<Input
-										id="manual-year"
-										type="number"
-										placeholder="2024"
-										bind:value={manual.year}
-									/>
-								</div>
-							</div>
-						{/if}
-
-						<Button
-							class="w-full"
-							size="sm"
-							onclick={handleManualAdd}
-							disabled={adding || !manual.title.trim()}
+			<!-- Provider attribution -->
+			{#if results.length > 0}
+				{#if slug === 'movies' || slug === 'series'}
+					<p class="text-right text-[10px] text-muted-foreground/60">
+						Data by <a
+							href="https://www.themoviedb.org"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="underline hover:text-muted-foreground">TMDB</a
 						>
-							{adding ? 'Adding...' : 'Add'}
-						</Button>
-					</div>
+					</p>
+				{:else if slug === 'games'}
+					<p class="text-right text-[10px] text-muted-foreground/60">
+						Data by <a
+							href="https://www.igdb.com"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="underline hover:text-muted-foreground">IGDB</a
+						>
+					</p>
 				{/if}
 			{/if}
-		</div>
-	</Dialog.Content>
-</Dialog.Root>
+
+			<!-- Results list -->
+			<div class="max-h-[50vh] overflow-y-auto sm:max-h-72">
+				{#if searching}
+					<p class="py-6 text-center text-sm text-muted-foreground">Searching...</p>
+				{:else if results.length > 0}
+					<div class="divide-y divide-border">
+						{#each results as result (result.externalId)}
+							<button
+								class="flex w-full items-center gap-3 px-1 py-3 text-left transition hover:bg-accent disabled:opacity-50"
+								onclick={() => handleSelect(result)}
+								disabled={adding}
+							>
+								<MediaCover title={result.title} coverUrl={result.coverUrl} size="md" />
+								<div class="min-w-0 flex-1">
+									<p class="truncate text-sm font-medium text-foreground">{result.title}</p>
+									{#if resultDetail(result)}
+										<p class="truncate text-xs text-muted-foreground">
+											{resultDetail(result)}
+										</p>
+									{/if}
+								</div>
+							</button>
+						{/each}
+					</div>
+				{:else if searchQuery.trim().length >= 2 && !searching}
+					<p class="py-6 text-center text-sm text-muted-foreground">No results found</p>
+				{/if}
+			</div>
+
+			<!-- Manual add toggle -->
+			{#if !showManualForm}
+				<button
+					class="w-full rounded-md border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition hover:border-foreground/30 hover:text-foreground"
+					onclick={() => (showManualForm = true)}
+				>
+					Add manually
+				</button>
+			{:else}
+				<Separator />
+				<div class="space-y-3">
+					<div class="space-y-1.5">
+						<Label for="manual-title">Title *</Label>
+						<Input id="manual-title" placeholder="Title" bind:value={manual.title} />
+					</div>
+
+					{#if slug === 'books'}
+						<div class="space-y-1.5">
+							<Label for="manual-author">Author</Label>
+							<Input id="manual-author" placeholder="Author" bind:value={manual.author} />
+						</div>
+						<div class="space-y-1.5">
+							<Label for="manual-genre">Genre</Label>
+							<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
+						</div>
+						<div class="grid grid-cols-2 gap-3">
+							<div class="space-y-1.5">
+								<Label for="manual-pages">Pages</Label>
+								<Input
+									id="manual-pages"
+									type="number"
+									placeholder="320"
+									bind:value={manual.pageCount}
+								/>
+							</div>
+							<div class="space-y-1.5">
+								<Label for="manual-year">Year</Label>
+								<Input id="manual-year" type="number" placeholder="2024" bind:value={manual.year} />
+							</div>
+						</div>
+						<div class="space-y-1.5">
+							<Label for="manual-isbn">ISBN</Label>
+							<Input id="manual-isbn" placeholder="978-0-00-000000-0" bind:value={manual.isbn} />
+						</div>
+					{:else if slug === 'movies'}
+						<div class="space-y-1.5">
+							<Label for="manual-director">Director</Label>
+							<Input id="manual-director" placeholder="Director" bind:value={manual.director} />
+						</div>
+						<div class="space-y-1.5">
+							<Label for="manual-genre">Genre</Label>
+							<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
+						</div>
+						<div class="grid grid-cols-2 gap-3">
+							<div class="space-y-1.5">
+								<Label for="manual-runtime">Runtime (min)</Label>
+								<Input
+									id="manual-runtime"
+									type="number"
+									placeholder="120"
+									bind:value={manual.runtime}
+								/>
+							</div>
+							<div class="space-y-1.5">
+								<Label for="manual-year">Year</Label>
+								<Input id="manual-year" type="number" placeholder="2024" bind:value={manual.year} />
+							</div>
+						</div>
+					{:else if slug === 'series'}
+						<div class="space-y-1.5">
+							<Label for="manual-creator">Creator</Label>
+							<Input id="manual-creator" placeholder="Creator" bind:value={manual.creator} />
+						</div>
+						<div class="space-y-1.5">
+							<Label for="manual-genre">Genre</Label>
+							<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
+						</div>
+						<div class="grid grid-cols-2 gap-3">
+							<div class="space-y-1.5">
+								<Label for="manual-seasons">Total seasons</Label>
+								<Input
+									id="manual-seasons"
+									type="number"
+									placeholder="3"
+									bind:value={manual.totalSeasons}
+								/>
+							</div>
+							<div class="space-y-1.5">
+								<Label for="manual-year">Year</Label>
+								<Input id="manual-year" type="number" placeholder="2024" bind:value={manual.year} />
+							</div>
+						</div>
+					{:else if slug === 'games'}
+						<div class="grid grid-cols-2 gap-3">
+							<div class="space-y-1.5">
+								<Label for="manual-developer">Developer</Label>
+								<Input id="manual-developer" placeholder="Studio" bind:value={manual.developer} />
+							</div>
+							<div class="space-y-1.5">
+								<Label for="manual-publisher">Publisher</Label>
+								<Input
+									id="manual-publisher"
+									placeholder="Publisher"
+									bind:value={manual.publisher}
+								/>
+							</div>
+						</div>
+						<div class="space-y-1.5">
+							<Label for="manual-platform">Platforms</Label>
+							<Input
+								id="manual-platform"
+								placeholder="PC, PS5, Switch..."
+								bind:value={manual.platform}
+							/>
+						</div>
+						<div class="grid grid-cols-2 gap-3">
+							<div class="space-y-1.5">
+								<Label for="manual-genre">Genre</Label>
+								<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
+							</div>
+							<div class="space-y-1.5">
+								<Label for="manual-year">Year</Label>
+								<Input id="manual-year" type="number" placeholder="2024" bind:value={manual.year} />
+							</div>
+						</div>
+					{:else if slug === 'podcasts'}
+						<div class="grid grid-cols-2 gap-3">
+							<div class="space-y-1.5">
+								<Label for="manual-host">Host</Label>
+								<Input id="manual-host" placeholder="Host" bind:value={manual.host} />
+							</div>
+							<div class="space-y-1.5">
+								<Label for="manual-publisher">Publisher</Label>
+								<Input
+									id="manual-publisher"
+									placeholder="Publisher"
+									bind:value={manual.publisher}
+								/>
+							</div>
+						</div>
+						<div class="grid grid-cols-2 gap-3">
+							<div class="space-y-1.5">
+								<Label for="manual-genre">Genre</Label>
+								<Input id="manual-genre" placeholder="Genre" bind:value={manual.genre} />
+							</div>
+							<div class="space-y-1.5">
+								<Label for="manual-year">Year</Label>
+								<Input id="manual-year" type="number" placeholder="2024" bind:value={manual.year} />
+							</div>
+						</div>
+					{/if}
+
+					<Button
+						class="w-full"
+						size="sm"
+						onclick={handleManualAdd}
+						disabled={adding || !manual.title.trim()}
+					>
+						{adding ? 'Adding...' : 'Add'}
+					</Button>
+				</div>
+			{/if}
+		{/if}
+	</div>
+{/snippet}
+
+{#if isDesktop.current}
+	<Dialog.Root
+		{open}
+		onOpenChange={(v) => {
+			if (!v) handleClose();
+		}}
+	>
+		<Dialog.Content class="max-h-[85vh] overflow-x-hidden overflow-y-auto">
+			<Dialog.Header>
+				<Dialog.Title>Add item</Dialog.Title>
+				<Dialog.Description class="sr-only">Search or manually add an item</Dialog.Description>
+			</Dialog.Header>
+			{@render modalBody()}
+		</Dialog.Content>
+	</Dialog.Root>
+{:else}
+	<Drawer.Root
+		{open}
+		onOpenChange={(v) => {
+			if (!v) handleClose();
+		}}
+	>
+		<Drawer.Content>
+			<Drawer.Header class="text-start">
+				<Drawer.Title>Add item</Drawer.Title>
+				<Drawer.Description class="sr-only">Search or manually add an item</Drawer.Description>
+			</Drawer.Header>
+			<div class="overflow-y-auto px-4 pb-4">
+				{@render modalBody()}
+			</div>
+		</Drawer.Content>
+	</Drawer.Root>
+{/if}
