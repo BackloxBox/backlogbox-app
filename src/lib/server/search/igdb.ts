@@ -1,5 +1,6 @@
 import { env } from '$env/dynamic/private';
 import type { SearchProvider, TypedSearchResult } from './types';
+import { resilientFetch } from './fetch';
 import { yearFromTimestamp } from './utils';
 import { igdbLimiter } from './rate-limiter';
 
@@ -47,7 +48,7 @@ async function getAccessToken(): Promise<{ clientId: string; accessToken: string
 		return { clientId, accessToken: cachedToken.token };
 	}
 
-	const response = await fetch('https://id.twitch.tv/oauth2/token', {
+	const response = await resilientFetch('https://id.twitch.tv/oauth2/token', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
@@ -88,7 +89,7 @@ function coverUrl(imageId: string | undefined): string | null {
 async function igdbFetch(body: string): Promise<IGDBGame[]> {
 	const { clientId, accessToken } = await getAccessToken();
 	await igdbLimiter.acquire();
-	const response = await fetch('https://api.igdb.com/v4/games', {
+	const response = await resilientFetch('https://api.igdb.com/v4/games', {
 		method: 'POST',
 		headers: {
 			'Client-ID': clientId,
@@ -194,7 +195,7 @@ export async function fetchSimilarGames(
 
 	const { clientId, accessToken } = await getAccessToken();
 	await igdbLimiter.acquire();
-	const response = await fetch('https://api.igdb.com/v4/games', {
+	const response = await resilientFetch('https://api.igdb.com/v4/games', {
 		method: 'POST',
 		headers: {
 			'Client-ID': clientId,

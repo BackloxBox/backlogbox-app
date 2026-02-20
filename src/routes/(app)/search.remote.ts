@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { query } from '$app/server';
 import { requireSubscription } from '$lib/server/auth-guard';
 import { getSearchProvider, type SearchResult } from '$lib/server/search';
-import { getOrFetch } from '$lib/server/search/cache';
+import { getOrFetch, getOrFetchValue } from '$lib/server/search/cache';
 import { fetchBookDescription } from '$lib/server/search/openlibrary';
 import {
 	fetchTmdbSeriesDetails,
@@ -58,7 +58,11 @@ export const getSeriesDetails = query(
 	async (tmdbId): Promise<TmdbSeriesDetailsResult | null> => {
 		requireSubscription();
 		try {
-			return await fetchTmdbSeriesDetails(tmdbId);
+			return await getOrFetchValue<TmdbSeriesDetailsResult | null>(
+				`detail:series:${tmdbId}`,
+				'tmdb',
+				() => fetchTmdbSeriesDetails(tmdbId)
+			);
 		} catch (err) {
 			log.error({ err, tmdbId, provider: 'tmdb' }, 'series details fetch failed');
 			return null;
@@ -72,7 +76,11 @@ export const getMovieDetails = query(
 	async (tmdbId): Promise<TmdbMovieDetailsResult | null> => {
 		requireSubscription();
 		try {
-			return await fetchTmdbMovieDetails(tmdbId);
+			return await getOrFetchValue<TmdbMovieDetailsResult | null>(
+				`detail:movie:${tmdbId}`,
+				'tmdb',
+				() => fetchTmdbMovieDetails(tmdbId)
+			);
 		} catch (err) {
 			log.error({ err, tmdbId, provider: 'tmdb' }, 'movie details fetch failed');
 			return null;
@@ -84,7 +92,9 @@ export const getMovieDetails = query(
 export const getBookDescription = query(v.string(), async (workKey): Promise<string | null> => {
 	requireSubscription();
 	try {
-		return await fetchBookDescription(workKey);
+		return await getOrFetchValue<string | null>(`detail:book:${workKey}`, 'openlibrary', () =>
+			fetchBookDescription(workKey)
+		);
 	} catch (err) {
 		log.error({ err, workKey, provider: 'openlibrary' }, 'book description fetch failed');
 		return null;

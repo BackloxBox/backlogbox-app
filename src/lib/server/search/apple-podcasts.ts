@@ -1,11 +1,12 @@
 /**
  * Apple Podcasts / iTunes search API.
  *
- * No rate limiter: Apple's iTunes Search API and RSS marketing feed are
- * public with no documented rate limits. Volume is also low — only 1 call
- * per discover tab switch (no "similar" endpoint exists for podcasts).
+ * Rate limited: ~20 req/min per Apple's undocumented throttle.
+ * Volume is low — only 1 call per discover tab switch (no "similar" endpoint).
  */
 import type { SearchProvider, SearchResult, TypedSearchResult } from './types';
+import { appleLimiter } from './rate-limiter';
+import { resilientFetch } from './fetch';
 import { yearFromDate } from './utils';
 
 interface ApplePodcast {
@@ -34,7 +35,8 @@ export const applePodcastsProvider: SearchProvider<'podcast'> = {
 			limit: '20'
 		});
 
-		const response = await fetch(`https://itunes.apple.com/search?${params}`);
+		await appleLimiter.acquire();
+		const response = await resilientFetch(`https://itunes.apple.com/search?${params}`);
 		if (!response.ok) return [];
 
 		const data: AppleSearchResponse = await response.json();
@@ -76,7 +78,8 @@ interface AppleTopChartFeed {
 /** Fetch top/trending podcasts from Apple RSS marketing feed */
 export async function fetchTopPodcasts(): Promise<SearchResult[]> {
 	try {
-		const response = await fetch(
+		await appleLimiter.acquire();
+		const response = await resilientFetch(
 			'https://rss.applemarketingtools.com/api/v2/us/podcasts/top/25/podcasts.json'
 		);
 		if (!response.ok) return [];

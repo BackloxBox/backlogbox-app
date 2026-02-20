@@ -323,6 +323,117 @@ async function revalidateInBackground(
 }
 
 // ---------------------------------------------------------------------------
+// Generic detail cache (for non-SearchResult[] values)
+// ---------------------------------------------------------------------------
+
+/** 24 hours — movie credits, series details, book descriptions rarely change */
+const DETAIL_EXPIRE_MS = 24 * 60 * 60 * 1000;
+const DETAIL_MAX_ENTRIES = 200;
+
+interface DetailEntry<T> {
+	value: T;
+	expiresAt: number;
+}
+
+const detailMemCache = new Map<string, DetailEntry<unknown>>();
+const detailInflight = new Map<string, Promise<unknown>>();
+
+async function detailGet<T>(key: string): Promise<DetailEntry<T> | null> {
+	const redis = getRedis();
+	if (redis) {
+		try {
+			const raw = await redis.get(REDIS_PREFIX + key);
+			if (!raw) return null;
+			return JSON.parse(raw) as DetailEntry<T>;
+		} catch (err) {
+			log.debug({ err: err instanceof Error ? err.message : err, key }, 'redis detail get failed');
+		}
+	}
+	return (detailMemCache.get(key) as DetailEntry<T> | undefined) ?? null;
+}
+
+async function detailSet<T>(key: string, entry: DetailEntry<T>): Promise<void> {
+	const ttlMs = entry.expiresAt - Date.now();
+	if (ttlMs <= 0) return;
+
+	const redis = getRedis();
+	if (redis) {
+		try {
+			await redis.set(REDIS_PREFIX + key, JSON.stringify(entry), 'PX', ttlMs);
+			return;
+		} catch (err) {
+			log.debug({ err: err instanceof Error ? err.message : err, key }, 'redis detail set failed');
+		}
+	}
+
+	// In-memory fallback — evict oldest if full
+	if (detailMemCache.size >= DETAIL_MAX_ENTRIES) {
+		const now = Date.now();
+		for (const [k, e] of detailMemCache) {
+			if (e.expiresAt <= now) detailMemCache.delete(k);
+		}
+		if (detailMemCache.size >= DETAIL_MAX_ENTRIES) {
+			let oldestKey: string | undefined;
+			let oldestTime = Infinity;
+			for (const [k, e] of detailMemCache) {
+				if (e.expiresAt < oldestTime) {
+					oldestTime = e.expiresAt;
+					oldestKey = k;
+				}
+			}
+			if (oldestKey) detailMemCache.delete(oldestKey);
+		}
+	}
+	detailMemCache.set(key, entry);
+}
+
+/**
+ * Generic cache-through with request coalescing for detail/singleton values.
+ *
+ * Same pattern as `getOrFetch` but for arbitrary JSON-serializable types
+ * (movie details, book descriptions, etc.) instead of `SearchResult[]`.
+ *
+ * @param key      Unique cache key (e.g. `detail:movie:12345`)
+ * @param provider Label for metrics
+ * @param fetcher  Function to call on miss — may return `null` on upstream error
+ */
+export async function getOrFetchValue<T>(
+	key: string,
+	provider: string,
+	fetcher: () => Promise<T>
+): Promise<T> {
+	const entry = await detailGet<T>(key);
+
+	if (entry && entry.expiresAt > Date.now()) {
+		recordCacheHit(provider);
+		return entry.value;
+	}
+
+	// Coalesce concurrent requests
+	const existing = detailInflight.get(key);
+	if (existing) return existing as Promise<T>;
+
+	const start = performance.now();
+	const promise = fetcher().then(async (value) => {
+		await detailSet(key, { value, expiresAt: Date.now() + DETAIL_EXPIRE_MS });
+		detailInflight.delete(key);
+		const latencyMs = Math.round(performance.now() - start);
+		recordApiCall(provider, latencyMs);
+		return value;
+	});
+
+	detailInflight.set(key, promise);
+
+	try {
+		return await promise;
+	} catch (err) {
+		detailInflight.delete(key);
+		recordApiError(provider);
+		throw err;
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Legacy API (backward-compatible for search.remote.ts)
 // ---------------------------------------------------------------------------
 

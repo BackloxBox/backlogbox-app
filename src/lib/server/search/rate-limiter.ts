@@ -89,6 +89,9 @@ export const igdbLimiter = new TokenBucket(4, 4, 'igdb');
 /** OpenLibrary: courtesy limit ~5 req/s (no official docs, but be polite) */
 export const openLibraryLimiter = new TokenBucket(5, 5, 'openlibrary');
 
+/** Apple iTunes: ~20 req/min ≈ 0.33 req/s, small burst for search + trending */
+export const appleLimiter = new TokenBucket(3, 0.33, 'apple');
+
 /**
  * Snapshot stats for all providers. Used by debug overlay.
  */
@@ -98,5 +101,5 @@ export function getRateLimiterStats(): Array<{
 	waiting: number;
 	maxTokens: number;
 }> {
-	return [tmdbLimiter.stats, igdbLimiter.stats, openLibraryLimiter.stats];
+	return [tmdbLimiter.stats, igdbLimiter.stats, openLibraryLimiter.stats, appleLimiter.stats];
 }

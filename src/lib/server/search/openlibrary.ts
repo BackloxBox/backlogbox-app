@@ -1,5 +1,6 @@
 import type { SearchProvider, SearchResult, TypedSearchResult } from './types';
 import { openLibraryLimiter } from './rate-limiter';
+import { resilientFetch } from './fetch';
 import { getRedis } from '$lib/server/redis';
 import { log } from '$lib/server/logger';
 
@@ -101,7 +102,7 @@ export const openLibraryProvider: SearchProvider<'book'> = {
 		});
 
 		await openLibraryLimiter.acquire();
-		const response = await fetch(`https://openlibrary.org/search.json?${params}`, {
+		const response = await resilientFetch(`https://openlibrary.org/search.json?${params}`, {
 			headers: { 'User-Agent': OL_USER_AGENT }
 		});
 		if (!response.ok) return [];
@@ -135,7 +136,7 @@ export async function fetchBookDescription(workKey: string): Promise<string | nu
 	const url = `https://openlibrary.org${workKey}.json`;
 	try {
 		await openLibraryLimiter.acquire();
-		const response = await fetch(url, {
+		const response = await resilientFetch(url, {
 			headers: { 'User-Agent': OL_USER_AGENT }
 		});
 		if (!response.ok) return null;
@@ -166,7 +167,7 @@ export async function fetchGenreByTitle(title: string): Promise<string | null> {
 	});
 	try {
 		await openLibraryLimiter.acquire();
-		const response = await fetch(`https://openlibrary.org/search.json?${params}`, {
+		const response = await resilientFetch(`https://openlibrary.org/search.json?${params}`, {
 			headers: { 'User-Agent': OL_USER_AGENT }
 		});
 		if (!response.ok) return null;
@@ -251,7 +252,7 @@ interface OpenLibraryTrendingResponse {
 export async function fetchTrendingBooks(): Promise<SearchResult[]> {
 	try {
 		await openLibraryLimiter.acquire();
-		const response = await fetch('https://openlibrary.org/trending/daily.json?limit=20', {
+		const response = await resilientFetch('https://openlibrary.org/trending/daily.json?limit=20', {
 			headers: { 'User-Agent': OL_USER_AGENT }
 		});
 		if (!response.ok) return [];
@@ -308,9 +309,12 @@ export async function fetchBooksBySubject(subject: string): Promise<SearchResult
 		.replace(/[^a-z0-9_]/g, '');
 	try {
 		await openLibraryLimiter.acquire();
-		const response = await fetch(`https://openlibrary.org/subjects/${normalized}.json?limit=10`, {
-			headers: { 'User-Agent': OL_USER_AGENT }
-		});
+		const response = await resilientFetch(
+			`https://openlibrary.org/subjects/${normalized}.json?limit=10`,
+			{
+				headers: { 'User-Agent': OL_USER_AGENT }
+			}
+		);
 		if (!response.ok) return [];
 
 		const data: OpenLibrarySubjectResponse = await response.json();

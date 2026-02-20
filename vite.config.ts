@@ -77,6 +77,14 @@ export default defineConfig({
 							cacheName: 'openlibrary-covers',
 							expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 }
 						}
+					},
+					{
+						urlPattern: /^https:\/\/is\d+-ssl\.mzstatic\.com\/.*/i,
+						handler: 'CacheFirst',
+						options: {
+							cacheName: 'apple-podcast-images',
+							expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 }
+						}
 					}
 				]
 			}

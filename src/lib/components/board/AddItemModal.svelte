@@ -765,7 +765,7 @@
 				<Drawer.Title>Add item</Drawer.Title>
 				<Drawer.Description class="sr-only">Search or manually add an item</Drawer.Description>
 			</Drawer.Header>
-			<div class="overflow-y-auto px-4 pb-4">
+			<div class="overflow-y-auto px-4 pt-1 pb-4">
 				{@render modalBody()}
 			</div>
 		</Drawer.Content>
