@@ -16,6 +16,10 @@
 
 	let { data }: { data: PageData } = $props();
 
+	const profileDescription = $derived(
+		`See what @${data.profileUser.username} is reading, watching, and playing on BacklogBox.`
+	);
+
 	const boards = MEDIA_TYPE_SLUGS.map((slug, i) => {
 		const type = slugToMediaType(slug);
 		const icons = [BookOpen, Film, Tv, Gamepad2, Podcast];
@@ -34,6 +38,17 @@
 		};
 	});
 </script>
+
+<svelte:head>
+	<title>@{data.profileUser.username} — BacklogBox</title>
+	<meta name="description" content={profileDescription} />
+	<meta property="og:title" content="@{data.profileUser.username} — BacklogBox" />
+	<meta property="og:description" content={profileDescription} />
+	<meta property="og:type" content="profile" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content="@{data.profileUser.username} — BacklogBox" />
+	<meta name="twitter:description" content={profileDescription} />
+</svelte:head>
 
 <div class="flex min-h-screen items-center justify-center bg-background px-4">
 	<div class="w-full max-w-md space-y-8 text-center">

@@ -4,6 +4,10 @@
 	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 </script>
 
+<svelte:head>
+	<title>{page.status} — BacklogBox</title>
+</svelte:head>
+
 <div class="flex h-full flex-col items-center justify-center gap-4 px-4">
 	<TriangleAlert class="size-10 text-muted-foreground" />
 

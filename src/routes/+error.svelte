@@ -4,6 +4,10 @@
 	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 </script>
 
+<svelte:head>
+	<title>{page.status} — BacklogBox</title>
+</svelte:head>
+
 <div class="flex min-h-screen items-center justify-center bg-background px-4">
 	<div class="w-full max-w-sm space-y-6 text-center">
 		<div class="flex justify-center">

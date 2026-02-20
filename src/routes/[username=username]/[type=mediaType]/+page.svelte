@@ -71,6 +71,20 @@
 	);
 </script>
 
+<svelte:head>
+	<title>{typeLabel} — @{data.profileUser.username} — BacklogBox</title>
+	<meta
+		name="description"
+		content="@{data.profileUser.username}'s {typeLabel.toLowerCase()} board on BacklogBox."
+	/>
+	<meta property="og:title" content="{typeLabel} — @{data.profileUser.username}" />
+	<meta
+		property="og:description"
+		content="@{data.profileUser.username}'s {typeLabel.toLowerCase()} board on BacklogBox."
+	/>
+	<meta name="twitter:card" content="summary" />
+</svelte:head>
+
 <div class="flex h-screen flex-col bg-background text-foreground">
 	<!-- Header -->
 	<header class="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6">

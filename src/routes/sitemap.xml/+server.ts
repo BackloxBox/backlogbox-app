@@ -6,8 +6,6 @@ const SITE_URL = 'https://backlogbox.com';
 
 const staticPages = [
 	{ path: '/', priority: '1.0', changefreq: 'weekly' },
-	{ path: '/login', priority: '0.3', changefreq: 'monthly' },
-	{ path: '/register', priority: '0.5', changefreq: 'monthly' },
 	{ path: '/blog', priority: '0.8', changefreq: 'weekly' },
 	{ path: '/blog/how-to-organize-your-media-backlog', priority: '0.7', changefreq: 'monthly' },
 	{

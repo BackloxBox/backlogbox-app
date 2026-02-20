@@ -46,8 +46,20 @@
 	<meta property="article:published_time" content={post.publishedAt} />
 	<meta property="article:modified_time" content={post.updatedAt} />
 
+	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content={post.title} />
 	<meta name="twitter:description" content={post.description} />
+
+	<!-- BreadcrumbList structured data -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
+	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Blog', item: `${siteUrl}/blog` },
+			{ '@type': 'ListItem', position: 2, name: post.title, item: pageUrl }
+		]
+	})}</${'script'}>`}
 
 	<!-- Article structured data -->
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
