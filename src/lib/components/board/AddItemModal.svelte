@@ -759,7 +759,6 @@
 		onOpenChange={(v) => {
 			if (!v) handleClose();
 		}}
-		snapPoints={[0.75]}
 	>
 		<Drawer.Content>
 			<Drawer.Header class="text-start">
