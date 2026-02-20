@@ -357,7 +357,7 @@
 			<Dialog.Description class="sr-only">Search or manually add an item</Dialog.Description>
 		</Dialog.Header>
 
-		<div class="space-y-3">
+		<div class="min-w-0 space-y-3">
 			{#if pendingPodcast}
 				<!-- Platform picker for podcasts -->
 				<div class="space-y-3">
