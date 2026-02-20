@@ -1,18 +1,19 @@
 /**
- * Cleanup script for expired trial users.
+ * Cleanup script for expired trial users and unverified accounts.
  *
  * Run daily via cron on the manager node:
  *   0 3 * * * docker exec $(docker ps -q -f name=backlogbox_app -f status=running | head -1) node scripts/cleanup-expired-trials.mjs
  *
- * Two actions:
- * 1. Users 83 days post-trial-expiry: send warning email (data deleted in 7 days)
- * 2. Users 90 days post-trial-expiry: soft-delete (set deleted_at)
+ * Three actions:
+ * 1. Unverified accounts 24h+ old: hard-delete (no data, never activated)
+ * 2. Users 83 days post-trial-expiry: send warning email (data deleted in 7 days)
+ * 3. Users 90 days post-trial-expiry: soft-delete (set deleted_at)
  *
  * Requires: DATABASE_URL, RESEND_API_KEY, EMAIL_FROM (from Docker secrets via entrypoint)
  */
 
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { and, eq, isNull, lt, gte, isNotNull } from 'drizzle-orm';
+import { and, eq, isNull, lt, gte, isNotNull, inArray } from 'drizzle-orm';
 import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core';
 import postgres from 'postgres';
 import { Resend } from 'resend';
@@ -39,10 +40,19 @@ const user = pgTable('user', {
 	id: text('id').primaryKey(),
 	name: text('name').notNull(),
 	email: text('email').notNull(),
+	emailVerified: boolean('email_verified').default(false).notNull(),
 	subscribed: boolean('subscribed').default(false).notNull(),
 	freeAccess: boolean('free_access').default(false).notNull(),
 	trialEndsAt: timestamp('trial_ends_at'),
-	deletedAt: timestamp('deleted_at')
+	deletedAt: timestamp('deleted_at'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+const verification = pgTable('verification', {
+	id: text('id').primaryKey(),
+	identifier: text('identifier').notNull(),
+	value: text('value').notNull(),
+	expiresAt: timestamp('expires_at').notNull()
 });
 
 // ---------------------------------------------------------------------------
@@ -71,7 +81,34 @@ try {
 	const now = new Date();
 	console.log(`[cleanup] starting at ${now.toISOString()}`);
 
-	// Users whose trial expired ~83 days ago (warn: 7 days until deletion)
+	// -----------------------------------------------------------------------
+	// 1. Hard-delete unverified accounts older than 24 hours
+	// -----------------------------------------------------------------------
+	const unverifiedCutoff = daysAgo(1);
+
+	const staleUnverified = await db
+		.select({ id: user.id, email: user.email })
+		.from(user)
+		.where(and(eq(user.emailVerified, false), lt(user.createdAt, unverifiedCutoff)));
+
+	if (staleUnverified.length > 0) {
+		// Clean up verification tokens for these emails
+		const emails = staleUnverified.map((u) => u.email);
+		await db.delete(verification).where(inArray(verification.identifier, emails));
+
+		// Hard-delete the user rows (session/account cascade automatically)
+		const ids = staleUnverified.map((u) => u.id);
+		await db.delete(user).where(inArray(user.id, ids));
+	}
+
+	console.log(`[cleanup] hard-deleted ${staleUnverified.length} unverified accounts`);
+	for (const u of staleUnverified) {
+		console.log(`[cleanup]   - ${u.email} (${u.id})`);
+	}
+
+	// -----------------------------------------------------------------------
+	// 2. Users whose trial expired ~83 days ago (warn: 7 days until deletion)
+	// -----------------------------------------------------------------------
 	// Window: trial_ends_at between (now - 84 days) and (now - 83 days)
 	const warnWindowStart = daysAgo(84);
 	const warnWindowEnd = daysAgo(83);
@@ -108,7 +145,9 @@ try {
 		}
 	}
 
-	// Users whose trial expired 90+ days ago — soft delete
+	// -----------------------------------------------------------------------
+	// 3. Users whose trial expired 90+ days ago — soft delete
+	// -----------------------------------------------------------------------
 	const deleteCutoff = daysAgo(90);
 
 	const deleteResult = await db

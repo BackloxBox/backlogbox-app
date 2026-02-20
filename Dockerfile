@@ -31,6 +31,7 @@ COPY --from=build /app/build ./build
 COPY --from=build /app/package.json ./
 COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=build /app/scripts/cleanup-expired-trials.mjs ./scripts/cleanup-expired-trials.mjs
 COPY docker-entrypoint.sh ./
 
 RUN chmod +x docker-entrypoint.sh
