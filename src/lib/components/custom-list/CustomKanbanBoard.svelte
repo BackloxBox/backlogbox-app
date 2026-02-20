@@ -23,6 +23,7 @@
 	type Props = {
 		groupedItems: Record<CustomListStatus, CustomListItemWithFields[]>;
 		statusLabels: Record<CustomListStatus, string>;
+		boardId?: string;
 		readonly?: boolean;
 		onReorder?: (
 			updates: Array<{ id: string; status: CustomListStatus; sortOrder: number }>
@@ -30,13 +31,57 @@
 		onCardClick?: (item: CustomListItemWithFields) => void;
 	};
 
-	let { groupedItems, statusLabels, readonly = false, onReorder, onCardClick }: Props = $props();
+	let {
+		groupedItems,
+		statusLabels,
+		boardId,
+		readonly = false,
+		onReorder,
+		onCardClick
+	}: Props = $props();
 
 	/** Local mutable copy for optimistic DnD updates */
 	let columns = $derived(structuredClone(groupedItems));
 
+	const STORAGE_PREFIX = 'bb:expanded:';
+	const DEFAULT_EXPANDED: CustomListStatus[] = ['doing', 'planned'];
+
+	function loadExpanded(): CustomListStatus[] {
+		if (!browser || !boardId) return DEFAULT_EXPANDED;
+		try {
+			const raw = localStorage.getItem(`${STORAGE_PREFIX}${boardId}`);
+			if (!raw) return DEFAULT_EXPANDED;
+			const parsed: unknown = JSON.parse(raw);
+			if (!Array.isArray(parsed)) return DEFAULT_EXPANDED;
+			const valid = parsed.filter((s): s is CustomListStatus =>
+				CUSTOM_LIST_STATUSES.includes(s as CustomListStatus)
+			);
+			return valid.length > 0 ? valid : DEFAULT_EXPANDED;
+		} catch {
+			return DEFAULT_EXPANDED;
+		}
+	}
+
+	function saveExpanded(sections: Set<CustomListStatus>) {
+		if (!browser || !boardId) return;
+		try {
+			localStorage.setItem(`${STORAGE_PREFIX}${boardId}`, JSON.stringify([...sections]));
+		} catch {
+			// quota exceeded — ignore
+		}
+	}
+
 	/** Expanded sections in mobile view */
-	let expandedSections = new SvelteSet<CustomListStatus>(['doing', 'planned']);
+	let expandedSections = new SvelteSet<CustomListStatus>(loadExpanded());
+
+	// Re-load when boardId changes
+	$effect(() => {
+		if (boardId) {
+			const loaded = loadExpanded();
+			expandedSections.clear();
+			for (const s of loaded) expandedSections.add(s);
+		}
+	});
 
 	async function handleDragEnd() {
 		const updates: Array<{ id: string; status: CustomListStatus; sortOrder: number }> = [];
@@ -148,6 +193,7 @@
 			onOpenChange={(v) => {
 				if (v) expandedSections.add(status);
 				else expandedSections.delete(status);
+				saveExpanded(expandedSections);
 			}}
 			class="mb-1.5"
 		>

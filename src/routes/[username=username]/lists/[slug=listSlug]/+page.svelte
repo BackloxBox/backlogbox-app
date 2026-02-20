@@ -146,6 +146,11 @@
 
 	<!-- Board -->
 	<div class="flex flex-1 flex-col overflow-hidden">
-		<CustomKanbanBoard {groupedItems} statusLabels={CUSTOM_LIST_STATUS_LABELS} readonly />
+		<CustomKanbanBoard
+			{groupedItems}
+			statusLabels={CUSTOM_LIST_STATUS_LABELS}
+			boardId="list:{data.list.slug}"
+			readonly
+		/>
 	</div>
 </div>

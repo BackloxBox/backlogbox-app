@@ -138,6 +138,6 @@
 
 	<!-- Board -->
 	<div class="flex flex-1 flex-col overflow-hidden">
-		<KanbanBoard {groupedItems} {statusLabels} readonly />
+		<KanbanBoard {groupedItems} {statusLabels} boardId={data.slug} readonly />
 	</div>
 </div>

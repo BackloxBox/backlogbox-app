@@ -544,8 +544,8 @@
 				{/if}
 			{/if}
 
-			<!-- Results list -->
-			<div class="max-h-[50vh] overflow-y-auto sm:max-h-72">
+			<!-- Results list (scrollable, capped height) -->
+			<div class="min-h-0 overflow-y-auto sm:max-h-72" class:max-h-[40vh]={!showManualForm}>
 				{#if searching}
 					<p class="py-6 text-center text-sm text-muted-foreground">Searching...</p>
 				{:else if results.length > 0}
@@ -573,17 +573,11 @@
 				{/if}
 			</div>
 
-			<!-- Manual add toggle -->
+			<!-- Manual add toggle (always visible below results) -->
 			{#if !showManualForm}
 				<button
-					class="w-full rounded-md border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition hover:border-foreground/30 hover:text-foreground"
-					onclick={() => {
-						showManualForm = true;
-						// tick: wait for DOM update, then scroll into view
-						requestAnimationFrame(() => {
-							manualFormEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-						});
-					}}
+					class="w-full shrink-0 rounded-md border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition hover:border-foreground/30 hover:text-foreground"
+					onclick={() => (showManualForm = true)}
 				>
 					Add manually
 				</button>
@@ -772,7 +766,7 @@
 				<Drawer.Title>Add item</Drawer.Title>
 				<Drawer.Description class="sr-only">Search or manually add an item</Drawer.Description>
 			</Drawer.Header>
-			<div class="min-h-[60vh] overflow-y-auto px-4 pt-1 pb-4">
+			<div class="min-h-[60vh] px-4 pt-1 pb-4">
 				{@render modalBody()}
 			</div>
 		</Drawer.Content>

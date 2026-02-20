@@ -261,6 +261,7 @@
 			<KanbanBoard
 				{groupedItems}
 				{statusLabels}
+				boardId={slug}
 				onReorder={async (updates) => {
 					try {
 						await reorderItems({ slug, updates });

@@ -278,6 +278,7 @@
 		<CustomKanbanBoard
 			{groupedItems}
 			statusLabels={CUSTOM_LIST_STATUS_LABELS}
+			boardId="list:{slug}"
 			onReorder={async (updates) => {
 				try {
 					await reorderItems({ slug, updates });

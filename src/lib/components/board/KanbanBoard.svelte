@@ -19,6 +19,7 @@
 	type Props = {
 		groupedItems: Record<MediaStatus, MediaItemWithMeta[]>;
 		statusLabels: Record<MediaStatus, string>;
+		boardId?: string;
 		readonly?: boolean;
 		onReorder?: (
 			updates: Array<{ id: string; status: MediaStatus; sortOrder: number }>
@@ -26,13 +27,57 @@
 		onCardClick?: (item: MediaItemWithMeta) => void;
 	};
 
-	let { groupedItems, statusLabels, readonly = false, onReorder, onCardClick }: Props = $props();
+	let {
+		groupedItems,
+		statusLabels,
+		boardId,
+		readonly = false,
+		onReorder,
+		onCardClick
+	}: Props = $props();
 
 	/** Local mutable copy for optimistic DnD updates — re-derived on server refresh, overridable by DnD */
 	let columns = $derived(structuredClone(groupedItems));
 
+	const STORAGE_PREFIX = 'bb:expanded:';
+	const DEFAULT_EXPANDED: MediaStatus[] = ['in_progress', 'backlog'];
+
+	function loadExpanded(): MediaStatus[] {
+		if (!browser || !boardId) return DEFAULT_EXPANDED;
+		try {
+			const raw = localStorage.getItem(`${STORAGE_PREFIX}${boardId}`);
+			if (!raw) return DEFAULT_EXPANDED;
+			const parsed: unknown = JSON.parse(raw);
+			if (!Array.isArray(parsed)) return DEFAULT_EXPANDED;
+			const valid = parsed.filter((s): s is MediaStatus =>
+				MEDIA_STATUSES.includes(s as MediaStatus)
+			);
+			return valid.length > 0 ? valid : DEFAULT_EXPANDED;
+		} catch {
+			return DEFAULT_EXPANDED;
+		}
+	}
+
+	function saveExpanded(sections: Set<MediaStatus>) {
+		if (!browser || !boardId) return;
+		try {
+			localStorage.setItem(`${STORAGE_PREFIX}${boardId}`, JSON.stringify([...sections]));
+		} catch {
+			// quota exceeded — ignore
+		}
+	}
+
 	/** Which sections are expanded in mobile view */
-	let expandedSections = new SvelteSet<MediaStatus>(['in_progress', 'backlog']);
+	let expandedSections = new SvelteSet<MediaStatus>(loadExpanded());
+
+	// Re-load when boardId changes (switching between media types)
+	$effect(() => {
+		if (boardId) {
+			const loaded = loadExpanded();
+			expandedSections.clear();
+			for (const s of loaded) expandedSections.add(s);
+		}
+	});
 
 	async function handleDragEnd() {
 		const updates: Array<{ id: string; status: MediaStatus; sortOrder: number }> = [];
@@ -144,6 +189,7 @@
 			onOpenChange={(v) => {
 				if (v) expandedSections.add(status);
 				else expandedSections.delete(status);
+				saveExpanded(expandedSections);
 			}}
 			class="mb-1.5"
 		>
