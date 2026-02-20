@@ -6,6 +6,7 @@
 	"packageManager": "pnpm@10.29.2",
 	"scripts": {
 		"dev": "vite dev",
+		"tunnel": "ngrok http --url=denzel-transovarian-edison.ngrok-free.dev 5173",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
