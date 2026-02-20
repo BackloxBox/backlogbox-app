@@ -59,6 +59,7 @@
 	}
 
 	let manual = $state(emptyForm());
+	let manualFormEl = $state<HTMLDivElement | null>(null);
 
 	// Season picker state for series
 	// Season 0 = "All seasons" (no specific season)
@@ -576,13 +577,19 @@
 			{#if !showManualForm}
 				<button
 					class="w-full rounded-md border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition hover:border-foreground/30 hover:text-foreground"
-					onclick={() => (showManualForm = true)}
+					onclick={() => {
+						showManualForm = true;
+						// tick: wait for DOM update, then scroll into view
+						requestAnimationFrame(() => {
+							manualFormEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+						});
+					}}
 				>
 					Add manually
 				</button>
 			{:else}
 				<Separator />
-				<div class="space-y-3">
+				<div class="space-y-3" bind:this={manualFormEl}>
 					<div class="space-y-1.5">
 						<Label for="manual-title">Title *</Label>
 						<Input id="manual-title" placeholder="Title" bind:value={manual.title} />
@@ -765,7 +772,7 @@
 				<Drawer.Title>Add item</Drawer.Title>
 				<Drawer.Description class="sr-only">Search or manually add an item</Drawer.Description>
 			</Drawer.Header>
-			<div class="overflow-y-auto px-4 pt-1 pb-4">
+			<div class="min-h-[60vh] overflow-y-auto px-4 pt-1 pb-4">
 				{@render modalBody()}
 			</div>
 		</Drawer.Content>
