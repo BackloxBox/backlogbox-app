@@ -48,13 +48,12 @@
 			onload={() => (loadedUrl = coverUrl)}
 			onerror={() => (failedUrl = coverUrl)}
 			class={cn(
-				'absolute inset-0 h-full w-full object-cover transition-opacity duration-200',
-				SIZE_CLASSES[size],
+				'absolute inset-0 h-full w-full rounded-[inherit] object-cover transition-opacity duration-200',
 				imageLoaded ? 'opacity-100' : 'opacity-0'
 			)}
 		/>
 		{#if !imageLoaded}
-			<div class={cn('absolute inset-0 animate-pulse bg-muted', SIZE_CLASSES[size])}></div>
+			<div class="absolute inset-0 animate-pulse rounded-[inherit] bg-muted"></div>
 		{/if}
 	</div>
 {:else}

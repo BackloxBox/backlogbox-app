@@ -148,16 +148,15 @@
 				{#each inProgress as item (item.id)}
 					<a href="/{mediaTypeToSlug(item.type)}" class="group flex w-20 shrink-0 flex-col gap-1">
 						<div
-							class="relative overflow-hidden rounded-lg border-2 border-transparent transition-colors"
+							class="relative overflow-hidden rounded-lg ring-2 ring-transparent transition-shadow group-hover:ring-[--item-color]"
 							style:--item-color={MEDIA_TYPE_COLORS[item.type]}
 						>
-							<div
-								class="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100"
-								style:box-shadow="inset 0 0 0 2px {MEDIA_TYPE_COLORS[item.type]}"
-								style:border-radius="0.5rem"
-							></div>
 							<div class="aspect-[2/3]">
-								<MediaCover title={item.title} coverUrl={item.coverUrl} />
+								<MediaCover
+									title={item.title}
+									coverUrl={item.coverUrl}
+									class="h-full w-full rounded-lg"
+								/>
 							</div>
 							<!-- Type badge -->
 							{#if TYPE_ICONS[item.type]}
@@ -249,34 +248,43 @@
 		{/each}
 
 		<!-- Custom lists -->
-		<div class="relative overflow-hidden rounded-xl border border-border bg-card p-3">
-			<div class="flex items-center gap-2">
-				<div
-					class="flex size-7 items-center justify-center rounded-lg"
-					style:background="#8B5CF615"
-					style:color="#8B5CF6"
-				>
-					<ListIcon class="size-3.5" />
+		<div
+			class="group relative overflow-hidden rounded-xl border border-border bg-card p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-transparent hover:shadow-lg"
+		>
+			<!-- Colored gradient background on hover -->
+			<div
+				class="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+				style:background="linear-gradient(135deg, #8B5CF608, #8B5CF615)"
+			></div>
+			<div class="relative">
+				<div class="flex items-center gap-2">
+					<div
+						class="flex size-7 items-center justify-center rounded-lg transition-colors duration-200"
+						style:background="#8B5CF615"
+						style:color="#8B5CF6"
+					>
+						<ListIcon class="size-3.5" />
+					</div>
+					<span class="text-xs font-medium text-muted-foreground">Lists</span>
 				</div>
-				<span class="text-xs font-medium text-muted-foreground">Lists</span>
-			</div>
-			<div class="mt-2 flex items-baseline gap-2">
-				<span class="text-lg font-bold text-foreground tabular-nums"
-					>{customListStats.totalItems}</span
-				>
-				{#if listsCompleted > 0}
-					<span class="text-xs text-muted-foreground">{listsCompleted} done</span>
+				<div class="mt-2 flex items-baseline gap-2">
+					<span class="text-lg font-bold text-foreground tabular-nums"
+						>{customListStats.totalItems}</span
+					>
+					{#if listsCompleted > 0}
+						<span class="text-xs text-muted-foreground">{listsCompleted} done</span>
+					{/if}
+				</div>
+				{#if customListStats.totalItems > 0}
+					<div class="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
+						<div
+							class="h-full rounded-full transition-all duration-500"
+							style:background="#8B5CF6"
+							style:width="{Math.round((listsCompleted / customListStats.totalItems) * 100)}%"
+						></div>
+					</div>
 				{/if}
 			</div>
-			{#if customListStats.totalItems > 0}
-				<div class="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
-					<div
-						class="h-full rounded-full transition-all duration-500"
-						style:background="#8B5CF6"
-						style:width="{Math.round((listsCompleted / customListStats.totalItems) * 100)}%"
-					></div>
-				</div>
-			{/if}
 		</div>
 	</div>
 
