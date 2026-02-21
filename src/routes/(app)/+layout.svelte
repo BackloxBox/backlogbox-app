@@ -296,15 +296,15 @@
 			{/if}
 		</div>
 
-		<!-- Trial banner -->
-		{#if trialDaysLeft !== null}
-			<div class="px-2">
+		<!-- Trial banner + Share profile box -->
+		<div class="space-y-3 px-2">
+			{#if trialDaysLeft !== null}
 				<a
 					href="/subscribe"
-					class="flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition
-				{trialUrgent
-						? 'border-red-400 bg-red-100 text-red-700 hover:bg-red-200 dark:border-red-500 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25'
-						: 'border-amber-400 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:border-amber-500 dark:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-500/25'}"
+					class="flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-xs transition
+					{trialUrgent
+						? 'border-red-400/50 bg-red-100 text-red-700 hover:bg-red-200 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25'
+						: 'border-amber-400/50 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-500/25'}"
 				>
 					<Clock class="size-3.5 shrink-0" />
 					{#if trialDaysLeft === 0}
@@ -313,40 +313,44 @@
 						{trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'} left in trial
 					{/if}
 				</a>
-			</div>
-		{/if}
+			{/if}
 
-		<!-- Share profile box -->
-		{#if shareUrl}
-			<div class="px-2">
+			{#if shareUrl}
 				<button
-					class="flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-xs transition
+					class="flex w-full gap-2.5 rounded-lg border px-3 py-3 text-left transition
 					{copied
-						? 'border-emerald-500 bg-emerald-200 text-emerald-800 dark:border-emerald-400 dark:bg-emerald-500/25 dark:text-emerald-300'
-						: 'border-emerald-400 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:border-emerald-500 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25'}"
+						? 'border-emerald-500/50 bg-emerald-200 text-emerald-800 dark:border-emerald-400/40 dark:bg-emerald-500/25 dark:text-emerald-300'
+						: 'border-emerald-400/50 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25'}"
 					onclick={copyShareLink}
 				>
-					{#if copied}
-						<Check class="size-3.5 shrink-0" />
-						Link copied!
-					{:else}
-						<Share2 class="size-3.5 shrink-0" />
-						Share your profile
-					{/if}
+					<Share2 class="mt-0.5 size-4 shrink-0" />
+					<div>
+						{#if copied}
+							<p class="text-sm font-medium">Link copied!</p>
+						{:else}
+							<p class="text-sm font-medium">Share your profile</p>
+							<p class="text-[11px] opacity-70">Let others see your boards</p>
+						{/if}
+					</div>
 				</button>
-			</div>
-		{:else if showSharingNudge}
-			<div class="px-2">
+			{:else if showSharingNudge}
 				<a
 					href="/settings"
-					class="flex items-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-50 px-3 py-2 text-xs text-emerald-600 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
+					class="flex gap-2.5 rounded-lg border border-emerald-400/50 bg-emerald-50 px-3 py-3 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20"
 					onclick={() => (sidebarOpen = false)}
 				>
-					<Share2 class="size-3.5 shrink-0" />
-					Set up profile sharing
+					<Share2 class="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+					<div>
+						<p class="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+							Set up profile sharing
+						</p>
+						<p class="text-[11px] text-emerald-600/70 dark:text-emerald-400/60">
+							Make your boards public
+						</p>
+					</div>
 				</a>
-			</div>
-		{/if}
+			{/if}
+		</div>
 
 		<!-- Bottom nav -->
 		<div class="space-y-0.5 p-2">

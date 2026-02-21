@@ -409,20 +409,39 @@
 										<div
 											class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
 										>
-											<Button
-												variant="secondary"
-												size="sm"
-												class="h-7 w-full text-xs"
-												disabled={isAdding}
-												onclick={() => handleAdd(result)}
-											>
-												{#if isAdding}
-													<LoaderCircle class="size-3 animate-spin" />
-												{:else}
-													<Plus class="size-3" />
-												{/if}
-												Add
-											</Button>
+											<div class="flex w-full gap-px">
+												<Button
+													variant="secondary"
+													size="sm"
+													class="h-7 flex-1 rounded-r-none text-xs"
+													disabled={isAdding}
+													onclick={() => handleAdd(result)}
+												>
+													{#if isAdding}
+														<LoaderCircle class="size-3 animate-spin" />
+													{:else}
+														<Plus class="size-3" />
+													{/if}
+													Add
+												</Button>
+												<DropdownMenu.Root>
+													<DropdownMenu.Trigger
+														class="flex h-7 items-center rounded-r-md bg-secondary px-1 text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:pointer-events-none disabled:opacity-50"
+														disabled={isAdding}
+													>
+														<ChevronDown class="size-3" />
+													</DropdownMenu.Trigger>
+													<DropdownMenu.Portal>
+														<DropdownMenu.Content align="end" class="min-w-[8rem]">
+															{#each MEDIA_STATUSES as s (s)}
+																<DropdownMenu.Item onclick={() => handleAdd(result, s)}>
+																	{type ? STATUS_LABELS[type][s] : s}
+																</DropdownMenu.Item>
+															{/each}
+														</DropdownMenu.Content>
+													</DropdownMenu.Portal>
+												</DropdownMenu.Root>
+											</div>
 										</div>
 									</div>
 									<p class="truncate text-xs font-medium">{result.title}</p>
@@ -522,20 +541,39 @@
 									<div
 										class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
 									>
-										<Button
-											variant="secondary"
-											size="sm"
-											class="h-7 w-full text-xs"
-											disabled={isAdding}
-											onclick={() => handleAdd(result)}
-										>
-											{#if isAdding}
-												<LoaderCircle class="size-3 animate-spin" />
-											{:else}
-												<Plus class="size-3" />
-											{/if}
-											Add
-										</Button>
+										<div class="flex w-full gap-px">
+											<Button
+												variant="secondary"
+												size="sm"
+												class="h-7 flex-1 rounded-r-none text-xs"
+												disabled={isAdding}
+												onclick={() => handleAdd(result)}
+											>
+												{#if isAdding}
+													<LoaderCircle class="size-3 animate-spin" />
+												{:else}
+													<Plus class="size-3" />
+												{/if}
+												Add
+											</Button>
+											<DropdownMenu.Root>
+												<DropdownMenu.Trigger
+													class="flex h-7 items-center rounded-r-md bg-secondary px-1 text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:pointer-events-none disabled:opacity-50"
+													disabled={isAdding}
+												>
+													<ChevronDown class="size-3" />
+												</DropdownMenu.Trigger>
+												<DropdownMenu.Portal>
+													<DropdownMenu.Content align="end" class="min-w-[8rem]">
+														{#each MEDIA_STATUSES as s (s)}
+															<DropdownMenu.Item onclick={() => handleAdd(result, s)}>
+																{type ? STATUS_LABELS[type][s] : s}
+															</DropdownMenu.Item>
+														{/each}
+													</DropdownMenu.Content>
+												</DropdownMenu.Portal>
+											</DropdownMenu.Root>
+										</div>
 									</div>
 								</div>
 								<p class="truncate text-xs font-medium">{result.title}</p>
