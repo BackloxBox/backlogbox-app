@@ -4,18 +4,34 @@
 		MEDIA_TYPE_SLUGS,
 		MEDIA_TYPE_LABELS,
 		MEDIA_TYPE_COLORS,
+		MEDIA_STATUSES,
+		STATUS_LABELS,
 		slugToMediaType,
-		type MediaTypeSlug
+		type MediaTypeSlug,
+		type MediaStatus
 	} from '$lib/types';
-	import { getTrending, getRecommendations, getAnticipated } from './discover.remote';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import {
+		getTrending,
+		getRecommendations,
+		getAnticipated,
+		excludeSeed,
+		undoExcludeSeed,
+		fetchExcludedSeeds,
+		type RecommendationGroup
+	} from './discover.remote';
 	import { addItem } from '../[type=mediaType]/data.remote';
 	import { debugMode } from '$lib/components/dev/debug-state.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { toast } from 'svelte-sonner';
 	import { handleSubscriptionError } from '$lib/subscription-guard';
 	import { trackEvent } from '$lib/analytics';
+	import { invalidateAll } from '$app/navigation';
 	import type { SearchResult } from '$lib/server/search';
 	import type { CacheDebugMeta } from '$lib/server/search/cache';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -24,6 +40,10 @@
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
 	import Rocket from '@lucide/svelte/icons/rocket';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import EyeOff from '@lucide/svelte/icons/eye-off';
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+	import SettingsIcon from '@lucide/svelte/icons/settings';
 	import type { Component } from 'svelte';
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Film from '@lucide/svelte/icons/film';
@@ -156,7 +176,7 @@
 		}
 	}
 
-	async function handleAdd(result: SearchResult) {
+	async function handleAdd(result: SearchResult, status: MediaStatus = 'backlog') {
 		if (!type || addingIds.has(result.externalId)) return;
 
 		addingIds = new Set([...addingIds, result.externalId]);
@@ -166,17 +186,62 @@
 				title: result.title,
 				coverUrl: result.coverUrl,
 				releaseYear: result.releaseYear,
-				status: 'backlog',
+				status,
 				...result.meta
 			});
 			trackEvent('item_added', { type, source: 'discover' });
-			toast.success(`Added "${result.title}" to backlog`);
+			toast.success(`Added "${result.title}" to ${status.replace('_', ' ')}`);
 		} catch (err) {
 			if (!handleSubscriptionError(err)) {
 				toast.error(`Failed to add "${result.title}"`);
 			}
 		} finally {
 			addingIds = new Set([...addingIds].filter((id) => id !== result.externalId));
+		}
+	}
+
+	// --- Exclude seeds ---
+
+	let excludeConfirm = $state<{ group: RecommendationGroup } | null>(null);
+	let manageExcludedOpen = $state(false);
+	let excludedSeedsQuery = $derived(manageExcludedOpen ? fetchExcludedSeeds() : null);
+	let excludedSeeds = $derived(excludedSeedsQuery?.current ?? []);
+
+	async function handleExclude(group: RecommendationGroup) {
+		excludeConfirm = null;
+		try {
+			for (const id of group.seedItemIds) {
+				await excludeSeed({ mediaItemId: id });
+			}
+			await invalidateAll();
+			toast(`Excluded "${group.seedTitle}" from recommendations`, {
+				action: {
+					label: 'Undo',
+					onClick: async () => {
+						for (const id of group.seedItemIds) {
+							await undoExcludeSeed({ mediaItemId: id });
+						}
+						await invalidateAll();
+					}
+				}
+			});
+			trackEvent('seed_excluded', { title: group.seedTitle });
+		} catch (err) {
+			if (!handleSubscriptionError(err)) {
+				toast.error('Failed to exclude item');
+			}
+		}
+	}
+
+	async function handleRestore(mediaItemId: string) {
+		try {
+			await undoExcludeSeed({ mediaItemId });
+			await invalidateAll();
+			toast.success('Restored item for recommendations');
+		} catch (err) {
+			if (!handleSubscriptionError(err)) {
+				toast.error('Failed to restore item');
+			}
 		}
 	}
 </script>
@@ -219,9 +284,20 @@
 	<!-- Recommendations -->
 	{#if type !== 'podcast'}
 		<section class="space-y-6">
-			<div class="flex items-center gap-2">
-				<span style:color="#3B82F6"><Sparkles class="size-5" /></span>
-				<h2 class="text-lg font-semibold">For You</h2>
+			<div class="flex items-center justify-between gap-2">
+				<div class="flex items-center gap-2">
+					<span style:color="#3B82F6"><Sparkles class="size-5" /></span>
+					<h2 class="text-lg font-semibold">For You</h2>
+				</div>
+				<Button
+					variant="ghost"
+					size="sm"
+					class="h-7 gap-1.5 text-xs text-muted-foreground"
+					onclick={() => (manageExcludedOpen = true)}
+				>
+					<SettingsIcon class="size-3" />
+					Manage
+				</Button>
 			</div>
 
 			{#if recsQuery.error}
@@ -268,15 +344,31 @@
 									{group.seedTitle}
 								</span>
 							</h3>
-							{#if showDebug && group._debug}
-								<span
-									class="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] {debugBadgeClass(
-										group._debug
-									)}"
-								>
-									{debugLabel(group._debug)}
-								</span>
-							{/if}
+							<div class="flex shrink-0 items-center gap-1.5">
+								{#if showDebug && group._debug}
+									<span
+										class="rounded border px-1.5 py-0.5 font-mono text-[10px] {debugBadgeClass(
+											group._debug
+										)}"
+									>
+										{debugLabel(group._debug)}
+									</span>
+								{/if}
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										<button
+											class="rounded-md p-1 text-muted-foreground/60 transition hover:bg-muted hover:text-muted-foreground"
+											onclick={() => (excludeConfirm = { group })}
+											aria-label="Don't recommend based on {group.seedTitle}"
+										>
+											<EyeOff class="size-3.5" />
+										</button>
+									</Tooltip.Trigger>
+									<Tooltip.Content>
+										<p>Don't recommend based on this</p>
+									</Tooltip.Content>
+								</Tooltip.Root>
+							</div>
 						</div>
 						<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
 							{#each group.items as result (result.externalId)}
@@ -541,20 +633,39 @@
 								<div
 									class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
 								>
-									<Button
-										variant="secondary"
-										size="sm"
-										class="h-7 w-full text-xs"
-										disabled={isAdding}
-										onclick={() => handleAdd(result)}
-									>
-										{#if isAdding}
-											<LoaderCircle class="size-3 animate-spin" />
-										{:else}
-											<Plus class="size-3" />
-										{/if}
-										Add
-									</Button>
+									<div class="flex w-full gap-px">
+										<Button
+											variant="secondary"
+											size="sm"
+											class="h-7 flex-1 rounded-r-none text-xs"
+											disabled={isAdding}
+											onclick={() => handleAdd(result)}
+										>
+											{#if isAdding}
+												<LoaderCircle class="size-3 animate-spin" />
+											{:else}
+												<Plus class="size-3" />
+											{/if}
+											Add
+										</Button>
+										<DropdownMenu.Root>
+											<DropdownMenu.Trigger
+												class="flex h-7 items-center rounded-r-md bg-secondary px-1 text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:pointer-events-none disabled:opacity-50"
+												disabled={isAdding}
+											>
+												<ChevronDown class="size-3" />
+											</DropdownMenu.Trigger>
+											<DropdownMenu.Portal>
+												<DropdownMenu.Content align="end" class="min-w-[8rem]">
+													{#each MEDIA_STATUSES as s (s)}
+														<DropdownMenu.Item onclick={() => handleAdd(result, s)}>
+															{type ? STATUS_LABELS[type][s] : s}
+														</DropdownMenu.Item>
+													{/each}
+												</DropdownMenu.Content>
+											</DropdownMenu.Portal>
+										</DropdownMenu.Root>
+									</div>
 								</div>
 							</div>
 							<p class="truncate text-xs font-medium">{result.title}</p>
@@ -566,3 +677,78 @@
 		</div>
 	</section>
 </div>
+
+<!-- Exclude confirmation dialog -->
+<AlertDialog.Root
+	open={excludeConfirm !== null}
+	onOpenChange={(open) => {
+		if (!open) excludeConfirm = null;
+	}}
+>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Exclude from recommendations?</AlertDialog.Title>
+			<AlertDialog.Description>
+				{#if excludeConfirm}
+					Recommendations based on <strong>{excludeConfirm.group.seedTitle}</strong> will no longer appear.
+					You can restore this anytime from the Manage menu.
+				{/if}
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Action
+				onclick={() => {
+					if (excludeConfirm) handleExclude(excludeConfirm.group);
+				}}>Exclude</AlertDialog.Action
+			>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
+
+<!-- Manage excluded seeds dialog -->
+<Dialog.Root bind:open={manageExcludedOpen}>
+	<Dialog.Content class="max-w-md">
+		<Dialog.Header>
+			<Dialog.Title>Excluded items</Dialog.Title>
+			<Dialog.Description>
+				These items won't be used for recommendations. Restore them to use them again.
+			</Dialog.Description>
+		</Dialog.Header>
+		{#if excludedSeeds.length === 0}
+			<p class="py-6 text-center text-sm text-muted-foreground">No excluded items yet.</p>
+		{:else}
+			<div class="max-h-80 space-y-2 overflow-y-auto">
+				{#each excludedSeeds as seed (seed.mediaItemId)}
+					<div class="flex items-center gap-3 rounded-lg border border-border/50 p-2">
+						<div class="size-10 shrink-0 overflow-hidden rounded">
+							{#if seed.coverUrl}
+								<img src={seed.coverUrl} alt={seed.title} class="h-full w-full object-cover" />
+							{:else}
+								<div
+									class="flex h-full w-full items-center justify-center text-xs font-semibold text-white/80"
+									style:background-color="hsl({titleToHue(seed.title)} 40% 30%)"
+								>
+									{seed.title.trim().charAt(0).toUpperCase()}
+								</div>
+							{/if}
+						</div>
+						<div class="min-w-0 flex-1">
+							<p class="truncate text-sm font-medium">{seed.title}</p>
+							<p class="text-[11px] text-muted-foreground capitalize">{seed.type}</p>
+						</div>
+						<Button
+							variant="ghost"
+							size="sm"
+							class="h-7 shrink-0 gap-1.5 text-xs"
+							onclick={() => handleRestore(seed.mediaItemId)}
+						>
+							<RotateCcw class="size-3" />
+							Restore
+						</Button>
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</Dialog.Content>
+</Dialog.Root>

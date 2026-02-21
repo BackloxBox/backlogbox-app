@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { query } from '$app/server';
+import { query, command } from '$app/server';
 import { dev } from '$app/environment';
 import { requireSubscription } from '$lib/server/auth-guard';
 import {
@@ -29,7 +29,13 @@ import {
 	fetchGenreByTitle
 } from '$lib/server/search/openlibrary';
 import { fetchTopPodcasts } from '$lib/server/search/apple-podcasts';
-import { getSeedItems, getUserExternalIds } from '$lib/server/db/queries';
+import {
+	getSeedItems,
+	getUserExternalIds,
+	addExcludedSeed,
+	removeExcludedSeed,
+	getExcludedSeeds
+} from '$lib/server/db/queries';
 import { slugToMediaType, MEDIA_TYPE_SLUGS } from '$lib/types';
 import type { SearchResult } from '$lib/server/search';
 import { error } from '@sveltejs/kit';
@@ -50,6 +56,7 @@ export interface TrendingResponse {
 
 export type RecommendationGroup = {
 	seedTitle: string;
+	seedItemIds: string[];
 	items: SearchResult[];
 	_debug: DiscoverDebug | null;
 };
@@ -204,7 +211,7 @@ export const getRecommendations = query(
 
 			if (type === 'book') {
 				// Group seeds by resolved genre to avoid duplicate fetches
-				const genreToSeeds = new Map<string, string[]>();
+				const genreToSeeds = new Map<string, { titles: string[]; itemIds: string[] }>();
 				for (const seed of seeds) {
 					let genre = seed.genre?.split(',')[0]?.trim() ?? null;
 					if (!genre) {
@@ -214,13 +221,17 @@ export const getRecommendations = query(
 					const key = genre.toLowerCase();
 					const existing = genreToSeeds.get(key);
 					if (existing) {
-						existing.push(seed.title);
+						existing.titles.push(seed.title);
+						existing.itemIds.push(seed.mediaItemId);
 					} else {
-						genreToSeeds.set(key, [seed.title]);
+						genreToSeeds.set(key, {
+							titles: [seed.title],
+							itemIds: [seed.mediaItemId]
+						});
 					}
 				}
 
-				for (const [genre, titles] of genreToSeeds) {
+				for (const [genre, { titles, itemIds }] of genreToSeeds) {
 					const cacheKey = discoverKey('similar', type, genre);
 					const { results: items, debug } = await getOrFetch(cacheKey, 'similar', provider, () =>
 						fetchBooksBySubject(genre)
@@ -236,6 +247,7 @@ export const getRecommendations = query(
 					if (filtered.length > 0) {
 						groups.push({
 							seedTitle: titles.join(' and '),
+							seedItemIds: itemIds,
 							items: filtered,
 							_debug: debug
 						});
@@ -255,7 +267,12 @@ export const getRecommendations = query(
 					});
 
 					if (filtered.length > 0) {
-						groups.push({ seedTitle: seed.title, items: filtered, _debug: debug });
+						groups.push({
+							seedTitle: seed.title,
+							seedItemIds: [seed.mediaItemId],
+							items: filtered,
+							_debug: debug
+						});
 					}
 				}
 			}
@@ -299,3 +316,35 @@ async function filterTracked(
 		? results.filter((r) => !trackedIds.has(r.title.toLowerCase()))
 		: results.filter((r) => !trackedIds.has(r.externalId));
 }
+
+// ---------------------------------------------------------------------------
+// Excluded seeds
+// ---------------------------------------------------------------------------
+
+const excludeSeedSchema = v.object({ mediaItemId: v.pipe(v.string(), v.nonEmpty()) });
+
+/** Mute a seed item so it no longer drives recommendations */
+export const excludeSeed = command(excludeSeedSchema, async (data) => {
+	const userId = requireSubscription();
+	await addExcludedSeed(userId, data.mediaItemId);
+});
+
+/** Restore a previously excluded seed */
+export const undoExcludeSeed = command(excludeSeedSchema, async (data) => {
+	const userId = requireSubscription();
+	await removeExcludedSeed(userId, data.mediaItemId);
+});
+
+export type ExcludedSeedItem = {
+	mediaItemId: string;
+	title: string;
+	type: string;
+	coverUrl: string | null;
+	excludedAt: Date;
+};
+
+/** Fetch all excluded seeds for the manage UI */
+export const fetchExcludedSeeds = query(async (): Promise<ExcludedSeedItem[]> => {
+	const userId = requireSubscription();
+	return getExcludedSeeds(userId);
+});

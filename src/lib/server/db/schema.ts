@@ -189,6 +189,31 @@ export const mediaNoteRelations = relations(mediaNote, ({ one }) => ({
 	mediaItem: one(mediaItem, { fields: [mediaNote.mediaItemId], references: [mediaItem.id] })
 }));
 
+// --- Excluded seeds (mute items from driving recommendations) ---
+
+export const excludedSeed = pgTable(
+	'excluded_seed',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		mediaItemId: uuid('media_item_id')
+			.notNull()
+			.references(() => mediaItem.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at').defaultNow().notNull()
+	},
+	(table) => [
+		unique().on(table.userId, table.mediaItemId),
+		index('excluded_seed_user_idx').on(table.userId)
+	]
+);
+
+export const excludedSeedRelations = relations(excludedSeed, ({ one }) => ({
+	user: one(user, { fields: [excludedSeed.userId], references: [user.id] }),
+	mediaItem: one(mediaItem, { fields: [excludedSeed.mediaItemId], references: [mediaItem.id] })
+}));
+
 // ---------------------------------------------------------------------------
 // Custom lists
 // ---------------------------------------------------------------------------

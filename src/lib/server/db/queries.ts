@@ -1,7 +1,8 @@
-import { and, asc, count, desc, eq, gte, inArray, isNotNull, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, sql } from 'drizzle-orm';
 import { db } from './index';
 import {
 	bookMeta,
+	excludedSeed,
 	gameMeta,
 	mediaItem,
 	mediaNote,
@@ -240,6 +241,7 @@ export async function updateMediaItemMeta<T extends MediaType>(
 
 /** Seed item shape for "because you liked X" recommendations */
 export type SeedItem = {
+	mediaItemId: string;
 	title: string;
 	externalId: string;
 	genre: string | null;
@@ -248,7 +250,8 @@ export type SeedItem = {
 /**
  * Get recent items for a user+type that have a non-null external ID.
  * Used to seed "similar to" recommendations. Returns up to `limit` items
- * ordered by most recently created.
+ * ordered by most recently created. Excludes items the user has muted via
+ * the `excluded_seed` table.
  *
  * For books, `externalId` is the title (lowercased) since books lack a
  * reliable single external ID. For all others it's the type-specific ID.
@@ -262,17 +265,23 @@ export async function getSeedItems(
 		case 'movie': {
 			const rows = await db
 				.select({
+					mediaItemId: mediaItem.id,
 					title: mediaItem.title,
 					externalId: sql<string>`CAST(${movieMeta.tmdbId} AS text)`,
 					genre: movieMeta.genre
 				})
 				.from(mediaItem)
 				.innerJoin(movieMeta, eq(movieMeta.mediaItemId, mediaItem.id))
+				.leftJoin(
+					excludedSeed,
+					and(eq(excludedSeed.mediaItemId, mediaItem.id), eq(excludedSeed.userId, userId))
+				)
 				.where(
 					and(
 						eq(mediaItem.userId, userId),
 						eq(mediaItem.type, 'movie'),
-						isNotNull(movieMeta.tmdbId)
+						isNotNull(movieMeta.tmdbId),
+						isNull(excludedSeed.id)
 					)
 				)
 				.orderBy(desc(mediaItem.createdAt))
@@ -282,17 +291,23 @@ export async function getSeedItems(
 		case 'series': {
 			const rows = await db
 				.select({
+					mediaItemId: mediaItem.id,
 					title: mediaItem.title,
 					externalId: sql<string>`CAST(${seriesMeta.tmdbId} AS text)`,
 					genre: seriesMeta.genre
 				})
 				.from(mediaItem)
 				.innerJoin(seriesMeta, eq(seriesMeta.mediaItemId, mediaItem.id))
+				.leftJoin(
+					excludedSeed,
+					and(eq(excludedSeed.mediaItemId, mediaItem.id), eq(excludedSeed.userId, userId))
+				)
 				.where(
 					and(
 						eq(mediaItem.userId, userId),
 						eq(mediaItem.type, 'series'),
-						isNotNull(seriesMeta.tmdbId)
+						isNotNull(seriesMeta.tmdbId),
+						isNull(excludedSeed.id)
 					)
 				)
 				.orderBy(desc(mediaItem.createdAt))
@@ -302,14 +317,24 @@ export async function getSeedItems(
 		case 'game': {
 			const rows = await db
 				.select({
+					mediaItemId: mediaItem.id,
 					title: mediaItem.title,
 					externalId: sql<string>`CAST(${gameMeta.igdbId} AS text)`,
 					genre: gameMeta.genre
 				})
 				.from(mediaItem)
 				.innerJoin(gameMeta, eq(gameMeta.mediaItemId, mediaItem.id))
+				.leftJoin(
+					excludedSeed,
+					and(eq(excludedSeed.mediaItemId, mediaItem.id), eq(excludedSeed.userId, userId))
+				)
 				.where(
-					and(eq(mediaItem.userId, userId), eq(mediaItem.type, 'game'), isNotNull(gameMeta.igdbId))
+					and(
+						eq(mediaItem.userId, userId),
+						eq(mediaItem.type, 'game'),
+						isNotNull(gameMeta.igdbId),
+						isNull(excludedSeed.id)
+					)
 				)
 				.orderBy(desc(mediaItem.createdAt))
 				.limit(limit);
@@ -320,13 +345,20 @@ export async function getSeedItems(
 			// Genre may be null for books added from trending — caller handles fallback.
 			const rows = await db
 				.select({
+					mediaItemId: mediaItem.id,
 					title: mediaItem.title,
 					externalId: mediaItem.title,
 					genre: bookMeta.genre
 				})
 				.from(mediaItem)
 				.innerJoin(bookMeta, eq(bookMeta.mediaItemId, mediaItem.id))
-				.where(and(eq(mediaItem.userId, userId), eq(mediaItem.type, 'book')))
+				.leftJoin(
+					excludedSeed,
+					and(eq(excludedSeed.mediaItemId, mediaItem.id), eq(excludedSeed.userId, userId))
+				)
+				.where(
+					and(eq(mediaItem.userId, userId), eq(mediaItem.type, 'book'), isNull(excludedSeed.id))
+				)
 				.orderBy(desc(mediaItem.createdAt))
 				.limit(limit);
 			return rows;
@@ -335,6 +367,38 @@ export async function getSeedItems(
 			// No similar API for podcasts
 			return [];
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Excluded seeds
+// ---------------------------------------------------------------------------
+
+/** Exclude a seed item from driving recommendations */
+export async function addExcludedSeed(userId: string, mediaItemId: string): Promise<void> {
+	await db.insert(excludedSeed).values({ userId, mediaItemId }).onConflictDoNothing();
+}
+
+/** Restore an excluded seed so it can drive recommendations again */
+export async function removeExcludedSeed(userId: string, mediaItemId: string): Promise<void> {
+	await db
+		.delete(excludedSeed)
+		.where(and(eq(excludedSeed.userId, userId), eq(excludedSeed.mediaItemId, mediaItemId)));
+}
+
+/** Get all excluded seeds for a user (for the manage UI) */
+export async function getExcludedSeeds(userId: string) {
+	return db
+		.select({
+			mediaItemId: excludedSeed.mediaItemId,
+			title: mediaItem.title,
+			type: mediaItem.type,
+			coverUrl: mediaItem.coverUrl,
+			excludedAt: excludedSeed.createdAt
+		})
+		.from(excludedSeed)
+		.innerJoin(mediaItem, eq(mediaItem.id, excludedSeed.mediaItemId))
+		.where(eq(excludedSeed.userId, userId))
+		.orderBy(desc(excludedSeed.createdAt));
 }
 
 /**
@@ -773,4 +837,322 @@ export async function updateUserProfile(
 		profilePublic: user.profilePublic
 	});
 	return updated;
+}
+
+// ---------------------------------------------------------------------------
+// Currently consuming (in_progress items for dashboard widget)
+// ---------------------------------------------------------------------------
+
+export type InProgressItem = {
+	id: string;
+	title: string;
+	type: MediaType;
+	coverUrl: string | null;
+	subtitle: string | null;
+	updatedAt: Date;
+};
+
+/** Get items with status "in_progress" across all types, with a subtitle */
+export async function getInProgressItems(userId: string, limit = 10): Promise<InProgressItem[]> {
+	const rows = await db
+		.select({
+			id: mediaItem.id,
+			title: mediaItem.title,
+			type: mediaItem.type,
+			coverUrl: mediaItem.coverUrl,
+			updatedAt: mediaItem.updatedAt,
+			author: bookMeta.author,
+			director: movieMeta.director,
+			currentSeason: seriesMeta.currentSeason,
+			totalSeasons: seriesMeta.totalSeasons,
+			developer: gameMeta.developer,
+			host: podcastMeta.host
+		})
+		.from(mediaItem)
+		.leftJoin(bookMeta, eq(bookMeta.mediaItemId, mediaItem.id))
+		.leftJoin(movieMeta, eq(movieMeta.mediaItemId, mediaItem.id))
+		.leftJoin(seriesMeta, eq(seriesMeta.mediaItemId, mediaItem.id))
+		.leftJoin(gameMeta, eq(gameMeta.mediaItemId, mediaItem.id))
+		.leftJoin(podcastMeta, eq(podcastMeta.mediaItemId, mediaItem.id))
+		.where(and(eq(mediaItem.userId, userId), eq(mediaItem.status, 'in_progress')))
+		.orderBy(desc(mediaItem.updatedAt))
+		.limit(limit);
+
+	return rows.map((r) => {
+		let subtitle: string | null = null;
+		switch (r.type) {
+			case 'book':
+				subtitle = r.author;
+				break;
+			case 'movie':
+				subtitle = r.director;
+				break;
+			case 'series':
+				subtitle =
+					r.currentSeason != null && r.totalSeasons != null
+						? `S${r.currentSeason}/${r.totalSeasons}`
+						: r.currentSeason != null
+							? `Season ${r.currentSeason}`
+							: null;
+				break;
+			case 'game':
+				subtitle = r.developer;
+				break;
+			case 'podcast':
+				subtitle = r.host;
+				break;
+		}
+		return {
+			id: r.id,
+			title: r.title,
+			type: r.type,
+			coverUrl: r.coverUrl,
+			subtitle,
+			updatedAt: r.updatedAt
+		};
+	});
+}
+
+// ---------------------------------------------------------------------------
+// Sidebar counts
+// ---------------------------------------------------------------------------
+
+/** Item counts per media type for sidebar badges */
+export async function getItemCountsByType(
+	userId: string
+): Promise<Partial<Record<MediaType, number>>> {
+	const rows = await db
+		.select({ type: mediaItem.type, count: count() })
+		.from(mediaItem)
+		.where(eq(mediaItem.userId, userId))
+		.groupBy(mediaItem.type);
+	const result: Partial<Record<MediaType, number>> = {};
+	for (const row of rows) {
+		result[row.type] = Number(row.count);
+	}
+	return result;
+}
+
+// ---------------------------------------------------------------------------
+// Yearly Wrapped
+// ---------------------------------------------------------------------------
+
+export type WrappedStats = {
+	year: number;
+	totalCompleted: number;
+	completedByType: Record<MediaType, number>;
+	topGenre: { genre: string; count: number } | null;
+	highestRated: { title: string; type: MediaType; rating: number; coverUrl: string | null } | null;
+	fastestCompletion: {
+		title: string;
+		type: MediaType;
+		days: number;
+		coverUrl: string | null;
+	} | null;
+	mostActiveMonth: { month: string; count: number } | null;
+	firstCompleted: { title: string; type: MediaType; date: Date; coverUrl: string | null } | null;
+	lastCompleted: { title: string; type: MediaType; date: Date; coverUrl: string | null } | null;
+	totalEstimatedHours: number;
+	averageRating: number | null;
+};
+
+/** Compute yearly wrapped stats for items completed in the given year */
+export async function getWrappedStats(userId: string, year: number): Promise<WrappedStats> {
+	const yearStart = new Date(year, 0, 1);
+	const yearEnd = new Date(year + 1, 0, 1);
+
+	// All items completed this year
+	const completedItems = await db
+		.select({
+			id: mediaItem.id,
+			title: mediaItem.title,
+			type: mediaItem.type,
+			rating: mediaItem.rating,
+			coverUrl: mediaItem.coverUrl,
+			completedAt: mediaItem.completedAt,
+			startedAt: mediaItem.startedAt,
+			createdAt: mediaItem.createdAt
+		})
+		.from(mediaItem)
+		.where(
+			and(
+				eq(mediaItem.userId, userId),
+				eq(mediaItem.status, 'completed'),
+				isNotNull(mediaItem.completedAt),
+				gte(mediaItem.completedAt, yearStart),
+				lt(mediaItem.completedAt, yearEnd)
+			)
+		)
+		.orderBy(asc(mediaItem.completedAt));
+
+	const totalCompleted = completedItems.length;
+
+	// Completed by type
+	const completedByType: Record<MediaType, number> = {
+		book: 0,
+		movie: 0,
+		series: 0,
+		game: 0,
+		podcast: 0
+	};
+	for (const item of completedItems) {
+		completedByType[item.type]++;
+	}
+
+	// Top genre — union across meta tables for completed items
+	const completedIds = completedItems.map((i) => i.id);
+	let topGenre: WrappedStats['topGenre'] = null;
+	if (completedIds.length > 0) {
+		const genreRows = await db
+			.select({
+				genre: sql<string>`genre`,
+				count: count()
+			})
+			.from(
+				sql`(
+					SELECT ${bookMeta.genre} AS genre FROM ${bookMeta} WHERE ${bookMeta.mediaItemId} IN (${sql.join(
+						completedIds.map((id) => sql`${id}`),
+						sql`, `
+					)}) AND ${bookMeta.genre} IS NOT NULL
+					UNION ALL
+					SELECT ${movieMeta.genre} AS genre FROM ${movieMeta} WHERE ${movieMeta.mediaItemId} IN (${sql.join(
+						completedIds.map((id) => sql`${id}`),
+						sql`, `
+					)}) AND ${movieMeta.genre} IS NOT NULL
+					UNION ALL
+					SELECT ${seriesMeta.genre} AS genre FROM ${seriesMeta} WHERE ${seriesMeta.mediaItemId} IN (${sql.join(
+						completedIds.map((id) => sql`${id}`),
+						sql`, `
+					)}) AND ${seriesMeta.genre} IS NOT NULL
+					UNION ALL
+					SELECT ${gameMeta.genre} AS genre FROM ${gameMeta} WHERE ${gameMeta.mediaItemId} IN (${sql.join(
+						completedIds.map((id) => sql`${id}`),
+						sql`, `
+					)}) AND ${gameMeta.genre} IS NOT NULL
+					UNION ALL
+					SELECT ${podcastMeta.genre} AS genre FROM ${podcastMeta} WHERE ${podcastMeta.mediaItemId} IN (${sql.join(
+						completedIds.map((id) => sql`${id}`),
+						sql`, `
+					)}) AND ${podcastMeta.genre} IS NOT NULL
+				) AS genres`
+			)
+			.groupBy(sql`genre`)
+			.orderBy(desc(count()))
+			.limit(1);
+		if (genreRows.length > 0) {
+			topGenre = { genre: genreRows[0].genre, count: Number(genreRows[0].count) };
+		}
+	}
+
+	// Highest rated
+	const rated = completedItems
+		.filter((i) => i.rating != null && i.rating > 0)
+		.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+	const highestRated: WrappedStats['highestRated'] =
+		rated.length > 0
+			? {
+					title: rated[0].title,
+					type: rated[0].type,
+					rating: rated[0].rating ?? 0,
+					coverUrl: rated[0].coverUrl
+				}
+			: null;
+
+	// Average rating
+	const ratedItems = completedItems.filter((i) => i.rating != null && i.rating > 0);
+	const averageRating =
+		ratedItems.length > 0
+			? Math.round(
+					(ratedItems.reduce((sum, i) => sum + (i.rating ?? 0), 0) / ratedItems.length) * 10
+				) / 10
+			: null;
+
+	// Fastest completion (smallest completedAt - startedAt gap)
+	let fastestCompletion: WrappedStats['fastestCompletion'] = null;
+	for (const item of completedItems) {
+		if (!item.startedAt || !item.completedAt) continue;
+		const days = Math.max(
+			0,
+			Math.round((item.completedAt.getTime() - item.startedAt.getTime()) / (1000 * 60 * 60 * 24))
+		);
+		if (!fastestCompletion || days < fastestCompletion.days) {
+			fastestCompletion = {
+				title: item.title,
+				type: item.type,
+				days,
+				coverUrl: item.coverUrl
+			};
+		}
+	}
+
+	// Most active month
+	const monthCounts = new Map<string, number>();
+	for (const item of completedItems) {
+		if (!item.completedAt) continue;
+		const key = `${item.completedAt.getFullYear()}-${String(item.completedAt.getMonth() + 1).padStart(2, '0')}`;
+		monthCounts.set(key, (monthCounts.get(key) ?? 0) + 1);
+	}
+	let mostActiveMonth: WrappedStats['mostActiveMonth'] = null;
+	for (const [month, count] of monthCounts) {
+		if (!mostActiveMonth || count > mostActiveMonth.count) {
+			mostActiveMonth = { month, count };
+		}
+	}
+
+	// First and last completed
+	const firstCompleted: WrappedStats['firstCompleted'] =
+		completedItems.length > 0
+			? {
+					title: completedItems[0].title,
+					type: completedItems[0].type,
+					date: completedItems[0].completedAt!,
+					coverUrl: completedItems[0].coverUrl
+				}
+			: null;
+	const lastItem = completedItems[completedItems.length - 1];
+	const lastCompleted: WrappedStats['lastCompleted'] = lastItem
+		? {
+				title: lastItem.title,
+				type: lastItem.type,
+				date: lastItem.completedAt!,
+				coverUrl: lastItem.coverUrl
+			}
+		: null;
+
+	// Estimated hours: movie runtime + game playtime + book pages/40
+	let totalEstimatedHours = 0;
+	if (completedIds.length > 0) {
+		const [movieHours] = await db
+			.select({ total: sql<number>`COALESCE(SUM(${movieMeta.runtime}), 0)` })
+			.from(movieMeta)
+			.where(inArray(movieMeta.mediaItemId, completedIds));
+		totalEstimatedHours += Math.round(Number(movieHours?.total ?? 0) / 60);
+
+		const [gameHours] = await db
+			.select({ total: sql<number>`COALESCE(SUM(${gameMeta.playtimeMinutes}), 0)` })
+			.from(gameMeta)
+			.where(inArray(gameMeta.mediaItemId, completedIds));
+		totalEstimatedHours += Math.round(Number(gameHours?.total ?? 0) / 60);
+
+		const [bookPages] = await db
+			.select({ total: sql<number>`COALESCE(SUM(${bookMeta.pageCount}), 0)` })
+			.from(bookMeta)
+			.where(inArray(bookMeta.mediaItemId, completedIds));
+		// ~40 pages per hour reading speed
+		totalEstimatedHours += Math.round(Number(bookPages?.total ?? 0) / 40);
+	}
+
+	return {
+		year,
+		totalCompleted,
+		completedByType,
+		topGenre,
+		highestRated,
+		fastestCompletion,
+		mostActiveMonth,
+		firstCompleted,
+		lastCompleted,
+		totalEstimatedHours,
+		averageRating
+	};
 }

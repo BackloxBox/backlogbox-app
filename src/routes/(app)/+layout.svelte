@@ -22,7 +22,6 @@
 	import Menu from '@lucide/svelte/icons/menu';
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import Settings from '@lucide/svelte/icons/settings';
-	import Link from '@lucide/svelte/icons/link';
 	import Check from '@lucide/svelte/icons/check';
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Film from '@lucide/svelte/icons/film';
@@ -34,6 +33,7 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import X from '@lucide/svelte/icons/x';
 	import Clock from '@lucide/svelte/icons/clock';
+	import Share2 from '@lucide/svelte/icons/share-2';
 	import type { Component } from 'svelte';
 
 	let { children, data } = $props();
@@ -51,6 +51,7 @@
 		return {
 			href: `/${slug}`,
 			slug,
+			type,
 			label: type ? MEDIA_TYPE_LABELS[type].plural : slug,
 			icon: SLUG_ICONS[slug],
 			color: type ? MEDIA_TYPE_COLORS[type] : undefined
@@ -106,6 +107,9 @@
 		copied = true;
 		setTimeout(() => (copied = false), 2000);
 	}
+
+	/** Whether to show the "set up sharing" nudge (has username but profile not public) */
+	const showSharingNudge = $derived(!shareUrl && data.profile?.username != null);
 
 	/** User initials for avatar */
 	const initials = $derived(
@@ -190,10 +194,11 @@
 			<Separator class="my-1.5" />
 			{#each navItems as item (item.slug)}
 				{@const active = page.url.pathname === item.href}
+				{@const itemCount = item.type ? data.itemCounts[item.type] : undefined}
 				<a
 					href={item.href}
 					class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-				{active
+			{active
 						? 'bg-sidebar-accent text-sidebar-accent-foreground'
 						: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
 					onclick={() => (sidebarOpen = false)}
@@ -208,6 +213,9 @@
 						<item.icon class="size-4" />
 					</span>
 					{item.label}
+					{#if itemCount}
+						<span class="ml-auto text-[11px] text-muted-foreground tabular-nums">{itemCount}</span>
+					{/if}
 				</a>
 			{/each}
 
@@ -215,9 +223,14 @@
 			{#if data.customLists.length > 0 || canCreateList}
 				<Separator class="my-1.5" />
 				<span
-					class="px-3 py-1 text-[11px] font-medium tracking-wider text-muted-foreground/60 uppercase"
-					>Lists</span
-				>
+					class="flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium tracking-wider text-muted-foreground/60 uppercase"
+					>Lists
+					{#if data.customListItemCount > 0}
+						<span class="text-[10px] text-muted-foreground/40 tabular-nums"
+							>{data.customListItemCount}</span
+						>
+					{/if}
+				</span>
 				{#each data.customLists as list (list.id)}
 					{@const listActive = page.url.pathname === `/lists/${list.slug}`}
 					{@const Icon = getIconComponent(list.icon)}
@@ -303,22 +316,40 @@
 			</div>
 		{/if}
 
-		<!-- Bottom nav -->
-		<div class="space-y-0.5 p-2">
-			{#if shareUrl}
+		<!-- Share profile box -->
+		{#if shareUrl}
+			<div class="px-2">
 				<button
-					class="flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium text-sidebar-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+					class="flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-xs transition
+					{copied
+						? 'border-emerald-500 bg-emerald-200 text-emerald-800 dark:border-emerald-400 dark:bg-emerald-500/25 dark:text-emerald-300'
+						: 'border-emerald-400 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:border-emerald-500 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25'}"
 					onclick={copyShareLink}
 				>
 					{#if copied}
-						<Check class="size-4 shrink-0 text-green-500" />
-						<span class="text-green-500">Copied!</span>
+						<Check class="size-3.5 shrink-0" />
+						Link copied!
 					{:else}
-						<Link class="size-4 shrink-0 text-muted-foreground" />
-						Share profile
+						<Share2 class="size-3.5 shrink-0" />
+						Share your profile
 					{/if}
 				</button>
-			{/if}
+			</div>
+		{:else if showSharingNudge}
+			<div class="px-2">
+				<a
+					href="/settings"
+					class="flex items-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-50 px-3 py-2 text-xs text-emerald-600 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
+					onclick={() => (sidebarOpen = false)}
+				>
+					<Share2 class="size-3.5 shrink-0" />
+					Set up profile sharing
+				</a>
+			</div>
+		{/if}
+
+		<!-- Bottom nav -->
+		<div class="space-y-0.5 p-2">
 			<a
 				href="/settings"
 				class="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition

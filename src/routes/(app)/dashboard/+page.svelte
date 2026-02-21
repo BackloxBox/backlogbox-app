@@ -6,6 +6,7 @@
 		mediaTypeToSlug,
 		type MediaType
 	} from '$lib/types';
+	import Play from '@lucide/svelte/icons/play';
 	import * as Chart from '$lib/components/ui/chart/index.js';
 	import { AreaChart } from 'layerchart';
 	import { curveMonotoneX } from 'd3-shape';
@@ -27,6 +28,7 @@
 	let { data }: { data: PageData } = $props();
 	const stats = $derived(data.stats);
 	const customListStats = $derived(data.customListStats);
+	const inProgress = $derived(data.inProgress);
 	const listsCompleted = $derived(
 		customListStats.statusCounts.find((s) => s.status === 'completed')?.count ?? 0
 	);
@@ -134,6 +136,52 @@
 		<h1 class="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
 		<p class="mt-0.5 text-sm text-muted-foreground">Your collection at a glance</p>
 	</div>
+
+	<!-- Currently consuming -->
+	{#if inProgress.length > 0}
+		<div class="space-y-2">
+			<div class="flex items-center gap-2">
+				<Play class="size-4 text-amber-500" />
+				<h2 class="text-sm font-medium text-foreground">Currently consuming</h2>
+			</div>
+			<div class="scrollbar-none flex gap-2.5 overflow-x-auto pb-1">
+				{#each inProgress as item (item.id)}
+					<a href="/{mediaTypeToSlug(item.type)}" class="group flex w-20 shrink-0 flex-col gap-1">
+						<div
+							class="relative overflow-hidden rounded-lg border-2 border-transparent transition-colors"
+							style:--item-color={MEDIA_TYPE_COLORS[item.type]}
+						>
+							<div
+								class="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100"
+								style:box-shadow="inset 0 0 0 2px {MEDIA_TYPE_COLORS[item.type]}"
+								style:border-radius="0.5rem"
+							></div>
+							<div class="aspect-[2/3]">
+								<MediaCover title={item.title} coverUrl={item.coverUrl} />
+							</div>
+							<!-- Type badge -->
+							{#if TYPE_ICONS[item.type]}
+								{@const Icon = TYPE_ICONS[item.type]}
+								<div
+									class="absolute bottom-1 left-1 flex size-5 items-center justify-center rounded-md"
+									style:background="{MEDIA_TYPE_COLORS[item.type]}25"
+									style:color={MEDIA_TYPE_COLORS[item.type]}
+								>
+									<Icon class="size-3" />
+								</div>
+							{/if}
+						</div>
+						<p class="truncate text-[11px] leading-tight font-medium">{item.title}</p>
+						{#if item.subtitle}
+							<p class="truncate text-[10px] leading-tight text-muted-foreground">
+								{item.subtitle}
+							</p>
+						{/if}
+					</a>
+				{/each}
+			</div>
+		</div>
+	{/if}
 
 	<!-- Summary stats -->
 	<div class="grid grid-cols-3 gap-2">

@@ -475,6 +475,16 @@ export async function deleteFieldValue(itemId: string, listId: string, fieldId: 
 // Dashboard stats for custom lists
 // ---------------------------------------------------------------------------
 
+/** Total custom list item count for a user (sidebar badge) */
+export async function getTotalCustomListItemCount(userId: string): Promise<number> {
+	const [row] = await db
+		.select({ count: count() })
+		.from(customListItem)
+		.innerJoin(customList, eq(customList.id, customListItem.listId))
+		.where(eq(customList.userId, userId));
+	return Number(row?.count ?? 0);
+}
+
 export type CustomListDashboardStats = {
 	totalLists: number;
 	totalItems: number;
