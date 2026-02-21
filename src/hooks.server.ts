@@ -75,7 +75,8 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 		const profile = await getUserProfile(session.user.id);
 		if (profile) {
 			event.locals.subscribed = hasAccess(profile);
-			event.locals.trialEndsAt = profile.trialEndsAt;
+			event.locals.trialEndsAt =
+				profile.subscribed || profile.freeAccess ? null : profile.trialEndsAt;
 		}
 	}
 

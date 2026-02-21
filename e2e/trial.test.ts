@@ -107,6 +107,17 @@ test.describe('trial banner', () => {
 		const banner = page.locator('a[href="/subscribe"]').filter({ hasText: /days? left in trial/ });
 		await expect(banner).not.toBeVisible();
 	});
+
+	test('no trial banner for converted user with remaining trial', async ({ context, page }) => {
+		const user = await createTestUser({ subscribed: true, trialEndsAt: daysFromNow(10) });
+		await authenticate(context, user.sessionToken);
+
+		await page.goto('/dashboard');
+		await page.waitForLoadState('networkidle');
+
+		const banner = page.locator('a[href="/subscribe"]').filter({ hasText: /days? left in trial/ });
+		await expect(banner).not.toBeVisible();
+	});
 });
 
 // ---------------------------------------------------------------------------
