@@ -510,7 +510,6 @@
 										<img
 											src={result.coverUrl}
 											alt={result.title}
-											crossorigin="anonymous"
 											loading="lazy"
 											class="h-full w-full object-cover"
 										/>
@@ -640,7 +639,6 @@
 									<img
 										src={result.coverUrl}
 										alt={result.title}
-										crossorigin="anonymous"
 										loading="lazy"
 										class="h-full w-full object-cover"
 									/>

@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import { ModeWatcher } from 'mode-watcher';
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import CacheDebugOverlay from '$lib/components/dev/CacheDebugOverlay.svelte';
 	import IosInstallHint from '$lib/components/pwa/IosInstallHint.svelte';
 	import { initPostHog, identifyUser, resetUser } from '$lib/analytics';
@@ -94,8 +95,10 @@
 
 <ModeWatcher defaultMode="dark" />
 <Toaster richColors />
-<IosInstallHint />
-{#if dev}
-	<CacheDebugOverlay />
-{/if}
-{@render children()}
+<Tooltip.Provider>
+	<IosInstallHint />
+	{#if dev}
+		<CacheDebugOverlay />
+	{/if}
+	{@render children()}
+</Tooltip.Provider>
