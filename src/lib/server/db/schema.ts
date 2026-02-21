@@ -73,6 +73,7 @@ export const bookMeta = pgTable('book_meta', {
 	genre: text('genre'),
 	description: text('description'),
 	pageCount: integer('page_count'),
+	currentPage: integer('current_page'),
 	isbn: text('isbn'),
 	language: text('language'),
 	publisher: text('publisher')
@@ -87,6 +88,7 @@ export const movieMeta = pgTable('movie_meta', {
 	description: text('description'),
 	cast: text('cast'),
 	runtime: integer('runtime'),
+	watchingOn: text('watching_on'),
 	tmdbId: integer('tmdb_id')
 });
 
@@ -103,6 +105,7 @@ export const seriesMeta = pgTable('series_meta', {
 	watchingOn: text('watching_on'),
 	totalSeasons: integer('total_seasons'),
 	currentSeason: integer('current_season'),
+	currentEpisode: integer('current_episode'),
 	tmdbId: integer('tmdb_id')
 });
 

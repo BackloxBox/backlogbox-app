@@ -1,7 +1,8 @@
 <script lang="ts">
 	import MediaCover from './MediaCover.svelte';
 	import Pin from '@lucide/svelte/icons/pin';
-	import { formatStars, getBadge, getSubtitle } from './card-utils';
+	import { formatStars, getBadge, getSubtitle, getProgress } from './card-utils';
+	import { MEDIA_TYPE_COLORS } from '$lib/types';
 	import type { MediaItemWithMeta } from '$lib/server/db/queries';
 
 	type Props = {
@@ -12,6 +13,10 @@
 
 	const badge = $derived(getBadge(item));
 	const sub = $derived(getSubtitle(item));
+	const progress = $derived(getProgress(item));
+	const progressPct = $derived(
+		progress ? Math.min(100, Math.round((progress.current / progress.total) * 100)) : 0
+	);
 </script>
 
 <div class="flex gap-2.5">
@@ -40,3 +45,18 @@
 		{/if}
 	</div>
 </div>
+{#if progress}
+	<div
+		class="mt-1.5 h-0.5 w-full overflow-hidden rounded-full bg-muted"
+		role="progressbar"
+		aria-valuenow={progress.current}
+		aria-valuemin={0}
+		aria-valuemax={progress.total}
+		aria-label="{progressPct}% complete"
+	>
+		<div
+			class="h-full rounded-full transition-[width] duration-300"
+			style="width: {progressPct}%; background-color: {MEDIA_TYPE_COLORS[item.type]}"
+		></div>
+	</div>
+{/if}

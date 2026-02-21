@@ -14,9 +14,11 @@ export function getSeasonBadge(item: MediaItemWithMeta): string | null {
 	return s ? `S${s}` : 'All';
 }
 
-/** Year badge for books (e.g. "1965") */
-export function getYearBadge(item: MediaItemWithMeta): string | null {
+/** Badge for books — shows "p.120" if tracking page progress, otherwise release year */
+export function getBookBadge(item: MediaItemWithMeta): string | null {
 	if (!item.bookMeta) return null;
+	const page = item.bookMeta.currentPage;
+	if (page) return `p.${page}`;
 	return item.releaseYear ? String(item.releaseYear) : null;
 }
 
@@ -34,23 +36,48 @@ export function getRuntimeBadge(item: MediaItemWithMeta): string | null {
 	return formatRuntime(rt);
 }
 
-/** Episode count badge for podcasts (e.g. "142 eps") */
+/** Episode badge for podcasts — shows current episode if tracked, otherwise total count */
 export function getEpisodeBadge(item: MediaItemWithMeta): string | null {
-	const ep = item.podcastMeta?.totalEpisodes;
-	if (!ep) return null;
-	return `${ep} eps`;
+	const current = item.podcastMeta?.currentEpisode;
+	if (current) return `Ep. ${current}`;
+	const total = item.podcastMeta?.totalEpisodes;
+	if (total) return `${total} eps`;
+	return null;
 }
 
-/** Single badge for the cover overlay — season for series, runtime for movies, episodes for podcasts, year for books */
+/** Single badge for the cover overlay — season for series, runtime for movies, episodes for podcasts, page/year for books */
 export function getBadge(item: MediaItemWithMeta): string | null {
 	return (
-		getSeasonBadge(item) ?? getRuntimeBadge(item) ?? getEpisodeBadge(item) ?? getYearBadge(item)
+		getSeasonBadge(item) ?? getRuntimeBadge(item) ?? getEpisodeBadge(item) ?? getBookBadge(item)
 	);
 }
 
 /** Lowercased searchable text: title + subtitle fields (author/director/genre/etc.) */
 export function getSearchableText(item: MediaItemWithMeta): string {
 	return [item.title, getSubtitle(item)].join(' ').toLowerCase();
+}
+
+/**
+ * Progress fraction for items that have both a current and total value.
+ * Returns null when progress can't be determined.
+ */
+export function getProgress(item: MediaItemWithMeta): { current: number; total: number } | null {
+	if (item.bookMeta) {
+		const { currentPage, pageCount } = item.bookMeta;
+		if (currentPage && pageCount && pageCount > 0)
+			return { current: currentPage, total: pageCount };
+	}
+	if (item.podcastMeta) {
+		const { currentEpisode, totalEpisodes } = item.podcastMeta;
+		if (currentEpisode && totalEpisodes && totalEpisodes > 0)
+			return { current: currentEpisode, total: totalEpisodes };
+	}
+	if (item.seriesMeta) {
+		const { currentSeason, totalSeasons } = item.seriesMeta;
+		if (currentSeason && totalSeasons && totalSeasons > 0)
+			return { current: currentSeason, total: totalSeasons };
+	}
+	return null;
 }
 
 /** Subtitle string based on media type metadata */

@@ -4,6 +4,7 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
@@ -155,6 +156,56 @@
 		}
 	}
 
+	async function handleMovieWatchingOnChange(value: string | undefined) {
+		saving = true;
+		try {
+			await onUpdate({}, { watchingOn: value || null });
+		} catch (err) {
+			console.error('update movie watchingOn failed', { itemId: item?.id, value, err });
+			toast.error('Failed to update platform');
+		} finally {
+			saving = false;
+		}
+	}
+
+	/** Debounce timer for number inputs to avoid saving on every keystroke */
+	let progressTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function handleProgressChange(field: string, raw: string) {
+		const value = raw === '' ? null : parseInt(raw, 10);
+		if (value !== null && isNaN(value)) return;
+		clearTimeout(progressTimer);
+		progressTimer = setTimeout(async () => {
+			saving = true;
+			try {
+				await onUpdate({}, { [field]: value });
+			} catch (err) {
+				console.error(`update ${field} failed`, { itemId: item?.id, value, err });
+				toast.error('Failed to save progress');
+			} finally {
+				saving = false;
+			}
+		}, 500);
+	}
+
+	function handlePlaytimeChange(raw: string) {
+		const hours = raw === '' ? null : parseFloat(raw);
+		if (hours !== null && isNaN(hours)) return;
+		const minutes = hours !== null ? Math.round(hours * 60) : null;
+		clearTimeout(progressTimer);
+		progressTimer = setTimeout(async () => {
+			saving = true;
+			try {
+				await onUpdate({}, { playtimeMinutes: minutes });
+			} catch (err) {
+				console.error('update playtime failed', { itemId: item?.id, minutes, err });
+				toast.error('Failed to save playtime');
+			} finally {
+				saving = false;
+			}
+		}, 500);
+	}
+
 	/** Available platforms from a game's meta.platform (comma-separated from IGDB) */
 	const gamePlatforms = $derived(
 		item?.gameMeta?.platform ? item.gameMeta.platform.split(', ').filter(Boolean) : []
@@ -277,11 +328,6 @@
 				entries.push({ label: 'Critic score', value: `${i.gameMeta.criticScore} / 100` });
 			if (i.gameMeta.userScore != null)
 				entries.push({ label: 'User score', value: `${i.gameMeta.userScore} / 100` });
-			if (i.gameMeta.playtimeMinutes)
-				entries.push({
-					label: 'Playtime',
-					value: `${Math.round(i.gameMeta.playtimeMinutes / 60)}h`
-				});
 		}
 		if (i.podcastMeta) {
 			if (i.podcastMeta.host) entries.push({ label: 'Host', value: i.podcastMeta.host });
@@ -294,8 +340,6 @@
 				entries.push({ label: 'Avg. episode', value: `${i.podcastMeta.episodeLength}m` });
 			if (i.podcastMeta.totalEpisodes)
 				entries.push({ label: 'Episodes', value: String(i.podcastMeta.totalEpisodes) });
-			if (i.podcastMeta.currentEpisode)
-				entries.push({ label: 'Current', value: `Ep. ${i.podcastMeta.currentEpisode}` });
 		}
 
 		return entries;
@@ -423,6 +467,53 @@
 					/>
 				</div>
 
+				<!-- Watching on (movies only) -->
+				{#if item.movieMeta}
+					<div class="mt-5 space-y-1.5">
+						<Label>Watching on</Label>
+						<Select.Root
+							type="single"
+							value={item.movieMeta.watchingOn ?? undefined}
+							onValueChange={handleMovieWatchingOnChange}
+							disabled={saving}
+						>
+							<Select.Trigger class="w-full">
+								{item.movieMeta.watchingOn ?? 'Select platform...'}
+							</Select.Trigger>
+							<Select.Content>
+								{#each STREAMING_PLATFORMS as platform (platform)}
+									<Select.Item value={platform}>{platform}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					</div>
+				{/if}
+
+				<!-- Page progress (books only) -->
+				{#if item.bookMeta}
+					<div class="mt-5 space-y-1.5">
+						<Label>Page</Label>
+						<div class="flex items-center gap-2">
+							<Input
+								type="number"
+								min={0}
+								max={item.bookMeta.pageCount ?? undefined}
+								placeholder="0"
+								value={item.bookMeta.currentPage ?? ''}
+								disabled={saving}
+								oninput={(e: Event) =>
+									handleProgressChange('currentPage', (e.target as HTMLInputElement).value)}
+								class="w-24"
+							/>
+							{#if item.bookMeta.pageCount}
+								<span class="text-sm text-muted-foreground">
+									of {item.bookMeta.pageCount}
+								</span>
+							{/if}
+						</div>
+					</div>
+				{/if}
+
 				<!-- Season selector (series only) -->
 				{#if item.seriesMeta}
 					{@const currentSeason = item.seriesMeta.currentSeason ?? 0}
@@ -458,6 +549,21 @@
 						</div>
 					</div>
 
+					<!-- Episode (within season) -->
+					<div class="mt-5 space-y-1.5">
+						<Label>Episode</Label>
+						<Input
+							type="number"
+							min={0}
+							placeholder="0"
+							value={item.seriesMeta.currentEpisode ?? ''}
+							disabled={saving}
+							oninput={(e: Event) =>
+								handleProgressChange('currentEpisode', (e.target as HTMLInputElement).value)}
+							class="w-24"
+						/>
+					</div>
+
 					<!-- Watching on -->
 					<div class="mt-5 space-y-1.5">
 						<Label>Watching on</Label>
@@ -479,7 +585,7 @@
 					</div>
 				{/if}
 
-				<!-- Playing on (games only) -->
+				<!-- Playing on + Hours played (games only) -->
 				{#if item.gameMeta}
 					<div class="mt-5 space-y-1.5">
 						<Label>Playing on</Label>
@@ -503,6 +609,25 @@
 							<p class="text-sm text-muted-foreground">No platforms available</p>
 						{/if}
 					</div>
+
+					<div class="mt-5 space-y-1.5">
+						<Label>Hours played</Label>
+						<div class="flex items-center gap-2">
+							<Input
+								type="number"
+								min={0}
+								step="0.5"
+								placeholder="0"
+								value={item.gameMeta.playtimeMinutes
+									? String(Math.round((item.gameMeta.playtimeMinutes / 60) * 10) / 10)
+									: ''}
+								disabled={saving}
+								oninput={(e: Event) => handlePlaytimeChange((e.target as HTMLInputElement).value)}
+								class="w-24"
+							/>
+							<span class="text-sm text-muted-foreground">hours</span>
+						</div>
+					</div>
 				{/if}
 
 				<!-- Listening on (podcasts only) -->
@@ -524,6 +649,29 @@
 								{/each}
 							</Select.Content>
 						</Select.Root>
+					</div>
+
+					<!-- Episode progress -->
+					<div class="mt-5 space-y-1.5">
+						<Label>Episode</Label>
+						<div class="flex items-center gap-2">
+							<Input
+								type="number"
+								min={0}
+								max={item.podcastMeta.totalEpisodes ?? undefined}
+								placeholder="0"
+								value={item.podcastMeta.currentEpisode ?? ''}
+								disabled={saving}
+								oninput={(e: Event) =>
+									handleProgressChange('currentEpisode', (e.target as HTMLInputElement).value)}
+								class="w-24"
+							/>
+							{#if item.podcastMeta.totalEpisodes}
+								<span class="text-sm text-muted-foreground">
+									of {item.podcastMeta.totalEpisodes}
+								</span>
+							{/if}
+						</div>
 					</div>
 				{/if}
 

@@ -54,6 +54,7 @@ const bookMetaSchema = v.object({
 	genre: optStr,
 	description: optStr,
 	pageCount: optNum,
+	currentPage: optNum,
 	isbn: optStr,
 	language: optStr,
 	publisher: optStr
@@ -65,6 +66,7 @@ const movieMetaSchema = v.object({
 	description: optStr,
 	cast: optStr,
 	runtime: optNum,
+	watchingOn: optStr,
 	tmdbId: optNum
 });
 
@@ -78,6 +80,7 @@ const seriesMetaSchema = v.object({
 	watchingOn: optStr,
 	totalSeasons: optNum,
 	currentSeason: optNum,
+	currentEpisode: optNum,
 	tmdbId: optNum
 });
 
@@ -214,6 +217,7 @@ function extractMeta(type: MediaType, data: AddItemInput): MetaFieldsFor<MediaTy
 				'genre',
 				'description',
 				'pageCount',
+				'currentPage',
 				'isbn',
 				'language',
 				'publisher'
@@ -225,6 +229,7 @@ function extractMeta(type: MediaType, data: AddItemInput): MetaFieldsFor<MediaTy
 				'description',
 				'cast',
 				'runtime',
+				'watchingOn',
 				'tmdbId'
 			]) satisfies MovieMetaFields;
 		case 'series':
@@ -238,6 +243,7 @@ function extractMeta(type: MediaType, data: AddItemInput): MetaFieldsFor<MediaTy
 				'watchingOn',
 				'totalSeasons',
 				'currentSeason',
+				'currentEpisode',
 				'tmdbId'
 			]) satisfies SeriesMetaFields;
 		case 'game':
