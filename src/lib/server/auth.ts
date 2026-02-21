@@ -20,7 +20,7 @@ function createAuth() {
 	});
 
 	return betterAuth({
-		...(env.BETTER_AUTH_URL ? { baseURL: env.BETTER_AUTH_URL } : {}),
+		...(env.BETTER_AUTH_URL && !dev ? { baseURL: env.BETTER_AUTH_URL } : {}),
 		trustedOrigins: [
 			'http://localhost:5173',
 			...(env.TRUSTED_ORIGINS ? env.TRUSTED_ORIGINS.split(',') : [])
