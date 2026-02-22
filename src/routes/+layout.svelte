@@ -57,6 +57,9 @@
 	<!-- Description is NOT set here to avoid duplicates; each public page sets its own -->
 	<title>{defaultTitle}</title>
 
+	<!-- Twitter/X -->
+	<meta name="twitter:site" content="@backlogbox" />
+
 	<!-- Open Graph (site-wide defaults, pages override per-page fields) -->
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="BacklogBox" />

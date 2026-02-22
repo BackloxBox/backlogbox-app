@@ -124,6 +124,54 @@
 	/** Trial state — null means no active trial (subscribed or grandfathered) */
 	const trialDaysLeft = $derived(data.trialDaysLeft);
 	const trialUrgent = $derived(trialDaysLeft !== null && trialDaysLeft <= 3);
+
+	// Userjot feedback widget
+	$effect(() => {
+		type UJ = {
+			init: (id: string, opts: Record<string, unknown>) => void;
+			identify: (u: Record<string, string>) => void;
+		};
+
+		const w = globalThis as unknown as {
+			$ujq: unknown[];
+			uj: UJ;
+		};
+
+		// Queue proxy (buffers calls until SDK loads)
+		w.$ujq = w.$ujq || [];
+		w.uj =
+			w.uj ||
+			(new Proxy(
+				{},
+				{
+					get:
+						(_: unknown, p: string) =>
+						(...a: unknown[]) =>
+							w.$ujq.push([p, ...a])
+				}
+			) as UJ);
+
+		// Load SDK script once
+		if (!document.querySelector('script[src*="userjot"]')) {
+			const s = document.createElement('script');
+			s.src = 'https://cdn.userjot.com/sdk/v2/uj.js';
+			s.type = 'module';
+			s.async = true;
+			document.head.appendChild(s);
+		}
+
+		w.uj.init('cmly0s6n30isj0iphc6a23980', {
+			widget: true,
+			position: 'right',
+			theme: 'auto'
+		});
+
+		w.uj.identify({
+			id: data.user.id,
+			email: data.user.email,
+			firstName: data.user.name ?? ''
+		});
+	});
 </script>
 
 <div class="flex h-screen bg-background text-foreground">

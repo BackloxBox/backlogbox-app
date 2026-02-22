@@ -135,11 +135,11 @@ const ERROR_MAP: ReadonlyArray<{ match: (err: APIError) => boolean; message: str
 	// ── Polar (payments) ─────────────────────────────────────────────────
 	{
 		match: (e) => e.message?.includes('Polar customer creation failed') ?? false,
-		message: 'Registration failed. Please try again or contact support.'
+		message: 'Registration failed. Please try again or contact yorick@backlogbox.com'
 	},
 	{
 		match: (e) => e.message?.includes('Checkout creation failed') ?? false,
-		message: 'Payment setup failed. Please try again or contact support.'
+		message: 'Payment setup failed. Please try again or contact yorick@backlogbox.com'
 	},
 	{
 		match: (e) => e.message?.includes('Product not found') ?? false,

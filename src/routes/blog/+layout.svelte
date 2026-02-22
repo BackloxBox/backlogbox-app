@@ -105,6 +105,23 @@
 				<img src="/backlogbox-logo.svg" alt="" class="size-4" />
 				BacklogBox
 			</a>
+			<div class="flex items-center gap-4 text-xs text-muted-foreground/60">
+				<a
+					href="https://backlogbox.userjot.com"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="transition-colors hover:text-foreground">Feedback</a
+				>
+				<a href="mailto:yorick@backlogbox.com" class="transition-colors hover:text-foreground"
+					>Support</a
+				>
+				<a
+					href="https://x.com/backlogbox"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="transition-colors hover:text-foreground">X</a
+				>
+			</div>
 			<p class="text-[11px] text-muted-foreground/30">
 				&copy; {new Date().getFullYear()} BacklogBox
 			</p>

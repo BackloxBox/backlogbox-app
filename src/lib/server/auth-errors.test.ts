@@ -176,7 +176,7 @@ describe('friendlyAuthError', () => {
 	it('maps Polar customer creation failed via message', () => {
 		const err = new APIError(500, { message: 'Polar customer creation failed' });
 		expect(friendlyAuthError(err)).toBe(
-			'Registration failed. Please try again or contact support.'
+			'Registration failed. Please try again or contact yorick@backlogbox.com'
 		);
 	});
 
@@ -185,7 +185,7 @@ describe('friendlyAuthError', () => {
 			message: 'Polar customer creation failed. Error: timeout'
 		});
 		expect(friendlyAuthError(err)).toBe(
-			'Registration failed. Please try again or contact support.'
+			'Registration failed. Please try again or contact yorick@backlogbox.com'
 		);
 	});
 

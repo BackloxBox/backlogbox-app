@@ -649,13 +649,30 @@
 				<img src="/backlogbox-logo.svg" alt="BacklogBox" class="size-4" />
 				BacklogBox
 			</div>
-			<div class="flex items-center gap-5 text-xs text-muted-foreground/60">
+			<div
+				class="flex flex-wrap items-center justify-center gap-5 text-xs text-muted-foreground/60"
+			>
 				<a href="/login" class="transition-colors hover:text-foreground">Sign in</a>
 				<a href="/register" class="transition-colors hover:text-foreground">Register</a>
 				<button class="transition-colors hover:text-foreground" onclick={() => scrollTo('pricing')}>
 					Pricing
 				</button>
 				<a href="/blog" class="transition-colors hover:text-foreground">Blog</a>
+				<a
+					href="https://backlogbox.userjot.com"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="transition-colors hover:text-foreground">Feedback</a
+				>
+				<a href="mailto:yorick@backlogbox.com" class="transition-colors hover:text-foreground"
+					>Support</a
+				>
+				<a
+					href="https://x.com/backlogbox"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="transition-colors hover:text-foreground">X</a
+				>
 			</div>
 			<p class="text-[11px] text-muted-foreground/30">
 				&copy; {new Date().getFullYear()} BacklogBox
