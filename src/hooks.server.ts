@@ -99,6 +99,20 @@ const SKIP_PREFIXES = [
 	'/healthz'
 ];
 
+/** Known bot/scanner probe paths — log at debug level instead of warn */
+const SCANNER_PREFIXES = [
+	'/wp-admin',
+	'/wp-login',
+	'/wp-includes',
+	'/wordpress',
+	'/.env',
+	'/.git',
+	'/xmlrpc.php',
+	'/admin.php',
+	'/phpmyadmin',
+	'/.well-known/traffic-advice'
+];
+
 const handleRequestLog: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 
@@ -122,8 +136,12 @@ const handleRequestLog: Handle = async ({ event, resolve }) => {
 	const userId = event.locals.user?.id;
 	if (userId) wideEvent.userId = userId;
 
+	const isScanner = SCANNER_PREFIXES.some((p) => pathname.startsWith(p));
+
 	if (response.status >= 500) {
 		log.error(wideEvent, 'request error');
+	} else if (response.status >= 400 && isScanner) {
+		log.debug(wideEvent, 'scanner probe');
 	} else if (response.status >= 400) {
 		log.warn(wideEvent, 'request client error');
 	} else if (duration > 2000) {
