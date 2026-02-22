@@ -1,4 +1,4 @@
-import { getRedis } from '$lib/server/redis';
+import { awaitRedis, getRedis } from '$lib/server/redis';
 import { log } from '$lib/server/logger';
 
 // ---------------------------------------------------------------------------
@@ -153,7 +153,7 @@ function toProviderMetrics(b: BucketFields, hours: number): ProviderMetrics {
  * Returns null if Redis is unavailable.
  */
 export async function getApiMetrics(hours: number): Promise<ApiMetricsSummary | null> {
-	const redis = getRedis();
+	const redis = await awaitRedis();
 	if (!redis) return null;
 
 	const hourSlots = hourKeys(hours);

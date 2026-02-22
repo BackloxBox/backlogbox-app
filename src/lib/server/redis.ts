@@ -14,23 +14,21 @@ import { log } from '$lib/server/logger';
 type RedisClient = import('ioredis').default;
 
 let client: RedisClient | null | undefined;
-let connecting = false;
+let connectionPromise: Promise<RedisClient | null> | undefined;
 
-export function getRedis(): RedisClient | null {
-	if (client !== undefined) return client;
-	if (connecting) return null;
+function connect(): Promise<RedisClient | null> {
+	if (connectionPromise) return connectionPromise;
 
 	const url = env.REDIS_URL;
 	if (!url) {
 		log.info('REDIS_URL not set — Redis disabled, using in-memory fallbacks');
 		client = null;
-		return null;
+		connectionPromise = Promise.resolve(null);
+		return connectionPromise;
 	}
 
-	connecting = true;
-
 	// Dynamic import keeps ioredis out of the bundle when unused
-	import('ioredis')
+	connectionPromise = import('ioredis')
 		.then(({ default: Redis }) => {
 			const redis = new Redis(url, {
 				maxRetriesPerRequest: 3,
@@ -50,15 +48,38 @@ export function getRedis(): RedisClient | null {
 			});
 
 			client = redis;
-			connecting = false;
+			return redis;
 		})
 		.catch((err) => {
 			log.warn({ err }, 'Failed to load ioredis — Redis disabled');
 			client = null;
-			connecting = false;
+			return null;
 		});
 
-	// Return null for the first call while connecting asynchronously.
-	// Subsequent calls will return the connected client.
+	return connectionPromise;
+}
+
+/**
+ * Synchronous accessor — returns the cached client or `null`.
+ *
+ * Returns `null` if the connection hasn't resolved yet. Safe for
+ * fire-and-forget callers (metrics recording, cache writes) that
+ * silently degrade when Redis is unavailable.
+ */
+export function getRedis(): RedisClient | null {
+	if (client !== undefined) return client;
+	// Kick off connection if not started
+	connect();
 	return null;
+}
+
+/**
+ * Async accessor — awaits the initial connection before returning.
+ *
+ * Use for read paths that need the connection to be ready (e.g.
+ * admin dashboard data loading).
+ */
+export async function awaitRedis(): Promise<RedisClient | null> {
+	if (client !== undefined) return client;
+	return connect();
 }

@@ -314,7 +314,7 @@
 	<section class="space-y-3">
 		<h2 class="text-lg font-semibold">User Growth</h2>
 		{#if signupChartData.length > 1}
-			<div class="rounded-lg border bg-card p-4">
+			<div class="overflow-hidden rounded-lg border bg-card p-4">
 				<Chart.Container config={signupChartConfig} class="h-[250px] w-full">
 					<AreaChart
 						data={signupChartData}
@@ -378,7 +378,7 @@
 	<section class="space-y-3">
 		<h2 class="text-lg font-semibold">Items Added Over Time</h2>
 		{#if itemsChartData.length > 1}
-			<div class="rounded-lg border bg-card p-4">
+			<div class="overflow-hidden rounded-lg border bg-card p-4">
 				<Chart.Container config={itemsChartConfig} class="h-[250px] w-full">
 					<AreaChart
 						data={itemsChartData}
@@ -436,9 +436,9 @@
 	<!-- Side by side: User Status + Items by Type -->
 	<div class="grid gap-6 md:grid-cols-2">
 		<!-- User Status Donut -->
-		<section class="space-y-3">
+		<section class="min-w-0 space-y-3">
 			<h2 class="text-lg font-semibold">User Status</h2>
-			<div class="rounded-lg border bg-card p-4">
+			<div class="overflow-hidden rounded-lg border bg-card p-4">
 				{#if donutData.length > 0}
 					<Chart.Container config={donutConfig} class="mx-auto aspect-square max-h-[250px]">
 						<PieChart
@@ -480,9 +480,9 @@
 		</section>
 
 		<!-- Items by Type Bar -->
-		<section class="space-y-3">
+		<section class="min-w-0 space-y-3">
 			<h2 class="text-lg font-semibold">Items by Type</h2>
-			<div class="rounded-lg border bg-card p-4">
+			<div class="overflow-hidden rounded-lg border bg-card p-4">
 				{#if typeBarData.length > 0}
 					<Chart.Container config={typeBarConfig} class="h-[250px] w-full">
 						<BarChart
@@ -563,7 +563,7 @@
 
 			<!-- API Calls Over Time Chart -->
 			{#if metricsChartData.length > 1}
-				<div class="rounded-lg border bg-card p-4">
+				<div class="overflow-hidden rounded-lg border bg-card p-4">
 					<p class="mb-2 text-sm font-medium text-muted-foreground">External API Calls Over Time</p>
 					<Chart.Container config={metricsChartConfig} class="h-[250px] w-full">
 						<AreaChart
@@ -618,7 +618,7 @@
 
 			<!-- Cache Hits Over Time Chart -->
 			{#if cachedChartData.length > 1}
-				<div class="rounded-lg border bg-card p-4">
+				<div class="overflow-hidden rounded-lg border bg-card p-4">
 					<p class="mb-2 text-sm font-medium text-muted-foreground">Cache Hits Over Time</p>
 					<Chart.Container config={metricsChartConfig} class="h-[200px] w-full">
 						<AreaChart
@@ -667,7 +667,7 @@
 
 			<!-- Errors Over Time Chart (only shown when errors exist) -->
 			{#if hasErrors && errorsChartData.length > 1}
-				<div class="rounded-lg border border-red-500/20 bg-card p-4">
+				<div class="overflow-hidden rounded-lg border border-red-500/20 bg-card p-4">
 					<p class="mb-2 text-sm font-medium text-red-400">Errors Over Time</p>
 					<Chart.Container config={metricsChartConfig} class="h-[200px] w-full">
 						<AreaChart
