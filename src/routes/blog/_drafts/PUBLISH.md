@@ -54,3 +54,63 @@ Sitemap + OG images auto-generate from `posts.ts`.
     keywords: ['TBR pile', 'to be read pile', 'reading backlog', 'TBR list management', 'book backlog', 'too many books to read', 'reading tracker']
 }
 ```
+
+### Mar 6 — best-letterboxd-alternative
+
+```ts
+{
+    slug: 'best-letterboxd-alternative',
+    title: 'Best Letterboxd Alternatives in 2026: Movie & TV Trackers Compared',
+    description: 'Love Letterboxd but need more? Compare the best Letterboxd alternatives for tracking movies, TV shows, and all your other media in one place.',
+    publishedAt: '2026-03-06',
+    updatedAt: '2026-03-06',
+    author: 'BacklogBox Team',
+    readingTime: '9 min read',
+    keywords: ['letterboxd alternative', 'movie tracker app', 'film tracking app', 'movie watchlist app', 'letterboxd replacement', 'tv show tracker']
+}
+```
+
+### Mar 10 — best-backloggd-alternative
+
+```ts
+{
+    slug: 'best-backloggd-alternative',
+    title: 'Best Backloggd Alternatives in 2026: Game Trackers for Your Pile of Shame',
+    description: 'Backloggd not cutting it? Compare the best Backloggd alternatives for tracking your game backlog, from dedicated game trackers to all-in-one media apps.',
+    publishedAt: '2026-03-10',
+    updatedAt: '2026-03-10',
+    author: 'BacklogBox Team',
+    readingTime: '9 min read',
+    keywords: ['backloggd alternative', 'game tracker app', 'game backlog app', 'game tracking app', 'backloggd replacement', 'pile of shame tracker']
+}
+```
+
+### Mar 13 — best-trakt-alternative
+
+```ts
+{
+    slug: 'best-trakt-alternative',
+    title: 'Best Trakt Alternatives in 2026: TV & Movie Trackers That Do More',
+    description: 'Trakt is powerful but complex. Compare the best Trakt alternatives for tracking TV shows, movies, and your entire media backlog with less setup.',
+    publishedAt: '2026-03-13',
+    updatedAt: '2026-03-13',
+    author: 'BacklogBox Team',
+    readingTime: '9 min read',
+    keywords: ['trakt alternative', 'tv show tracker', 'watch tracker app', 'trakt replacement', 'movie tracking app', 'tv tracker app']
+}
+```
+
+---
+
+## Reddit posts
+
+Drafts in `_drafts/reddit/`. Copy-paste into Reddit when ready.
+
+| File                            | Subreddit                     | Type                        |
+| ------------------------------- | ----------------------------- | --------------------------- |
+| `i-built-this.md`               | r/SideProject, r/indiehackers | Direct launch story         |
+| `patientgamers-game-backlog.md` | r/patientgamers               | Value-first, subtle mention |
+| `books-tbr-pile.md`             | r/books                       | Value-first, subtle mention |
+| `productivity-kanban.md`        | r/productivity                | Value-first, subtle mention |
+
+Space these out over 1-2 weeks. Do not post all on the same day.
