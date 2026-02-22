@@ -106,7 +106,7 @@
 			for (const id of newlyCompleted) recentlyCompleted.add(id);
 			setTimeout(() => {
 				for (const id of newlyCompleted) recentlyCompleted.delete(id);
-			}, 1500);
+			}, 800);
 		}
 
 		if (updates.length > 0) {

@@ -63,23 +63,20 @@
 {/if}
 
 <style>
-	@keyframes neon-pulse {
-		0%,
-		100% {
-			box-shadow:
-				0 0 4px #22c55e80,
-				0 0 12px #22c55e40;
-			border-color: #22c55e;
-		}
-		50% {
+	@keyframes neon-flash {
+		0% {
 			box-shadow:
 				0 0 8px #22c55e,
 				0 0 20px #22c55e60;
 			border-color: #22c55e;
 		}
+		100% {
+			box-shadow: none;
+			border-color: var(--color-border);
+		}
 	}
 
 	:global(.neon-glow) {
-		animation: neon-pulse 0.75s ease-in-out 2;
+		animation: neon-flash 0.8s ease-out;
 	}
 </style>
