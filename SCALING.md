@@ -49,24 +49,42 @@ Resize in Hetzner Cloud Console. Requires a reboot (~30 seconds downtime per nod
 
 **How to resize with minimal downtime:**
 
+Swarm's drain mechanism moves all replicas off a node before you touch it. Drain → resize → reactivate, one node at a time.
+
+**Worker node (zero downtime):**
+
 ```bash
-# 1. Drain worker node (moves replicas to manager)
+# 1. Drain worker (moves its replicas to manager)
 docker node update --availability drain backlogbox-worker
 
-# 2. Resize worker in Hetzner Console (triggers reboot)
+# 2. Resize worker in Hetzner Console (triggers ~30s reboot)
 #    Hetzner Console → Servers → backlogbox-worker → Rescale
+#    No impact — worker has 0 replicas, traffic flows through manager
 
 # 3. Re-activate worker
 docker node update --availability active backlogbox-worker
 
 # 4. Scale replicas to use new capacity
 docker service scale backlogbox_app=6
+```
 
-# 5. Repeat for manager (drain to worker first)
+**Manager node (~30 seconds downtime):**
+
+Caddy is pinned to the manager node. When the manager reboots, Caddy goes down and the site is unreachable for ~30 seconds. There is no way around this without adding a load balancer.
+
+```bash
+# 1. Drain manager app replicas to worker
 docker node update --availability drain backlogbox-manager
-# Resize in Hetzner Console
+
+# 2. Resize manager in Hetzner Console (triggers ~30s reboot)
+#    ⚠️ ~30 seconds of downtime — Caddy is down during reboot
+#    Do this at low-traffic time (early morning)
+
+# 3. Re-activate manager
 docker node update --availability active backlogbox-manager
 ```
+
+**Recommended order:** resize worker first (zero downtime), then manager (30s downtime at low-traffic time).
 
 After resizing to CX32, bump Redis memory too:
 
