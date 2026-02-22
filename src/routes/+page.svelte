@@ -12,7 +12,7 @@
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import Check from '@lucide/svelte/icons/check';
 	import Search from '@lucide/svelte/icons/search';
-	import GripVertical from '@lucide/svelte/icons/grip-vertical';
+
 	import Globe from '@lucide/svelte/icons/globe';
 	import ListPlus from '@lucide/svelte/icons/list-plus';
 	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
@@ -105,21 +105,6 @@
 		'Dashboard with stats & progress charts',
 		'Public profile & shareable boards',
 		'Full access to all future features'
-	] as const;
-
-	const boardTabs = [
-		{ icon: Film, label: 'Movies', active: true },
-		{ icon: Tv, label: 'Series', active: false },
-		{ icon: BookOpen, label: 'Books', active: false },
-		{ icon: Gamepad2, label: 'Games', active: false },
-		{ icon: Podcast, label: 'Podcasts', active: false }
-	] as const;
-
-	const boardColumns = [
-		{ name: 'Wishlist', color: '#3B82F6', cards: ['Dune: Part Two', 'The Brutalist'] },
-		{ name: 'Backlog', color: '#737373', cards: ['Nosferatu', 'Conclave', 'Anora'] },
-		{ name: 'In Progress', color: '#F59E0B', cards: ['The Substance'] },
-		{ name: 'Completed', color: '#22C55E', cards: ['Oppenheimer', 'Poor Things'] }
 	] as const;
 
 	function scrollTo(id: string) {
@@ -317,55 +302,62 @@
 	<!-- APP PREVIEW                                                         -->
 	<!-- ================================================================== -->
 	<section class="landing-section pb-28 sm:pb-32">
-		<div class="mx-auto max-w-4xl">
-			<div class="landing-board-preview">
-				<!-- Window chrome -->
-				<div class="flex items-center gap-2 border-b border-border/40 px-5 py-3">
-					<div class="size-[9px] rounded-full bg-muted-foreground/20"></div>
-					<div class="size-[9px] rounded-full bg-muted-foreground/20"></div>
-					<div class="size-[9px] rounded-full bg-muted-foreground/20"></div>
-				</div>
+		<div class="mx-auto max-w-5xl">
+			<!-- Gradient backdrop -->
+			<div
+				class="landing-hero-backdrop relative flex justify-center overflow-hidden rounded-xl"
+				style="
+					aspect-ratio: 5/3;
+					background:
+						radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.15), transparent 50%),
+						radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.12), transparent 50%),
+						radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.08), transparent 60%),
+						linear-gradient(135deg, var(--color-muted), color-mix(in oklch, var(--color-muted) 50%, transparent));
+				"
+			>
+				<!-- Blur overlay — diffuses the radial gradients into a soft glow -->
+				<div
+					class="pointer-events-none absolute inset-0 z-10 size-full rounded-xl"
+					style="backdrop-filter: blur(100px); -webkit-backdrop-filter: blur(100px)"
+				></div>
 
-				<!-- Board tabs -->
-				<div class="scrollbar-none flex items-center gap-0.5 overflow-x-auto px-5 pt-3 pb-2">
-					{#each boardTabs as tab (tab.label)}
-						<span
-							class="inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-medium transition-colors sm:text-xs {tab.active
-								? 'bg-muted text-foreground'
-								: 'text-muted-foreground/50'}"
-						>
-							<tab.icon class="size-3" />
-							{tab.label}
-						</span>
-					{/each}
-				</div>
+				<!-- Inset ring overlay -->
+				<div
+					class="pointer-events-none absolute inset-0 z-30 size-full rounded-xl ring-1 ring-foreground/5 ring-inset"
+				></div>
 
-				<!-- Kanban columns -->
-				<div class="grid grid-cols-2 gap-2 px-5 pt-2 pb-5 sm:grid-cols-4 sm:gap-3">
-					{#each boardColumns as col (col.name)}
-						<div class="space-y-1.5">
-							<div class="flex items-center gap-1.5 px-0.5 pb-1">
-								<span class="size-1.5 shrink-0 rounded-full" style:background-color={col.color}
-								></span>
-								<span class="text-[10px] font-medium text-muted-foreground sm:text-xs">
-									{col.name}
-								</span>
-								<span class="text-[9px] text-muted-foreground/40 tabular-nums">
-									{col.cards.length}
-								</span>
-							</div>
-							{#each col.cards as card (card)}
-								<div class="landing-board-card">
-									<GripVertical class="hidden size-3 shrink-0 text-muted-foreground/20 sm:block" />
-									<p
-										class="min-w-0 flex-1 truncate text-[10px] font-medium text-foreground sm:text-xs"
-									>
-										{card}
-									</p>
-								</div>
-							{/each}
+				<!-- Browser chrome — overflows bottom for clipped peek effect -->
+				<div
+					class="absolute inset-x-0 top-0 -bottom-20 z-20 flex w-full justify-center p-4 sm:p-6 md:p-8"
+				>
+					<div
+						class="shadow-macos h-full w-full overflow-hidden rounded-xl px-1.5 pb-1.5 ring-1 ring-border/20 backdrop-blur-xl"
+						style="background: color-mix(in oklch, var(--color-background) 50%, transparent)"
+					>
+						<!-- macOS traffic lights -->
+						<div class="flex items-center gap-1.5 px-2 py-2.5">
+							<div
+								class="size-[9px] rounded-full border border-foreground/10 bg-muted-foreground/15 transition-colors hover:bg-red-500"
+							></div>
+							<div
+								class="size-[9px] rounded-full border border-foreground/10 bg-muted-foreground/15 transition-colors hover:bg-yellow-500"
+							></div>
+							<div
+								class="size-[9px] rounded-full border border-foreground/10 bg-muted-foreground/15 transition-colors hover:bg-green-500"
+							></div>
 						</div>
-					{/each}
+
+						<!-- Hero screenshot -->
+						<img
+							src="/hero.webp"
+							alt="BacklogBox kanban board showing games organized across Wishlist, Backlog, Playing, and Completed columns with cover art"
+							width="3436"
+							height="1806"
+							class="h-auto w-full rounded-lg ring-1 ring-border/10"
+							loading="eager"
+							decoding="async"
+						/>
+					</div>
 				</div>
 			</div>
 			<p class="mt-5 text-center text-[11px] tracking-wide text-muted-foreground/40 uppercase">
@@ -648,37 +640,23 @@
 	}
 
 	/* ------------------------------------------------------------------ */
-	/* Board preview — the hero visual                                     */
+	/* Hero screenshot — macOS-style window shadow                         */
 	/* ------------------------------------------------------------------ */
-	.landing-board-preview {
-		border-radius: 1rem;
-		border: 1px solid var(--border);
-		background: color-mix(in oklch, var(--card) 50%, transparent);
-		backdrop-filter: blur(12px);
+	.shadow-macos {
 		box-shadow:
-			0 0 0 1px color-mix(in oklch, var(--border) 30%, transparent),
-			0 4px 24px -4px rgb(0 0 0 / 0.08),
-			0 12px 48px -8px rgb(0 0 0 / 0.06);
+			0 0 0 1px rgb(0 0 0 / 0.06),
+			0 4px 6px -1px rgb(0 0 0 / 0.1),
+			0 10px 15px -3px rgb(0 0 0 / 0.1),
+			0 20px 25px -5px rgb(0 0 0 / 0.1),
+			0 25px 50px -12px rgb(0 0 0 / 0.25);
 	}
-	:global(.dark) .landing-board-preview {
+	:global(.dark) .shadow-macos {
 		box-shadow:
-			0 0 0 1px color-mix(in oklch, var(--border) 40%, transparent),
-			0 4px 24px -4px rgb(0 0 0 / 0.3),
-			0 12px 48px -8px rgb(0 0 0 / 0.2);
-	}
-
-	.landing-board-card {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		border-radius: 0.5rem;
-		border: 1px solid var(--border);
-		background: color-mix(in oklch, var(--background) 80%, transparent);
-		padding: 0.5rem 0.625rem;
-		transition: border-color 0.15s ease;
-	}
-	.landing-board-card:hover {
-		border-color: color-mix(in oklch, var(--border) 100%, var(--foreground) 10%);
+			0 0 0 1px rgb(255 255 255 / 0.06),
+			0 4px 6px -1px rgb(0 0 0 / 0.2),
+			0 10px 15px -3px rgb(0 0 0 / 0.2),
+			0 20px 25px -5px rgb(0 0 0 / 0.25),
+			0 25px 50px -12px rgb(0 0 0 / 0.5);
 	}
 
 	/* ------------------------------------------------------------------ */
