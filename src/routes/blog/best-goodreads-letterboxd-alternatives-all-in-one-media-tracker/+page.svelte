@@ -387,7 +387,7 @@
 	}
 	.prose-custom :global(ul),
 	.prose-custom :global(ol) {
-		margin-top: 0.75rem;
+		margin-top: 1.25rem;
 		margin-bottom: 1rem;
 		padding-left: 1.5rem;
 		color: var(--muted-foreground);
