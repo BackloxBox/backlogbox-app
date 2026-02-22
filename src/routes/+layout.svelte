@@ -53,9 +53,9 @@
 	{/if}
 	<link rel="canonical" href={canonicalUrl} />
 
-	<!-- Defaults — child pages override title/description/og/twitter via their own <svelte:head> -->
+	<!-- Default title — child pages override via their own <svelte:head> -->
+	<!-- Description is NOT set here to avoid duplicates; each public page sets its own -->
 	<title>{defaultTitle}</title>
-	<meta name="description" content={defaultDescription} />
 
 	<!-- Open Graph (site-wide defaults, pages override per-page fields) -->
 	<meta property="og:type" content="website" />
