@@ -47,44 +47,40 @@
 
 <div class="space-y-1.5">
 	<Label>{label}</Label>
-	<div class="flex items-center gap-1">
-		<Popover.Root bind:open>
-			<Popover.Trigger {disabled}>
-				{#snippet child({ props })}
-					<Button
-						{...props}
-						variant="outline"
-						class="w-full justify-start text-start font-normal {!value
-							? 'text-muted-foreground'
-							: ''}"
-						{disabled}
-					>
-						<CalendarIcon class="mr-2 size-3.5" />
-						{value ? formatDate(value) : 'Not set'}
-					</Button>
-				{/snippet}
-			</Popover.Trigger>
-			<Popover.Content class="w-auto overflow-hidden p-0" align="start">
-				<Calendar
-					type="single"
-					value={calendarValue}
-					onValueChange={handleValueChange}
-					captionLayout="dropdown"
-					maxValue={today(getLocalTimeZone())}
-				/>
-			</Popover.Content>
-		</Popover.Root>
-		{#if value}
-			<Button
-				variant="ghost"
-				size="icon"
-				class="size-8 shrink-0 text-muted-foreground hover:text-foreground"
-				onclick={handleClear}
-				{disabled}
-				aria-label="Clear {label.toLowerCase()}"
-			>
-				<X class="size-3.5" />
-			</Button>
-		{/if}
-	</div>
+	<Popover.Root bind:open>
+		<Popover.Trigger {disabled}>
+			{#snippet child({ props })}
+				<Button
+					{...props}
+					variant="outline"
+					class="w-full justify-start text-start font-normal {!value
+						? 'text-muted-foreground'
+						: ''}"
+					{disabled}
+				>
+					<CalendarIcon class="mr-2 size-3.5 shrink-0" />
+					<span class="truncate">{value ? formatDate(value) : 'Not set'}</span>
+					{#if value && !disabled}
+						<button
+							type="button"
+							class="-mr-1 ml-auto flex size-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
+							onclick={handleClear}
+							aria-label="Clear {label.toLowerCase()}"
+						>
+							<X class="size-3" />
+						</button>
+					{/if}
+				</Button>
+			{/snippet}
+		</Popover.Trigger>
+		<Popover.Content class="w-auto overflow-hidden p-0" align="start">
+			<Calendar
+				type="single"
+				value={calendarValue}
+				onValueChange={handleValueChange}
+				captionLayout="dropdown"
+				maxValue={today(getLocalTimeZone())}
+			/>
+		</Popover.Content>
+	</Popover.Root>
 </div>

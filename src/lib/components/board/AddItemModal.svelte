@@ -28,6 +28,7 @@
 	let searchQuery = $state('');
 	let results = $state<SearchResult[]>([]);
 	let searching = $state(false);
+	let searchFailed = $state(false);
 	let adding = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -93,6 +94,7 @@
 		searchQuery = '';
 		results = [];
 		searching = false;
+		searchFailed = false;
 		adding = false;
 		showManualForm = false;
 		manual = emptyForm();
@@ -125,11 +127,13 @@
 		}
 
 		searching = true;
+		searchFailed = false;
 		debounceTimer = setTimeout(async () => {
 			try {
 				results = await onSearch(searchQuery.trim());
 			} catch {
 				results = [];
+				searchFailed = true;
 			} finally {
 				searching = false;
 			}
@@ -568,6 +572,10 @@
 							</button>
 						{/each}
 					</div>
+				{:else if searchFailed && !searching}
+					<p class="py-6 text-center text-sm text-muted-foreground">
+						Search is temporarily unavailable. Try again or add manually.
+					</p>
 				{:else if searchQuery.trim().length >= 2 && !searching}
 					<p class="py-6 text-center text-sm text-muted-foreground">No results found</p>
 				{/if}

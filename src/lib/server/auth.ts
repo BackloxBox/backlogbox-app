@@ -27,6 +27,15 @@ function createAuth() {
 		],
 		secret: env.BETTER_AUTH_SECRET,
 		database: drizzleAdapter(db, { provider: 'pg' }),
+		rateLimit: {
+			window: 60,
+			max: 100,
+			customRules: {
+				'/sign-in/email': { window: 60, max: 5 },
+				'/sign-up/email': { window: 60, max: 3 },
+				'/forget-password': { window: 300, max: 3 }
+			}
+		},
 		emailAndPassword: {
 			enabled: true,
 			requireEmailVerification: true,
@@ -68,7 +77,7 @@ function createAuth() {
 			: {}),
 		plugins: [
 			username({
-				minUsernameLength: 1,
+				minUsernameLength: 3,
 				maxUsernameLength: 39,
 				usernameValidator: (u) => /^[a-z0-9]+$/.test(u)
 			}),

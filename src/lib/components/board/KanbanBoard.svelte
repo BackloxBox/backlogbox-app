@@ -39,6 +39,9 @@
 	/** Local mutable copy for optimistic DnD updates — re-derived on server refresh, overridable by DnD */
 	let columns = $derived(structuredClone(groupedItems));
 
+	/** IDs of items that just moved to the "completed" column — used for glow animation */
+	let recentlyCompleted = new SvelteSet<string>();
+
 	const STORAGE_PREFIX = 'bb:expanded:';
 	const DEFAULT_EXPANDED: MediaStatus[] = ['in_progress', 'backlog'];
 
@@ -81,6 +84,7 @@
 
 	async function handleDragEnd() {
 		const updates: Array<{ id: string; status: MediaStatus; sortOrder: number }> = [];
+		const newlyCompleted: string[] = [];
 
 		for (const status of MEDIA_STATUSES) {
 			const items = columns[status];
@@ -91,8 +95,18 @@
 				const sortOrder = i * 1000;
 				if (item.status !== status || item.sortOrder !== sortOrder) {
 					updates.push({ id: item.id, status, sortOrder });
+					if (status === 'completed' && item.status !== 'completed') {
+						newlyCompleted.push(item.id);
+					}
 				}
 			}
+		}
+
+		if (newlyCompleted.length > 0) {
+			for (const id of newlyCompleted) recentlyCompleted.add(id);
+			setTimeout(() => {
+				for (const id of newlyCompleted) recentlyCompleted.delete(id);
+			}, 1500);
 		}
 
 		if (updates.length > 0) {
@@ -127,6 +141,7 @@
 						label={statusLabels[status]}
 						color={STATUS_COLORS[status]}
 						items={columns[status] ?? []}
+						{recentlyCompleted}
 						{onCardClick}
 					/>
 				{/each}

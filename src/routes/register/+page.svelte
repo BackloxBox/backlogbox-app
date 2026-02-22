@@ -4,6 +4,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import Github from '@lucide/svelte/icons/github';
 	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import CircleX from '@lucide/svelte/icons/circle-x';
@@ -14,11 +15,15 @@
 	import { toast } from 'svelte-sonner';
 	import type { ActionData } from './$types';
 
-	const USERNAME_RE = /^[a-z0-9]{1,39}$/;
+	const USERNAME_RE = /^[a-z0-9]{3,39}$/;
+	const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+	const MIN_PASSWORD_LENGTH = 8;
 
 	let { form }: { form: ActionData } = $props();
 
 	let username = $state('');
+	let email = $state('');
+	let password = $state('');
 	let usernameStatus = $state<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
 	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -69,13 +74,37 @@
 				return { text: 'Username is already taken', class: 'text-destructive' } as const;
 			case 'invalid':
 				return {
-					text: 'Lowercase letters and numbers only, 1-39 chars',
+					text: 'Lowercase letters and numbers only, 3-39 chars',
 					class: 'text-destructive'
 				} as const;
 			default:
 				return null;
 		}
 	});
+
+	const emailHint = $derived.by(() => {
+		if (!email) return null;
+		if (!EMAIL_RE.test(email)) {
+			return { text: 'Enter a valid email address', class: 'text-destructive' } as const;
+		}
+		return null;
+	});
+
+	const passwordHint = $derived.by(() => {
+		if (!password) return null;
+		if (password.length < MIN_PASSWORD_LENGTH) {
+			return {
+				text: `${MIN_PASSWORD_LENGTH - password.length} more character${MIN_PASSWORD_LENGTH - password.length === 1 ? '' : 's'} needed`,
+				class: 'text-destructive'
+			} as const;
+		}
+		return null;
+	});
+
+	const usernameValid = $derived(usernameStatus === 'available' || usernameStatus === 'checking');
+	const emailValid = $derived(email.length > 0 && EMAIL_RE.test(email));
+	const passwordValid = $derived(password.length >= MIN_PASSWORD_LENGTH);
+	const formValid = $derived(usernameValid && emailValid && passwordValid);
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-background px-4">
@@ -154,14 +183,24 @@
 					{#if usernameHint}
 						<p class="text-xs {usernameHint.class}">{usernameHint.text}</p>
 					{:else}
-						<p class="text-xs text-muted-foreground">
-							Lowercase letters and numbers only. Used for your public profile URL.
-						</p>
+						<Tooltip.Root>
+							<Tooltip.Trigger
+								class="cursor-default text-xs text-muted-foreground underline decoration-dotted underline-offset-2"
+							>
+								Lowercase letters and numbers only. Used for your public profile URL.
+							</Tooltip.Trigger>
+							<Tooltip.Content>
+								3-39 characters, lowercase letters (a-z) and numbers (0-9)
+							</Tooltip.Content>
+						</Tooltip.Root>
 					{/if}
 				</div>
 				<div class="space-y-1.5">
 					<Label for="email">Email</Label>
-					<Input id="email" type="email" name="email" required />
+					<Input id="email" type="email" name="email" required bind:value={email} />
+					{#if emailHint}
+						<p class="text-xs {emailHint.class}">{emailHint.text}</p>
+					{/if}
 				</div>
 				<div class="space-y-1.5">
 					<Label for="password">Password</Label>
@@ -172,12 +211,14 @@
 						required
 						minlength={8}
 						placeholder="At least 8 characters"
+						bind:value={password}
 					/>
+					{#if passwordHint}
+						<p class="text-xs {passwordHint.class}">{passwordHint.text}</p>
+					{/if}
 				</div>
 
-				<Button type="submit" class="w-full" disabled={usernameStatus === 'taken'}>
-					Create account
-				</Button>
+				<Button type="submit" class="w-full" disabled={!formValid}>Create account</Button>
 			</form>
 
 			{#if form?.message}
