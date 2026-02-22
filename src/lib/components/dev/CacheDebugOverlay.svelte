@@ -14,7 +14,7 @@
 {#if dev}
 	<!-- Toggle button — always visible in dev -->
 	<button
-		class="fixed right-4 bottom-4 z-[9999] flex size-10 items-center justify-center rounded-full shadow-lg transition-colors
+		class="fixed bottom-4 left-4 z-[9999] flex size-10 items-center justify-center rounded-full shadow-lg transition-colors
 			{debugMode.enabled
 			? 'bg-red-500 text-white hover:bg-red-600'
 			: 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'}"
@@ -27,7 +27,7 @@
 	<!-- Debug panel -->
 	{#if debugMode.enabled}
 		<div
-			class="fixed right-4 bottom-16 z-[9999] w-72 rounded-lg border border-zinc-700 bg-zinc-900 p-3 font-mono text-xs text-zinc-300 shadow-xl"
+			class="fixed bottom-16 left-4 z-[9999] w-72 rounded-lg border border-zinc-700 bg-zinc-900 p-3 font-mono text-xs text-zinc-300 shadow-xl"
 		>
 			<div class="mb-2 flex items-center justify-between">
 				<span class="font-semibold text-zinc-100">Cache Debug</span>
