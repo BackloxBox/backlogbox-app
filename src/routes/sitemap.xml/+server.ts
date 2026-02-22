@@ -1,37 +1,51 @@
 import type { RequestHandler } from './$types';
-
-export const prerender = true;
+import { posts } from '$lib/blog/posts';
+import { getAllPublicUsernames } from '$lib/server/db/queries';
 
 const SITE_URL = 'https://backlogbox.com';
 
-const staticPages = [
-	{ path: '/', priority: '1.0', changefreq: 'weekly' },
-	{ path: '/blog', priority: '0.8', changefreq: 'weekly' },
-	{ path: '/blog/how-to-organize-your-media-backlog', priority: '0.7', changefreq: 'monthly' },
-	{
-		path: '/blog/best-goodreads-letterboxd-alternatives-all-in-one-media-tracker',
-		priority: '0.7',
-		changefreq: 'monthly'
-	},
-	{
-		path: '/blog/game-backlog-management-guide',
-		priority: '0.7',
-		changefreq: 'monthly'
-	}
-] as const;
+interface SitemapEntry {
+	readonly path: string;
+	readonly lastmod: string;
+	readonly priority: string;
+	readonly changefreq: string;
+}
 
-export const GET: RequestHandler = () => {
-	const now = new Date().toISOString().split('T')[0];
+export const GET: RequestHandler = async () => {
+	const usernames = await getAllPublicUsernames();
+
+	const today = new Date().toISOString().split('T')[0]!;
+
+	const entries: SitemapEntry[] = [
+		{ path: '/', lastmod: today, priority: '1.0', changefreq: 'weekly' },
+		{ path: '/blog', lastmod: today, priority: '0.8', changefreq: 'weekly' },
+
+		// Blog posts — auto-generated from posts.ts
+		...posts.map((post) => ({
+			path: `/blog/${post.slug}`,
+			lastmod: post.updatedAt,
+			priority: '0.7',
+			changefreq: 'monthly' as const
+		})),
+
+		// Public user profiles
+		...usernames.map((username) => ({
+			path: `/@${username}`,
+			lastmod: today,
+			priority: '0.5',
+			changefreq: 'weekly' as const
+		}))
+	];
 
 	const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${staticPages
+${entries
 	.map(
-		(page) => `  <url>
-    <loc>${SITE_URL}${page.path}</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
+		(entry) => `  <url>
+    <loc>${SITE_URL}${entry.path}</loc>
+    <lastmod>${entry.lastmod}</lastmod>
+    <changefreq>${entry.changefreq}</changefreq>
+    <priority>${entry.priority}</priority>
   </url>`
 	)
 	.join('\n')}

@@ -46,9 +46,13 @@
 	<meta property="article:published_time" content={post.publishedAt} />
 	<meta property="article:modified_time" content={post.updatedAt} />
 
-	<meta name="twitter:card" content="summary" />
+	<meta property="og:image" content="{siteUrl}/blog/{post.slug}/og.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content={post.title} />
 	<meta name="twitter:description" content={post.description} />
+	<meta name="twitter:image" content="{siteUrl}/blog/{post.slug}/og.png" />
 
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
 	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
@@ -66,6 +70,7 @@
 		'@type': 'Article',
 		headline: post.title,
 		description: post.description,
+		image: `${siteUrl}/blog/${post.slug}/og.png`,
 		datePublished: post.publishedAt,
 		dateModified: post.updatedAt,
 		author: { '@type': 'Organization', name: 'BacklogBox' },

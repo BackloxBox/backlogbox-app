@@ -55,6 +55,7 @@
 
 	<!-- Defaults — child pages override title/description/og/twitter via their own <svelte:head> -->
 	<title>{defaultTitle}</title>
+	<meta name="description" content={defaultDescription} />
 
 	<!-- Open Graph (site-wide defaults, pages override per-page fields) -->
 	<meta property="og:type" content="website" />
@@ -82,7 +83,7 @@
 		}
 	})}</${'script'}>`}
 
-	<!-- Structured data: WebSite with search -->
+	<!-- Structured data: WebSite -->
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD, no user input -->
 	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
 		'@context': 'https://schema.org',
@@ -90,6 +91,18 @@
 		name: 'BacklogBox',
 		url: siteUrl,
 		description: defaultDescription
+	})}</${'script'}>`}
+
+	<!-- Structured data: Organization -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD, no user input -->
+	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'Organization',
+		name: 'BacklogBox',
+		url: siteUrl,
+		logo: `${siteUrl}/backlogbox-logo.svg`,
+		description: defaultDescription,
+		sameAs: ['https://x.com/backlogbox']
 	})}</${'script'}>`}
 </svelte:head>
 

@@ -592,6 +592,15 @@ export type PublicUser = {
 	image: string | null;
 };
 
+/** All usernames with public profiles, for sitemap generation. */
+export async function getAllPublicUsernames(): Promise<string[]> {
+	const rows = await db.query.user.findMany({
+		where: and(isNotNull(user.username), eq(user.profilePublic, true)),
+		columns: { username: true }
+	});
+	return rows.flatMap((r) => (r.username ? [r.username] : []));
+}
+
 /** Look up a public user by username. Returns null if not found or profile is private. */
 export async function getPublicUserByUsername(username: string): Promise<PublicUser | null> {
 	const row = await db.query.user.findFirst({
