@@ -114,6 +114,15 @@
 </script>
 
 <svelte:head>
+	<link
+		rel="preload"
+		as="image"
+		href="/hero.webp"
+		type="image/webp"
+		imagesrcset="/hero-640w.webp 640w, /hero-1024w.webp 1024w, /hero-1536w.webp 1536w, /hero-2048w.webp 2048w, /hero.webp 3436w"
+		imagesizes="(max-width: 1024px) 100vw, 1024px"
+		fetchpriority="high"
+	/>
 	<meta
 		name="description"
 		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything."
@@ -350,12 +359,15 @@
 						<!-- Hero screenshot -->
 						<img
 							src="/hero.webp"
+							srcset="/hero-640w.webp 640w, /hero-1024w.webp 1024w, /hero-1536w.webp 1536w, /hero-2048w.webp 2048w, /hero.webp 3436w"
+							sizes="(max-width: 1024px) 100vw, 1024px"
 							alt="BacklogBox kanban board showing games organized across Wishlist, Backlog, Playing, and Completed columns with cover art"
 							width="3436"
 							height="1806"
 							class="h-auto w-full rounded-lg ring-1 ring-border/10"
 							loading="eager"
 							decoding="async"
+							fetchpriority="high"
 						/>
 					</div>
 				</div>
@@ -466,6 +478,8 @@
 						<!-- Discover screenshot -->
 						<img
 							src="/discover.webp"
+							srcset="/discover-640w.webp 640w, /discover-1024w.webp 1024w, /discover-1536w.webp 1536w, /discover-2048w.webp 2048w, /discover.webp 3064w"
+							sizes="(max-width: 1024px) 100vw, 1024px"
 							alt="BacklogBox discover page showing personalized recommendations, trending titles, and upcoming releases with cover art"
 							width="3064"
 							height="1800"

@@ -17,7 +17,7 @@ backlogbox.com {
 	}
 
 	# Other static assets (favicon, manifest, fonts, PWA service worker, etc.)
-	@static path /favicon.ico /robots.txt /fonts/* /og.png /*.png /*.svg /manifest.webmanifest /sw.js /sw.js.map /workbox-*.js /workbox-*.js.map
+	@static path /favicon.ico /robots.txt /fonts/* /og.png /*.png /*.svg /*.webp /manifest.webmanifest /sw.js /sw.js.map /workbox-*.js /workbox-*.js.map
 	handle @static {
 		root * /srv/static
 		header Cache-Control "public, max-age=3600"
