@@ -402,6 +402,87 @@
 	</section>
 
 	<!-- ================================================================== -->
+	<!-- DISCOVER                                                            -->
+	<!-- ================================================================== -->
+	<section class="landing-section pb-28 sm:pb-32">
+		<div class="mx-auto max-w-4xl">
+			<div class="mb-14 max-w-lg">
+				<h2 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+					Find your next
+					<span class="hero-gradient bg-clip-text text-transparent">favorite</span>
+				</h2>
+				<p class="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+					Personalized recommendations, trending titles, and upcoming releases — all in one place.
+					No more tab-hopping to find what to watch, read, or play next.
+				</p>
+			</div>
+		</div>
+
+		<div class="mx-auto max-w-5xl">
+			<!-- Gradient backdrop -->
+			<div
+				class="landing-hero-backdrop relative flex justify-center overflow-hidden rounded-xl"
+				style="
+					aspect-ratio: 5/3;
+					background:
+						radial-gradient(circle at 25% 75%, rgba(168, 85, 247, 0.15), transparent 50%),
+						radial-gradient(circle at 75% 25%, rgba(59, 130, 246, 0.12), transparent 50%),
+						radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.08), transparent 60%),
+						linear-gradient(135deg, var(--color-muted), color-mix(in oklch, var(--color-muted) 50%, transparent));
+				"
+			>
+				<!-- Blur overlay -->
+				<div
+					class="pointer-events-none absolute inset-0 z-10 size-full rounded-xl"
+					style="backdrop-filter: blur(100px); -webkit-backdrop-filter: blur(100px)"
+				></div>
+
+				<!-- Inset ring overlay -->
+				<div
+					class="pointer-events-none absolute inset-0 z-30 size-full rounded-xl ring-1 ring-foreground/5 ring-inset"
+				></div>
+
+				<!-- Browser chrome -->
+				<div
+					class="absolute inset-x-0 top-0 -bottom-20 z-20 flex w-full justify-center p-4 sm:p-6 md:p-8"
+				>
+					<div
+						class="shadow-macos h-full w-full overflow-hidden rounded-xl px-1.5 pb-1.5 ring-1 ring-border/20 backdrop-blur-xl"
+						style="background: color-mix(in oklch, var(--color-background) 50%, transparent)"
+					>
+						<!-- macOS traffic lights -->
+						<div class="flex items-center gap-1.5 px-2 py-2.5">
+							<div
+								class="size-[9px] rounded-full border border-foreground/10 bg-muted-foreground/15 transition-colors hover:bg-red-500"
+							></div>
+							<div
+								class="size-[9px] rounded-full border border-foreground/10 bg-muted-foreground/15 transition-colors hover:bg-yellow-500"
+							></div>
+							<div
+								class="size-[9px] rounded-full border border-foreground/10 bg-muted-foreground/15 transition-colors hover:bg-green-500"
+							></div>
+						</div>
+
+						<!-- Discover screenshot -->
+						<img
+							src="/discover.webp"
+							alt="BacklogBox discover page showing personalized recommendations, trending titles, and upcoming releases with cover art"
+							width="3064"
+							height="1800"
+							class="h-auto w-full rounded-lg ring-1 ring-border/10"
+							loading="lazy"
+							decoding="async"
+						/>
+					</div>
+				</div>
+			</div>
+			<p class="mt-5 text-center text-[11px] tracking-wide text-muted-foreground/40 uppercase">
+				Recommendations powered by your backlog — trending, anticipated & personalized picks
+			</p>
+		</div>
+	</section>
+
+	<!-- ================================================================== -->
 	<!-- CUSTOM LISTS SHOWCASE                                               -->
 	<!-- ================================================================== -->
 	<section class="landing-section pb-28 sm:pb-32">
