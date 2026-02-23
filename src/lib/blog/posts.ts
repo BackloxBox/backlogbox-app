@@ -29,37 +29,22 @@ export const posts: readonly BlogPost[] = [
 		]
 	},
 	{
-		slug: 'best-goodreads-letterboxd-alternatives-all-in-one-media-tracker',
-		title: 'Best Goodreads & Letterboxd Alternative: Why You Need an All-in-One Media Tracker',
+		slug: 'best-media-tracker-apps',
+		title: 'Best Media Tracker Apps in 2026: Track Books, Movies, Games & More',
 		description:
-			'Tired of juggling Goodreads, Letterboxd, Backloggd, and Trakt? Compare the best alternatives and discover why an all-in-one media tracker saves time.',
-		publishedAt: '2026-02-17',
-		updatedAt: '2026-02-17',
+			'Looking for the best media tracker app? We compare the top tools for tracking books, movies, TV shows, games, and podcasts — from single-media apps to all-in-one solutions.',
+		publishedAt: '2026-02-23',
+		updatedAt: '2026-02-23',
 		author: 'BacklogBox Team',
 		readingTime: '10 min read',
 		keywords: [
-			'goodreads alternative',
-			'letterboxd alternative',
-			'backloggd alternative',
 			'media tracker app',
-			'all-in-one media tracker'
-		]
-	},
-	{
-		slug: 'game-backlog-management-guide',
-		title: 'Game Backlog Management: A Complete Guide to Tackling Your Pile of Shame',
-		description:
-			'Your Steam library has 300+ games and you keep buying more. Here is a practical guide to managing your game backlog with Kanban boards, priority frameworks, and tracking tools.',
-		publishedAt: '2026-02-17',
-		updatedAt: '2026-02-17',
-		author: 'BacklogBox Team',
-		readingTime: '9 min read',
-		keywords: [
-			'game backlog',
-			'game backlog management',
-			'pile of shame',
-			'steam backlog',
-			'game tracker'
+			'best media tracker',
+			'entertainment tracker',
+			'book tracker app',
+			'movie tracker app',
+			'game tracker app',
+			'backlog tracker'
 		]
 	}
 ] as const;
