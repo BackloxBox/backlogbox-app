@@ -208,17 +208,17 @@
 	</p>
 
 	<div
-		class="not-prose my-10 rounded-xl border border-border/60 bg-card/30 p-6 text-center backdrop-blur-sm"
+		class="not-prose my-12 rounded-xl border border-border/60 bg-card/30 px-6 py-8 text-center backdrop-blur-sm sm:px-8 sm:py-10"
 	>
-		<p class="text-sm font-medium text-foreground">
+		<p class="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
 			Tired of juggling four different tracker apps?
 		</p>
-		<p class="mt-1 text-xs text-muted-foreground">
+		<p class="mt-2 text-sm text-muted-foreground sm:text-base">
 			BacklogBox combines books, movies, series, games, and podcasts in one Kanban-style tracker.
 		</p>
-		<div class="mt-4">
-			<Button size="sm" href="/register">
-				Try BacklogBox <ArrowRight class="ml-1 size-3" />
+		<div class="mt-6">
+			<Button size="lg" href="/register">
+				Try BacklogBox <ArrowRight class="ml-1.5 size-4" />
 			</Button>
 		</div>
 	</div>

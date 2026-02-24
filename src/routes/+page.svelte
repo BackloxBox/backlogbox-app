@@ -178,7 +178,8 @@
 	<meta name="twitter:image" content="https://backlogbox.com/og.png" />
 
 	<!-- BreadcrumbList — Home (single item for homepage) -->
-	{@html `<script type="application/ld+json">${JSON.stringify({
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
+	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'BreadcrumbList',
 		itemListElement: [
@@ -189,10 +190,11 @@
 				item: siteUrl
 			}
 		]
-	})}</script>`}
+	})}</${'script'}>`}
 
 	<!-- FAQPage -->
-	{@html `<script type="application/ld+json">${JSON.stringify({
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
+	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'FAQPage',
 		mainEntity: faqItems.map((faq) => ({
@@ -203,10 +205,11 @@
 				text: faq.answer
 			}
 		}))
-	})}</script>`}
+	})}</${'script'}>`}
 
 	<!-- HowTo — "How BacklogBox works" -->
-	{@html `<script type="application/ld+json">${JSON.stringify({
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
+	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'HowTo',
 		name: 'How BacklogBox works',
@@ -217,7 +220,7 @@
 			name: s.title,
 			text: s.description
 		}))
-	})}</script>`}
+	})}</${'script'}>`}
 </svelte:head>
 
 <div class="relative min-h-screen bg-background">
