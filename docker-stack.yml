@@ -75,6 +75,8 @@ services:
         target: PUBLIC_POSTHOG_HOST
       - ADMIN_USER
       - ADMIN_PASS
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET
     environment:
       PORT: '3000'
       HOST: '0.0.0.0'
@@ -152,6 +154,10 @@ secrets:
   ADMIN_USER:
     external: true
   ADMIN_PASS:
+    external: true
+  GOOGLE_CLIENT_ID:
+    external: true
+  GOOGLE_CLIENT_SECRET:
     external: true
 
 networks:
