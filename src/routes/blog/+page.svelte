@@ -5,6 +5,10 @@
 	import Clock from '@lucide/svelte/icons/clock';
 
 	const siteUrl = 'https://backlogbox.com';
+
+	const sortedPosts = [...posts].sort(
+		(a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+	);
 </script>
 
 <svelte:head>
@@ -57,7 +61,7 @@
 	</p>
 
 	<div class="mt-12 space-y-8">
-		{#each posts as post (post.slug)}
+		{#each sortedPosts as post (post.slug)}
 			<article>
 				<a
 					href="/blog/{post.slug}"

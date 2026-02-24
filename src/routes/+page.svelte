@@ -770,11 +770,13 @@
 	<!-- ================================================================== -->
 	<section class="landing-section pb-28 sm:pb-32">
 		<div class="mx-auto max-w-2xl text-center">
-			<h2 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+			<h2
+				class="text-3xl leading-[1.15] font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl"
+			>
 				Ready to organize your
 				<span class="hero-gradient bg-clip-text text-transparent">media backlog</span>?
 			</h2>
-			<p class="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+			<p class="mx-auto mt-5 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
 				Start your 14-day free trial today. No credit card required. Track books, movies, games, and
 				more in one place.
 			</p>
