@@ -1,13 +1,10 @@
 <script lang="ts">
 	import { getPost } from '$lib/blog/posts';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import BlogPostSchema from '$lib/components/seo/BlogPostSchema.svelte';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
-	import Calendar from '@lucide/svelte/icons/calendar';
-	import Clock from '@lucide/svelte/icons/clock';
 
 	const post = getPost('how-to-organize-your-media-backlog')!;
-	const siteUrl = 'https://backlogbox.com';
-	const pageUrl = `${siteUrl}/blog/${post.slug}`;
 
 	const faqItems = [
 		{
@@ -33,101 +30,8 @@
 	] as const;
 </script>
 
-<svelte:head>
-	<title>{post.title} | BacklogBox Blog</title>
-	<meta name="description" content={post.description} />
-	<meta name="keywords" content={post.keywords.join(', ')} />
-	<link rel="canonical" href={pageUrl} />
-
-	<meta property="og:type" content="article" />
-	<meta property="og:title" content={post.title} />
-	<meta property="og:description" content={post.description} />
-	<meta property="og:url" content={pageUrl} />
-	<meta property="article:published_time" content={post.publishedAt} />
-	<meta property="article:modified_time" content={post.updatedAt} />
-
-	<meta property="og:image" content="{siteUrl}/blog/{post.slug}/og.png" />
-	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="630" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={post.title} />
-	<meta name="twitter:description" content={post.description} />
-	<meta name="twitter:image" content="{siteUrl}/blog/{post.slug}/og.png" />
-
-	<!-- BreadcrumbList structured data -->
-	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
-	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
-		'@context': 'https://schema.org',
-		'@type': 'BreadcrumbList',
-		itemListElement: [
-			{ '@type': 'ListItem', position: 1, name: 'Blog', item: `${siteUrl}/blog` },
-			{ '@type': 'ListItem', position: 2, name: post.title, item: pageUrl }
-		]
-	})}</${'script'}>`}
-
-	<!-- Article structured data -->
-	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
-	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
-		'@context': 'https://schema.org',
-		'@type': 'Article',
-		headline: post.title,
-		description: post.description,
-		image: `${siteUrl}/blog/${post.slug}/og.png`,
-		datePublished: post.publishedAt,
-		dateModified: post.updatedAt,
-		author: { '@type': 'Organization', name: 'BacklogBox' },
-		publisher: {
-			'@type': 'Organization',
-			name: 'BacklogBox',
-			url: siteUrl
-		},
-		mainEntityOfPage: pageUrl
-	})}</${'script'}>`}
-
-	<!-- FAQ structured data -->
-	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
-	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
-		'@context': 'https://schema.org',
-		'@type': 'FAQPage',
-		mainEntity: faqItems.map((item) => ({
-			'@type': 'Question',
-			name: item.question,
-			acceptedAnswer: {
-				'@type': 'Answer',
-				text: item.answer
-			}
-		}))
-	})}</${'script'}>`}
-</svelte:head>
-
 <article class="prose-custom">
-	<!-- Breadcrumb -->
-	<nav class="mb-8 text-xs text-muted-foreground/60">
-		<a href="/blog" class="transition-colors hover:text-foreground">Blog</a>
-		<span class="mx-1.5">/</span>
-		<span class="text-foreground">How to Organize Your Media Backlog</span>
-	</nav>
-
-	<!-- Header -->
-	<header class="mb-10">
-		<h1 class="text-3xl leading-tight font-bold tracking-tight text-foreground sm:text-4xl">
-			{post.title}
-		</h1>
-		<div class="mt-4 flex items-center gap-4 text-xs text-muted-foreground/60">
-			<span class="inline-flex items-center gap-1">
-				<Calendar class="size-3" />
-				{new Date(post.publishedAt).toLocaleDateString('en-US', {
-					year: 'numeric',
-					month: 'long',
-					day: 'numeric'
-				})}
-			</span>
-			<span class="inline-flex items-center gap-1">
-				<Clock class="size-3" />
-				{post.readingTime}
-			</span>
-		</div>
-	</header>
+	<BlogPostSchema {post} {faqItems} breadcrumbLabel="How to Organize Your Media Backlog" />
 
 	<!-- Content -->
 	<p class="lead">
@@ -293,16 +197,18 @@
 	</ol>
 
 	<div
-		class="not-prose my-10 rounded-xl border border-border/60 bg-card/30 p-6 text-center backdrop-blur-sm"
+		class="not-prose my-12 rounded-xl border border-border/60 bg-card/30 px-6 py-8 text-center backdrop-blur-sm sm:px-8 sm:py-10"
 	>
-		<p class="text-sm font-medium text-foreground">Ready to organize your media backlog?</p>
-		<p class="mt-1 text-xs text-muted-foreground">
+		<p class="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+			Ready to organize your media backlog?
+		</p>
+		<p class="mt-2 text-sm text-muted-foreground sm:text-base">
 			BacklogBox gives you Kanban boards for books, movies, series, games, and podcasts — plus
 			custom lists for anything else.
 		</p>
-		<div class="mt-4">
-			<Button size="sm" href="/register">
-				Start Tracking <ArrowRight class="ml-1 size-3" />
+		<div class="mt-6">
+			<Button size="lg" href="/register">
+				Start Tracking <ArrowRight class="ml-1.5 size-4" />
 			</Button>
 		</div>
 	</div>
@@ -341,53 +247,3 @@
 		</div>
 	</div>
 </article>
-
-<style>
-	.prose-custom :global(h2) {
-		margin-top: 2.5rem;
-		margin-bottom: 0.75rem;
-		font-size: 1.375rem;
-		font-weight: 700;
-		letter-spacing: -0.01em;
-		color: var(--foreground);
-	}
-	.prose-custom :global(h3) {
-		margin-top: 1.75rem;
-		margin-bottom: 0.5rem;
-		font-size: 1.125rem;
-		font-weight: 600;
-		color: var(--foreground);
-	}
-	.prose-custom :global(:not(.not-prose) > p) {
-		margin-bottom: 1rem;
-		line-height: 1.75;
-		color: var(--muted-foreground);
-	}
-	.prose-custom :global(p.lead) {
-		font-size: 1.0625rem;
-		color: var(--foreground);
-	}
-	.prose-custom :global(ul),
-	.prose-custom :global(ol) {
-		margin-top: 1.25rem;
-		margin-bottom: 1rem;
-		padding-left: 1.5rem;
-		color: var(--muted-foreground);
-	}
-	.prose-custom :global(li) {
-		margin-bottom: 0.375rem;
-		line-height: 1.75;
-	}
-	.prose-custom :global(:not(.not-prose) > a:not([data-slot='button'])) {
-		color: var(--primary);
-		text-decoration: underline;
-		text-underline-offset: 2px;
-	}
-	.prose-custom :global(:not(.not-prose) > a:not([data-slot='button']):hover) {
-		opacity: 0.8;
-	}
-	.prose-custom :global(strong) {
-		color: var(--foreground);
-		font-weight: 600;
-	}
-</style>

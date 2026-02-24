@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Accordion from '$lib/components/ui/accordion/index.js';
 	import { toggleMode } from 'mode-watcher';
 
 	import Sun from '@lucide/svelte/icons/sun';
@@ -107,6 +108,36 @@
 		'Full access to all future features'
 	] as const;
 
+	const siteUrl = 'https://backlogbox.com';
+
+	const faqItems = [
+		{
+			question: 'Is there a free trial?',
+			answer:
+				'Yes — every new account starts with a 14-day free trial with full access to all features. No credit card required.'
+		},
+		{
+			question: 'What media types can I track?',
+			answer:
+				'BacklogBox has dedicated boards for books, movies, TV series, games, and podcasts. You can also create custom lists for anything else — wines, restaurants, travel destinations, and more.'
+		},
+		{
+			question: 'How is BacklogBox different from Goodreads or Letterboxd?',
+			answer:
+				'Goodreads is books-only and Letterboxd is movies-only. BacklogBox tracks all your media in one place with a unified kanban workflow, plus custom lists for non-media items. One app instead of five.'
+		},
+		{
+			question: 'Can I share my boards with friends?',
+			answer:
+				"Yes. You can enable a public profile and share any board via a simple link. Others can see what you're tracking, reading, or playing — no account required to view."
+		},
+		{
+			question: 'Can I cancel anytime?',
+			answer:
+				'Absolutely. You can cancel your subscription at any time from your account settings. Your data stays accessible until the end of your billing period.'
+		}
+	] as const;
+
 	function scrollTo(id: string) {
 		document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 		mobileMenuOpen = false;
@@ -145,6 +176,51 @@
 		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything."
 	/>
 	<meta name="twitter:image" content="https://backlogbox.com/og.png" />
+
+	<!-- BreadcrumbList — Home (single item for homepage) -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
+	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{
+				'@type': 'ListItem',
+				position: 1,
+				name: 'Home',
+				item: siteUrl
+			}
+		]
+	})}</${'script'}>`}
+
+	<!-- FAQPage -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
+	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'FAQPage',
+		mainEntity: faqItems.map((faq) => ({
+			'@type': 'Question',
+			name: faq.question,
+			acceptedAnswer: {
+				'@type': 'Answer',
+				text: faq.answer
+			}
+		}))
+	})}</${'script'}>`}
+
+	<!-- HowTo — "How BacklogBox works" -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
+	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'HowTo',
+		name: 'How BacklogBox works',
+		description: 'Set up your media backlog in minutes. Three steps.',
+		step: steps.map((s, i) => ({
+			'@type': 'HowToStep',
+			position: i + 1,
+			name: s.title,
+			text: s.description
+		}))
+	})}</${'script'}>`}
 </svelte:head>
 
 <div class="relative min-h-screen bg-background">
@@ -178,6 +254,7 @@
 			<div class="hidden items-center gap-1 md:flex">
 				<Button variant="ghost" size="sm" onclick={() => scrollTo('features')}>Features</Button>
 				<Button variant="ghost" size="sm" onclick={() => scrollTo('pricing')}>Pricing</Button>
+				<Button variant="ghost" size="sm" onclick={() => scrollTo('faq')}>FAQ</Button>
 				<Button variant="ghost" size="sm" href="/blog">Blog</Button>
 				<Button
 					variant="ghost"
@@ -240,6 +317,12 @@
 						onclick={() => scrollTo('pricing')}
 					>
 						Pricing
+					</button>
+					<button
+						class="rounded-md px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+						onclick={() => scrollTo('faq')}
+					>
+						FAQ
 					</button>
 					<a
 						href="/blog"
@@ -648,6 +731,71 @@
 				<p class="mt-3 text-center text-[11px] text-muted-foreground/40">
 					No credit card required. Cancel anytime.
 				</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- ================================================================== -->
+	<!-- FAQ                                                                 -->
+	<!-- ================================================================== -->
+	<section id="faq" class="landing-section pb-28 sm:pb-32">
+		<div class="mx-auto max-w-2xl">
+			<div class="mb-14 text-center">
+				<h2 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+					Frequently asked questions
+				</h2>
+				<p class="mt-3 text-sm text-muted-foreground sm:text-base">
+					Everything you need to know before getting started.
+				</p>
+			</div>
+
+			<Accordion.Root type="multiple" class="space-y-2">
+				{#each faqItems as item, i (item.question)}
+					<Accordion.Item value="faq-{i}" class="landing-card px-6">
+						<Accordion.Trigger
+							class="py-5 text-[15px] font-medium text-foreground hover:no-underline"
+						>
+							{item.question}
+						</Accordion.Trigger>
+						<Accordion.Content
+							class="overflow-hidden text-sm leading-relaxed text-muted-foreground"
+						>
+							<div class="pb-5">{item.answer}</div>
+						</Accordion.Content>
+					</Accordion.Item>
+				{/each}
+			</Accordion.Root>
+		</div>
+	</section>
+
+	<!-- ================================================================== -->
+	<!-- CTA                                                                 -->
+	<!-- ================================================================== -->
+	<section class="landing-section pb-28 sm:pb-32">
+		<div class="mx-auto max-w-2xl text-center">
+			<h2
+				class="text-3xl leading-[1.15] font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl"
+			>
+				Ready to organize your
+				<span class="hero-gradient bg-clip-text text-transparent">media backlog</span>?
+			</h2>
+			<p class="mx-auto mt-5 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
+				Start your 14-day free trial today. No credit card required. Track books, movies, games, and
+				more in one place.
+			</p>
+			<div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+				<Button size="lg" href="/register" class="w-full gap-2 sm:w-auto">
+					Start Free Trial
+					<ArrowRight class="size-4" />
+				</Button>
+				<Button
+					variant="outline"
+					size="lg"
+					onclick={() => scrollTo('pricing')}
+					class="w-full sm:w-auto"
+				>
+					View Pricing
+				</Button>
 			</div>
 		</div>
 	</section>

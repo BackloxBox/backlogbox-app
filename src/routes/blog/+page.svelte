@@ -3,6 +3,12 @@
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import Calendar from '@lucide/svelte/icons/calendar';
 	import Clock from '@lucide/svelte/icons/clock';
+
+	const siteUrl = 'https://backlogbox.com';
+
+	const sortedPosts = [...posts].sort(
+		(a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+	);
 </script>
 
 <svelte:head>
@@ -16,6 +22,36 @@
 		property="og:description"
 		content="Tips, guides, and strategies for organizing your media backlog."
 	/>
+
+	<!-- BreadcrumbList: Home > Blog -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
+	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+			{ '@type': 'ListItem', position: 2, name: 'Blog', item: `${siteUrl}/blog` }
+		]
+	})}</${'script'}>`}
+
+	<!-- CollectionPage with ItemList -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static JSON-LD -->
+	{@html `<${'script'} type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'CollectionPage',
+		name: 'Blog - Media Tracking Tips & Guides',
+		description: 'Tips, guides, and strategies for organizing your media backlog.',
+		url: `${siteUrl}/blog`,
+		mainEntity: {
+			'@type': 'ItemList',
+			itemListElement: posts.map((p, i) => ({
+				'@type': 'ListItem',
+				position: i + 1,
+				url: `${siteUrl}/blog/${p.slug}`,
+				name: p.title
+			}))
+		}
+	})}</${'script'}>`}
 </svelte:head>
 
 <div>
@@ -25,7 +61,7 @@
 	</p>
 
 	<div class="mt-12 space-y-8">
-		{#each posts as post (post.slug)}
+		{#each sortedPosts as post (post.slug)}
 			<article>
 				<a
 					href="/blog/{post.slug}"

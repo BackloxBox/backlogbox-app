@@ -34,6 +34,7 @@
 	import X from '@lucide/svelte/icons/x';
 	import Clock from '@lucide/svelte/icons/clock';
 	import Share2 from '@lucide/svelte/icons/share-2';
+	import MessageSquareMore from '@lucide/svelte/icons/message-square-more';
 	import type { Component } from 'svelte';
 
 	let { children, data } = $props();
@@ -130,6 +131,8 @@
 		type UJ = {
 			init: (id: string, opts: Record<string, unknown>) => void;
 			identify: (u: Record<string, string>) => void;
+			showWidget: (opts?: { section?: string }) => void;
+			hideWidget: () => void;
 		};
 
 		const w = globalThis as unknown as {
@@ -162,7 +165,7 @@
 
 		w.uj.init('cmly0s6n30isj0iphc6a23980', {
 			widget: true,
-			position: 'right',
+			trigger: 'custom',
 			theme: 'auto'
 		});
 
@@ -417,6 +420,20 @@
 				/>
 				Settings
 			</a>
+			<button
+				onclick={() => {
+					const uj = (
+						globalThis as unknown as { uj?: { showWidget: (o?: { section?: string }) => void } }
+					).uj;
+					uj?.showWidget({ section: 'feedback' });
+					sidebarOpen = false;
+				}}
+				class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium text-sidebar-foreground
+					transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+			>
+				<MessageSquareMore class="size-4 shrink-0 text-muted-foreground" />
+				Got Feedback?
+			</button>
 		</div>
 
 		<Separator />
