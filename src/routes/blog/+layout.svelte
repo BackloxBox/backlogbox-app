@@ -128,3 +128,70 @@
 		</div>
 	</footer>
 </div>
+
+<style>
+	/* ------------------------------------------------------------------ */
+	/* Shared prose styles for blog post articles                          */
+	/* ------------------------------------------------------------------ */
+	:global(.prose-custom h2) {
+		margin-top: 2.5rem;
+		margin-bottom: 0.75rem;
+		font-size: 1.375rem;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		color: var(--foreground);
+	}
+	:global(.prose-custom h3) {
+		margin-top: 1.75rem;
+		margin-bottom: 0.5rem;
+		font-size: 1.125rem;
+		font-weight: 600;
+		color: var(--foreground);
+	}
+	:global(.prose-custom :not(.not-prose) > p) {
+		margin-bottom: 1rem;
+		line-height: 1.75;
+		color: var(--muted-foreground);
+	}
+	:global(.prose-custom p.lead) {
+		font-size: 1.0625rem;
+		color: var(--foreground);
+	}
+	:global(.prose-custom ul),
+	:global(.prose-custom ol) {
+		margin-top: 1.25rem;
+		margin-bottom: 1rem;
+		padding-left: 1.5rem;
+		color: var(--muted-foreground);
+	}
+	:global(.prose-custom li) {
+		margin-bottom: 0.375rem;
+		line-height: 1.75;
+	}
+	:global(.prose-custom :not(.not-prose) > a:not([data-slot='button'])) {
+		color: var(--primary);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+	:global(.prose-custom :not(.not-prose) > a:not([data-slot='button']):hover) {
+		opacity: 0.8;
+	}
+	:global(.prose-custom strong) {
+		color: var(--foreground);
+		font-weight: 600;
+	}
+	:global(.prose-custom table) {
+		border-collapse: collapse;
+		width: 100%;
+	}
+	:global(.prose-custom th),
+	:global(.prose-custom td) {
+		white-space: nowrap;
+	}
+	@media (max-width: 639px) {
+		:global(.prose-custom th),
+		:global(.prose-custom td) {
+			white-space: normal;
+		}
+	}
+</style>
