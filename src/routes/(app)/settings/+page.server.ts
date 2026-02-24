@@ -18,6 +18,7 @@ export const actions: Actions = {
 
 		const formData = await event.request.formData();
 		const name = formData.get('name')?.toString().trim() ?? '';
+		const newUsername = formData.get('username')?.toString().trim() ?? '';
 		const profilePublic = formData.get('profilePublic') === 'on';
 
 		if (!name) {
@@ -27,19 +28,39 @@ export const actions: Actions = {
 		const profile = await getUserProfile(user.id);
 		const hasUsername = !!profile?.username;
 
-		try {
-			await updateUserProfile(user.id, {
-				name,
-				profilePublic: hasUsername ? profilePublic : false
-			});
-		} catch {
-			return fail(500, { profileMessage: 'Failed to update profile' });
+		// Only allow setting username if user doesn't have one yet
+		const usernameToSet = !hasUsername && newUsername ? newUsername : undefined;
+
+		if (usernameToSet !== undefined) {
+			try {
+				// Route through Better Auth so the username plugin validates
+				await auth.api.updateUser({
+					body: { name, username: usernameToSet },
+					headers: event.request.headers
+				});
+			} catch (error) {
+				const message =
+					error instanceof APIError
+						? friendlyAuthError(error, { action: 'updateProfile' })
+						: 'Invalid username';
+				return fail(400, { profileMessage: message });
+			}
+		} else {
+			try {
+				await auth.api.updateUser({ body: { name }, headers: event.request.headers });
+			} catch {
+				// Non-critical — BetterAuth name is secondary to our DB
+			}
 		}
 
 		try {
-			await auth.api.updateUser({ body: { name }, headers: event.request.headers });
+			await updateUserProfile(user.id, {
+				name,
+				...(usernameToSet !== undefined ? { username: usernameToSet } : {}),
+				profilePublic: hasUsername || usernameToSet !== undefined ? profilePublic : false
+			});
 		} catch {
-			// Non-critical — BetterAuth name is secondary to our DB
+			return fail(500, { profileMessage: 'Failed to update profile' });
 		}
 
 		return { profileMessage: 'Profile updated', profileSuccess: true };

@@ -27,6 +27,23 @@ function createAuth() {
 		],
 		secret: env.BETTER_AUTH_SECRET,
 		database: drizzleAdapter(db, { provider: 'pg' }),
+		databaseHooks: {
+			account: {
+				create: {
+					async after(account) {
+						// OAuth providers (not 'credential') skip email verification,
+						// so afterEmailVerification never fires. Start trial here.
+						if (account.providerId !== 'credential') {
+							log.info(
+								{ userId: account.userId, provider: account.providerId },
+								'oauth signup, starting trial'
+							);
+							await setTrialStarted(account.userId);
+						}
+					}
+				}
+			}
+		},
 		rateLimit: {
 			window: 60,
 			max: 100,

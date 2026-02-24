@@ -637,11 +637,14 @@ export async function setUserSubscribed(userId: string, subscribed: boolean) {
 /** TRIAL_DURATION_DAYS — number of days for the free trial */
 const TRIAL_DURATION_DAYS = 14;
 
-/** Start the free trial for a user (called after email verification) */
+/** Start the free trial for a user (idempotent — skips if trial already set) */
 export async function setTrialStarted(userId: string) {
 	const trialEndsAt = new Date();
 	trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DURATION_DAYS);
-	await db.update(user).set({ trialEndsAt }).where(eq(user.id, userId));
+	await db
+		.update(user)
+		.set({ trialEndsAt })
+		.where(and(eq(user.id, userId), isNull(user.trialEndsAt)));
 }
 
 /** Soft-delete a user (sets deletedAt, preserves data) */

@@ -66,6 +66,21 @@
 				<Label>Username</Label>
 				<p class="text-sm text-foreground">@{username}</p>
 			</div>
+		{:else}
+			<div class="space-y-1.5">
+				<Label for="username">Username</Label>
+				<Input
+					id="username"
+					name="username"
+					placeholder="choose a username"
+					pattern="[a-z0-9]+"
+					minlength={3}
+					maxlength={39}
+				/>
+				<p class="text-xs text-muted-foreground">
+					3-39 lowercase letters and numbers. Cannot be changed later.
+				</p>
+			</div>
 		{/if}
 
 		<div class="flex items-center justify-between">
