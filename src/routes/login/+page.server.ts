@@ -47,7 +47,7 @@ export const actions: Actions = {
 
 		try {
 			const result = await auth.api.signInSocial({
-				body: { provider: provider as 'github', callbackURL: redirectTo }
+				body: { provider: provider as 'github' | 'google', callbackURL: redirectTo }
 			});
 
 			if (result.url) {
