@@ -1,0 +1,15 @@
+# backlogbox.com llms.txt
+
+> Organize and track media collections and other interests using customizable kanban boards, offering automation, recommendations, and sharing features for enhanced media management.
+
+- [Free Trial Registration](https://backlogbox.com/register): Register for a free trial account.
+- [Media Tracker Guide](https://backlogbox.com/blog/best-media-tracker-apps): Compare and recommend media tracker apps for organizing books, movies, TV shows, games, and podcasts in one platform.
+- [Media Backlog Tracker](https://backlogbox.com): Organize and track media collections and custom lists using kanban boards with automatic metadata.
+- [Password Reset](https://backlogbox.com/forgot-password): Assist users in resetting their passwords via email.
+- [Game Backlog Management](https://backlogbox.com/blog/game-backlog-management-guide): Guide gamers on managing and reducing their game backlog using organizational systems and prioritization strategies.
+- [Media Backlog Organization](https://backlogbox.com/blog/how-to-organize-your-media-backlog): Guide to organizing and managing media backlog effectively using Kanban system.
+- [All-in-One Media Tracker](https://backlogbox.com/blog/best-goodreads-letterboxd-alternatives-all-in-one-media-tracker): Promote BacklogBox as a unified media tracker using Kanban-style organization across various media types.
+- [Media Backlog Management](https://backlogbox.com/blog): Provides tips and tools for organizing and managing media backlogs.
+- [BacklogBox Login](https://backlogbox.com/login): Enable users to log into their BacklogBox account.
+
+<!-- Unlock the full power of AI on your site by creating a free AI customer service agent at https://sitespeak.ai -->

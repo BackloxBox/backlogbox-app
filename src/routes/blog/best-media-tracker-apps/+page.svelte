@@ -328,6 +328,14 @@
 					>Best Goodreads & Letterboxd Alternative: Why You Need an All-in-One Media Tracker</span
 				>
 			</a>
+			<a
+				href="/blog/game-backlog-management-guide"
+				class="block rounded-lg border border-border/40 p-4 text-sm transition-colors hover:border-border hover:bg-card/30"
+			>
+				<span class="font-medium text-foreground"
+					>Game Backlog Management: A Complete Guide to Tackling Your Pile of Shame</span
+				>
+			</a>
 		</div>
 	</div>
 </article>

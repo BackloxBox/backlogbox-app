@@ -100,17 +100,47 @@ Sitemap + OG images auto-generate from `posts.ts`.
 }
 ```
 
----
+### Mar 17 — what-to-watch-read-play-next
 
-## Reddit posts
+```ts
+{
+    slug: 'what-to-watch-read-play-next',
+    title: 'What to Watch, Read, or Play Next: A Decision Framework for Your Media Backlog',
+    description: 'Spending more time choosing than consuming? Use this decision framework to pick what to watch, read, or play next — and actually enjoy it instead of doom-scrolling.',
+    publishedAt: '2026-03-17',
+    updatedAt: '2026-03-17',
+    author: 'BacklogBox Team',
+    readingTime: '8 min read',
+    keywords: ['what to watch next', 'what to read next', 'what to play next', 'decision fatigue entertainment', 'media backlog decision', 'choose what to watch']
+}
+```
 
-Drafts in `_drafts/reddit/`. Copy-paste into Reddit when ready.
+### Mar 20 — import-from-goodreads-letterboxd-backloggd
 
-| File                            | Subreddit                     | Type                        |
-| ------------------------------- | ----------------------------- | --------------------------- |
-| `i-built-this.md`               | r/SideProject, r/indiehackers | Direct launch story         |
-| `patientgamers-game-backlog.md` | r/patientgamers               | Value-first, subtle mention |
-| `books-tbr-pile.md`             | r/books                       | Value-first, subtle mention |
-| `productivity-kanban.md`        | r/productivity                | Value-first, subtle mention |
+```ts
+{
+    slug: 'import-from-goodreads-letterboxd-backloggd',
+    title: 'How to Import Your Data from Goodreads, Letterboxd, and Backloggd',
+    description: 'Ready to consolidate your media tracking? Learn how to export your data from Goodreads, Letterboxd, Backloggd, and Trakt — and import it into an all-in-one media tracker.',
+    publishedAt: '2026-03-20',
+    updatedAt: '2026-03-20',
+    author: 'BacklogBox Team',
+    readingTime: '7 min read',
+    keywords: ['export goodreads data', 'import letterboxd', 'switch from goodreads', 'migrate from letterboxd', 'backloggd export', 'media tracker import']
+}
+```
 
-Space these out over 1-2 weeks. Do not post all on the same day.
+### Mar 24 — tv-show-backlog-guide
+
+```ts
+{
+    slug: 'tv-show-backlog-guide',
+    title: 'TV Show Backlog: How to Finally Tackle Your Streaming Watchlist',
+    description: 'Your streaming watchlist keeps growing and you never know what to watch. Learn practical strategies to organize your TV show backlog and stop doom-scrolling for good.',
+    publishedAt: '2026-03-24',
+    updatedAt: '2026-03-24',
+    author: 'BacklogBox Team',
+    readingTime: '9 min read',
+    keywords: ['tv show backlog', 'streaming watchlist', 'too many shows to watch', 'what to watch on netflix', 'tv show tracker', 'streaming backlog']
+}
+```

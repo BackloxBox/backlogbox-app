@@ -272,6 +272,14 @@
 					>Game Backlog Management: A Complete Guide to Tackling Your Pile of Shame</span
 				>
 			</a>
+			<a
+				href="/blog/best-media-tracker-apps"
+				class="block rounded-lg border border-border/40 p-4 text-sm transition-colors hover:border-border hover:bg-card/30"
+			>
+				<span class="font-medium text-foreground"
+					>Best Media Tracker Apps in 2026: Track Books, Movies, Games & More</span
+				>
+			</a>
 		</div>
 	</div>
 </article>

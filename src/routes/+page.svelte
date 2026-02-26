@@ -2,6 +2,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Accordion from '$lib/components/ui/accordion/index.js';
 	import { toggleMode } from 'mode-watcher';
+	import { posts } from '$lib/blog/posts';
 
 	import Sun from '@lucide/svelte/icons/sun';
 	import Moon from '@lucide/svelte/icons/moon';
@@ -23,6 +24,10 @@
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import UtensilsCrossed from '@lucide/svelte/icons/utensils-crossed';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
+	import Compass from '@lucide/svelte/icons/compass';
+	import Star from '@lucide/svelte/icons/star';
+	import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
+	import CalendarHeart from '@lucide/svelte/icons/calendar-heart';
 
 	let mobileMenuOpen = $state(false);
 	let billing = $state<'monthly' | 'yearly'>('yearly');
@@ -50,6 +55,34 @@
 			description:
 				'Search TMDB, OpenLibrary, IGDB & more. Cover art, metadata, and details fill in automatically.',
 			color: '#22C55E'
+		},
+		{
+			icon: Compass,
+			title: 'Discover & recommendations',
+			description:
+				'Personalized picks based on your library, trending titles, and upcoming releases. Find your next favorite without tab-hopping.',
+			color: '#06B6D4'
+		},
+		{
+			icon: BarChart3,
+			title: 'Dashboard & stats',
+			description:
+				"Activity heatmap, completion charts, genre breakdowns, and a feed of what you're currently consuming. All at a glance.",
+			color: '#F59E0B'
+		},
+		{
+			icon: Star,
+			title: 'Ratings, notes & progress',
+			description:
+				'Rate items, add timestamped notes, and track page, episode, or playtime progress with visual bars on every card.',
+			color: '#EF4444'
+		},
+		{
+			icon: CalendarHeart,
+			title: 'Year in Review — Wrapped',
+			description:
+				'A Spotify Wrapped-style recap of your year: top genres, hours consumed, fastest completions, and more.',
+			color: '#EC4899'
 		},
 		{
 			icon: ListPlus,
@@ -156,7 +189,7 @@
 	/>
 	<meta
 		name="description"
-		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything."
+		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything. Start free for 14 days."
 	/>
 	<meta
 		property="og:title"
@@ -164,7 +197,7 @@
 	/>
 	<meta
 		property="og:description"
-		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything."
+		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything. Start free for 14 days."
 	/>
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta
@@ -173,7 +206,7 @@
 	/>
 	<meta
 		name="twitter:description"
-		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything."
+		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything. Start free for 14 days."
 	/>
 	<meta name="twitter:image" content="https://backlogbox.com/og.png" />
 
@@ -269,8 +302,23 @@
 					/>
 				</Button>
 				<div class="mx-1 h-4 w-px bg-border/60"></div>
-				<Button variant="ghost" size="sm" href="/login">Sign in</Button>
-				<Button size="sm" href="/register">Start Free Trial</Button>
+				<Button size="sm" href="/login" class="gap-1.5">
+					Sign in
+					<svg
+						class="size-3.5"
+						viewBox="0 0 24 24"
+						fill="currentColor"
+						xmlns="http://www.w3.org/2000/svg"
+						><circle cx="12" cy="12" r="10" /><path
+							d="m10 8 4 4-4 4"
+							fill="none"
+							stroke="var(--background)"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/></svg
+					>
+				</Button>
 			</div>
 
 			<!-- Mobile -->
@@ -331,14 +379,24 @@
 						Blog
 					</a>
 					<div class="my-2 h-px bg-border/60"></div>
-					<a
-						href="/login"
-						class="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-					>
-						Sign in
-					</a>
 					<div class="pt-1">
-						<Button size="sm" href="/register" class="w-full">Start Free Trial</Button>
+						<Button size="sm" href="/login" class="w-full gap-1.5">
+							Sign in
+							<svg
+								class="size-3.5"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								xmlns="http://www.w3.org/2000/svg"
+								><circle cx="12" cy="12" r="10" /><path
+									d="m10 8 4 4-4 4"
+									fill="none"
+									stroke="var(--background)"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/></svg
+							>
+						</Button>
 					</div>
 				</div>
 			</div>
@@ -363,9 +421,9 @@
 			<h1
 				class="landing-fade-in text-4xl leading-[1.1] font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl"
 			>
-				Track Your Books, Movies,
+				Track Your Media Backlog —
 				<br />
-				<span class="hero-gradient bg-clip-text text-transparent">Games & More</span>
+				<span class="hero-gradient bg-clip-text text-transparent">Books, Movies, Games & More</span>
 			</h1>
 
 			<p
@@ -382,8 +440,21 @@
 				style="animation-delay: 200ms"
 			>
 				<Button size="lg" href="/register" class="w-full gap-2 sm:w-auto">
-					Start Free Trial
-					<ArrowRight class="size-4" />
+					Get Started Free
+					<svg
+						class="size-4"
+						viewBox="0 0 24 24"
+						fill="currentColor"
+						xmlns="http://www.w3.org/2000/svg"
+						><circle cx="12" cy="12" r="10" /><path
+							d="m10 8 4 4-4 4"
+							fill="none"
+							stroke="var(--primary-foreground)"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/></svg
+					>
 				</Button>
 				<Button variant="outline" size="lg" href="/login" class="w-full sm:w-auto">Sign in</Button>
 			</div>
@@ -726,7 +797,23 @@
 					{/each}
 				</ul>
 
-				<Button class="mt-8 w-full" size="lg" href="/register">Start 14-Day Free Trial</Button>
+				<Button class="mt-8 w-full gap-2" size="lg" href="/register">
+					Get Started Free
+					<svg
+						class="size-4"
+						viewBox="0 0 24 24"
+						fill="currentColor"
+						xmlns="http://www.w3.org/2000/svg"
+						><circle cx="12" cy="12" r="10" /><path
+							d="m10 8 4 4-4 4"
+							fill="none"
+							stroke="var(--primary-foreground)"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/></svg
+					>
+				</Button>
 
 				<p class="mt-3 text-center text-[11px] text-muted-foreground/40">
 					No credit card required. Cancel anytime.
@@ -785,8 +872,21 @@
 			</p>
 			<div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
 				<Button size="lg" href="/register" class="w-full gap-2 sm:w-auto">
-					Start Free Trial
-					<ArrowRight class="size-4" />
+					Get Started Free
+					<svg
+						class="size-4"
+						viewBox="0 0 24 24"
+						fill="currentColor"
+						xmlns="http://www.w3.org/2000/svg"
+						><circle cx="12" cy="12" r="10" /><path
+							d="m10 8 4 4-4 4"
+							fill="none"
+							stroke="var(--primary-foreground)"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/></svg
+					>
 				</Button>
 				<Button
 					variant="outline"
@@ -795,6 +895,58 @@
 					class="w-full sm:w-auto"
 				>
 					View Pricing
+				</Button>
+			</div>
+		</div>
+	</section>
+
+	<!-- ================================================================== -->
+	<!-- FROM THE BLOG                                                       -->
+	<!-- ================================================================== -->
+	<section class="landing-section pb-28 sm:pb-32">
+		<div class="mx-auto max-w-4xl">
+			<div class="mb-10 flex items-end justify-between">
+				<div>
+					<h2 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+						From the blog
+					</h2>
+					<p class="mt-2 text-sm text-muted-foreground sm:text-base">
+						Guides and strategies for organizing your media backlog.
+					</p>
+				</div>
+				<a
+					href="/blog"
+					class="hidden items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80 sm:inline-flex"
+				>
+					All posts <ArrowRight class="size-3.5" />
+				</a>
+			</div>
+
+			<div class="grid gap-4 sm:grid-cols-3">
+				{#each [...posts]
+					.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+					.slice(0, 3) as post (post.slug)}
+					<a href="/blog/{post.slug}" class="group landing-feature-card flex flex-col gap-3">
+						<h3
+							class="text-[15px] leading-snug font-semibold text-foreground transition-colors group-hover:text-primary"
+						>
+							{post.title}
+						</h3>
+						<p class="line-clamp-3 flex-1 text-xs leading-relaxed text-muted-foreground">
+							{post.description}
+						</p>
+						<span
+							class="inline-flex items-center gap-1 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100"
+						>
+							Read more <ArrowRight class="size-3" />
+						</span>
+					</a>
+				{/each}
+			</div>
+
+			<div class="mt-6 text-center sm:hidden">
+				<Button variant="ghost" size="sm" href="/blog" class="gap-1">
+					All posts <ArrowRight class="size-3.5" />
 				</Button>
 			</div>
 		</div>
