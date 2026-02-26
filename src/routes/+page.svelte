@@ -312,7 +312,7 @@
 						><circle cx="12" cy="12" r="10" /><path
 							d="m10 8 4 4-4 4"
 							fill="none"
-							stroke="var(--background)"
+							style="stroke: var(--primary)"
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -390,7 +390,7 @@
 								><circle cx="12" cy="12" r="10" /><path
 									d="m10 8 4 4-4 4"
 									fill="none"
-									stroke="var(--background)"
+									style="stroke: var(--primary)"
 									stroke-width="2"
 									stroke-linecap="round"
 									stroke-linejoin="round"
@@ -449,7 +449,7 @@
 						><circle cx="12" cy="12" r="10" /><path
 							d="m10 8 4 4-4 4"
 							fill="none"
-							stroke="var(--primary-foreground)"
+							style="stroke: var(--primary)"
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -807,7 +807,7 @@
 						><circle cx="12" cy="12" r="10" /><path
 							d="m10 8 4 4-4 4"
 							fill="none"
-							stroke="var(--primary-foreground)"
+							style="stroke: var(--primary)"
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -881,7 +881,7 @@
 						><circle cx="12" cy="12" r="10" /><path
 							d="m10 8 4 4-4 4"
 							fill="none"
-							stroke="var(--primary-foreground)"
+							style="stroke: var(--primary)"
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round"
