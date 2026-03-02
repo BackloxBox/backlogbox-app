@@ -201,7 +201,7 @@
 	</p>
 
 	<p>
-		The VIP tier ($30/yr) adds advanced filtering, custom lists, and detailed stats. The calendar
+		The VIP tier ($60/yr) adds advanced filtering, custom lists, and detailed stats. The calendar
 		view showing upcoming episodes is genuinely useful for keeping up with airing shows.
 	</p>
 

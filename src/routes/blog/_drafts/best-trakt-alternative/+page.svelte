@@ -13,7 +13,7 @@
 		{
 			question: 'Is Trakt free?',
 			answer:
-				'Trakt has a free tier, but many features like advanced stats, filtering, and year-in-review reports require VIP ($30/year). BacklogBox has no free tier but offers a 14-day free trial with full access to all features.'
+				'Trakt has a free tier, but many features like advanced stats, filtering, and year-in-review reports require VIP ($60/year). BacklogBox has a free tier with 3 boards and 20 items per board, plus a 14-day Pro trial with full access to all features.'
 		},
 		{
 			question: 'Does BacklogBox have auto-scrobbling like Trakt?',
@@ -284,8 +284,8 @@
 	</p>
 
 	<p>
-		<strong>Weaknesses:</strong> No auto-scrobbling — all tracking is manual. Limited free tier ($7.99/mo
-		or $69/yr for full access). Smaller community than established trackers.
+		<strong>Weaknesses:</strong> No auto-scrobbling — all tracking is manual. Free tier limited to 3 boards
+		and 20 items each (Pro is $7.99/mo or $69/yr). Smaller community than established trackers.
 	</p>
 
 	<p>

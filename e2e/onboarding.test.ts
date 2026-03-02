@@ -28,7 +28,8 @@ function daysFromNow(days: number): Date {
 
 test.describe('onboarding redirect', () => {
 	test('new user (no onboarding) redirects to /onboarding', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(14),
 			onboardingCompletedAt: null
 		});
@@ -41,7 +42,8 @@ test.describe('onboarding redirect', () => {
 	});
 
 	test('onboarded user goes straight to /dashboard', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(14),
 			onboardingCompletedAt: new Date()
 		});
@@ -60,7 +62,8 @@ test.describe('onboarding redirect', () => {
 
 test.describe('onboarding step 1', () => {
 	test('renders heading and 5 media type cards', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(14),
 			onboardingCompletedAt: null
 		});
@@ -80,7 +83,8 @@ test.describe('onboarding step 1', () => {
 	});
 
 	test('continue button disabled until interest selected', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(14),
 			onboardingCompletedAt: null
 		});
@@ -99,7 +103,8 @@ test.describe('onboarding step 1', () => {
 	});
 
 	test('no sidebar visible on onboarding page', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(14),
 			onboardingCompletedAt: null
 		});
@@ -119,7 +124,8 @@ test.describe('onboarding step 1', () => {
 
 test.describe('skip onboarding', () => {
 	test('skip redirects to dashboard and stays there', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(14),
 			onboardingCompletedAt: null
 		});

@@ -31,7 +31,8 @@ test.describe('access control', () => {
 		context,
 		page
 	}) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			subscribed: false,
 			trialEndsAt: null,
 			interests: ['book', 'movie'],
@@ -57,7 +58,8 @@ test.describe('access control', () => {
 	});
 
 	test('user with expired trial stays in app as free tier', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie'],
 			freeBoards: ['book', 'movie']
@@ -82,10 +84,7 @@ test.describe('access control', () => {
 	});
 
 	test('soft-deleted user redirects to /subscribe', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
-			subscribed: true,
-			deletedAt: new Date()
-		});
+		const user = await createTestUser({ suite: SUITE, subscribed: true, deletedAt: new Date() });
 		await authenticate(context, user.sessionToken);
 
 		await page.goto('/dashboard');
@@ -123,7 +122,11 @@ test.describe('trial banner', () => {
 	});
 
 	test('no trial banner for converted user with remaining trial', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE, subscribed: true, trialEndsAt: daysFromNow(10) });
+		const user = await createTestUser({
+			suite: SUITE,
+			subscribed: true,
+			trialEndsAt: daysFromNow(10)
+		});
 		await authenticate(context, user.sessionToken);
 
 		await page.goto('/dashboard');
@@ -134,7 +137,8 @@ test.describe('trial banner', () => {
 	});
 
 	test('shows free-tier upgrade banner when trial expired', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-5),
 			interests: ['book', 'movie'],
 			freeBoards: ['book', 'movie']

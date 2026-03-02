@@ -31,7 +31,8 @@ test.describe('choose-boards interstitial', () => {
 		context,
 		page
 	}) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie', 'series', 'game'],
 			freeBoards: null
@@ -45,7 +46,8 @@ test.describe('choose-boards interstitial', () => {
 	});
 
 	test('choose-boards shows heading and board cards', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie', 'series', 'game'],
 			freeBoards: null
@@ -62,7 +64,8 @@ test.describe('choose-boards interstitial', () => {
 	});
 
 	test('can select up to 3 boards and submit', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie', 'series', 'game'],
 			freeBoards: null
@@ -92,7 +95,8 @@ test.describe('choose-boards interstitial', () => {
 	});
 
 	test('free user with <=3 interests skips interstitial', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie'],
 			freeBoards: null
@@ -107,7 +111,8 @@ test.describe('choose-boards interstitial', () => {
 	});
 
 	test('free user with freeBoards set skips interstitial', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie', 'series', 'game'],
 			freeBoards: ['book', 'movie', 'series']
@@ -127,7 +132,8 @@ test.describe('choose-boards interstitial', () => {
 
 test.describe('free-tier board access', () => {
 	test('locked board shows upgrade banner', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie', 'series', 'game'],
 			freeBoards: ['book', 'movie', 'series']
@@ -144,7 +150,8 @@ test.describe('free-tier board access', () => {
 	});
 
 	test('active free board does not show read-only banner', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie', 'series'],
 			freeBoards: ['book', 'movie', 'series']
@@ -161,7 +168,8 @@ test.describe('free-tier board access', () => {
 	});
 
 	test('sidebar shows lock icon on locked boards', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie', 'series', 'game'],
 			freeBoards: ['book', 'movie', 'series']
@@ -205,7 +213,8 @@ test.describe('free-tier feature gates', () => {
 		context,
 		page
 	}) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie'],
 			freeBoards: ['book', 'movie']
@@ -221,7 +230,8 @@ test.describe('free-tier feature gates', () => {
 	});
 
 	test('wrapped redirects free user to /subscribe', async ({ context, page }) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie'],
 			freeBoards: ['book', 'movie']
@@ -238,7 +248,8 @@ test.describe('free-tier feature gates', () => {
 		context,
 		page
 	}) => {
-		const user = await createTestUser({ suite: SUITE,
+		const user = await createTestUser({
+			suite: SUITE,
 			trialEndsAt: daysFromNow(-1),
 			interests: ['book', 'movie'],
 			freeBoards: ['book', 'movie']

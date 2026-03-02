@@ -12,7 +12,6 @@ import {
 	MEDIA_TYPES,
 	MEDIA_TYPE_SLUGS,
 	slugToMediaType,
-	mediaTypeToSlug,
 	type MediaType,
 	type MetaFieldsFor
 } from '$lib/types';
