@@ -61,8 +61,10 @@ services:
       - TWITCH_CLIENT_ID
       - TWITCH_CLIENT_SECRET
       - POLAR_ACCESS_TOKEN
-      - POLAR_PRODUCT_ID_MONTHLY
-      - POLAR_PRODUCT_ID_YEARLY
+      - source: POLAR_PRODUCT_ID_MONTHLY_v2
+        target: POLAR_PRODUCT_ID_MONTHLY
+      - source: POLAR_PRODUCT_ID_YEARLY_v2
+        target: POLAR_PRODUCT_ID_YEARLY
       - POLAR_WEBHOOK_SECRET
       - AXIOM_TOKEN
       - AXIOM_DATASET
@@ -129,9 +131,9 @@ secrets:
     external: true
   POLAR_ACCESS_TOKEN:
     external: true
-  POLAR_PRODUCT_ID_MONTHLY:
+  POLAR_PRODUCT_ID_MONTHLY_v2:
     external: true
-  POLAR_PRODUCT_ID_YEARLY:
+  POLAR_PRODUCT_ID_YEARLY_v2:
     external: true
   POLAR_WEBHOOK_SECRET:
     external: true
