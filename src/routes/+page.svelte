@@ -14,6 +14,7 @@
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import Check from '@lucide/svelte/icons/check';
 	import Search from '@lucide/svelte/icons/search';
+	import Crown from '@lucide/svelte/icons/crown';
 
 	import Globe from '@lucide/svelte/icons/globe';
 	import ListPlus from '@lucide/svelte/icons/list-plus';
@@ -127,32 +128,45 @@
 	] as const;
 
 	const plans = {
-		monthly: { price: '$9.99', period: '/mo', slug: 'monthly' },
-		yearly: { price: '$99', period: '/yr', slug: 'yearly' }
+		monthly: { price: '$7.99', period: '/mo', slug: 'monthly' },
+		yearly: { price: '$69', period: '/yr', slug: 'yearly' }
 	} as const;
 
-	const pricingFeatures = [
-		'Unlimited boards for all 5 media types',
-		'Custom lists for anything you want to track',
-		'Drag & drop kanban organization',
-		'Auto-search from TMDB, OpenLibrary, IGDB & more',
-		'Dashboard with stats & progress charts',
-		'Public profile & shareable boards',
-		'Full access to all future features'
+	const freeFeatures = [
+		'3 media boards (your pick)',
+		'20 items per board',
+		'Drag & drop kanban',
+		'Auto-search & metadata',
+		'Dashboard & stats',
+		'Public profile & sharing'
+	] as const;
+
+	const proFeatures = [
+		'All 5 media boards',
+		'Unlimited items per board',
+		'Notes on items',
+		'Custom lists for anything',
+		'Personalized recommendations',
+		'Year in Review (Wrapped)'
 	] as const;
 
 	const siteUrl = 'https://backlogbox.com';
 
 	const faqItems = [
 		{
-			question: 'Is there a free trial?',
+			question: 'Is there a free plan?',
 			answer:
-				'Yes — every new account starts with a 14-day free trial with full access to all features. No credit card required.'
+				'Yes! BacklogBox is free forever with 3 media boards and 20 items per board. Every new account also starts with a 14-day trial of the full Pro plan — no credit card required.'
+		},
+		{
+			question: 'What happens when my trial ends?',
+			answer:
+				"You're never locked out. When your trial ends, you keep free plan access with your data intact. Boards beyond your 3 free picks become read-only, and items over the 20-per-board limit are preserved — you just can't add more until you upgrade."
 		},
 		{
 			question: 'What media types can I track?',
 			answer:
-				'BacklogBox has dedicated boards for books, movies, TV series, games, and podcasts. You can also create custom lists for anything else — wines, restaurants, travel destinations, and more.'
+				'BacklogBox has dedicated boards for books, movies, TV series, games, and podcasts. Pro users can also create custom lists for anything else — wines, restaurants, travel destinations, and more.'
 		},
 		{
 			question: 'How is BacklogBox different from Goodreads or Letterboxd?',
@@ -162,12 +176,12 @@
 		{
 			question: 'Can I share my boards with friends?',
 			answer:
-				"Yes. You can enable a public profile and share any board via a simple link. Others can see what you're tracking, reading, or playing — no account required to view."
+				"Yes — even on the free plan. You can enable a public profile and share any board via a simple link. Others can see what you're tracking, reading, or playing — no account required to view."
 		},
 		{
 			question: 'Can I cancel anytime?',
 			answer:
-				'Absolutely. You can cancel your subscription at any time from your account settings. Your data stays accessible until the end of your billing period.'
+				'Absolutely. You can cancel your Pro subscription at any time from your account settings. You keep Pro access until the end of your billing period, then drop back to the free plan.'
 		}
 	] as const;
 
@@ -189,7 +203,7 @@
 	/>
 	<meta
 		name="description"
-		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything. Start free for 14 days."
+		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything. Free forever — Pro trial included."
 	/>
 	<meta
 		property="og:title"
@@ -197,7 +211,7 @@
 	/>
 	<meta
 		property="og:description"
-		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything. Start free for 14 days."
+		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything. Free forever — Pro trial included."
 	/>
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta
@@ -206,7 +220,7 @@
 	/>
 	<meta
 		name="twitter:description"
-		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything. Start free for 14 days."
+		content="Organize your books, movies, TV shows, games, and podcasts in one Kanban-style tracker. Drag items from backlog to completed. Custom lists for anything. Free forever — Pro trial included."
 	/>
 	<meta name="twitter:image" content="https://backlogbox.com/og.png" />
 
@@ -432,7 +446,7 @@
 			>
 				The all-in-one media backlog tracker. Kanban boards for books, movies, series, games, and
 				podcasts — plus custom lists for anything else.
-				<span class="font-medium text-foreground">14-day free trial, no card required.</span>
+				<span class="font-medium text-foreground">Free forever. Pro trial included.</span>
 			</p>
 
 			<div
@@ -737,87 +751,131 @@
 	<!-- PRICING                                                             -->
 	<!-- ================================================================== -->
 	<section id="pricing" class="landing-section pb-28 sm:pb-32">
-		<div class="mx-auto max-w-md">
+		<div class="mx-auto max-w-3xl">
 			<div class="mb-10 text-center">
 				<h2 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-					Simple pricing.
-					<span class="hero-gradient bg-clip-text text-transparent">Full media tracker access.</span
+					Free forever.
+					<span class="hero-gradient bg-clip-text text-transparent">Upgrade when you're ready.</span
 					>
 				</h2>
 				<p class="mt-3 text-sm text-muted-foreground sm:text-base">
-					Start with a 14-day free trial. No tiers, no feature gates.
+					Start tracking for free. Every account includes a 14-day Pro trial.
 				</p>
 			</div>
 
-			<!-- Billing toggle -->
-			<div class="mb-6 flex justify-center">
-				<div class="inline-flex items-center rounded-full border border-border/60 bg-muted/30 p-1">
-					<button
-						class="rounded-full px-4 py-1.5 text-xs font-medium transition-all {billing ===
-						'monthly'
-							? 'bg-background text-foreground shadow-sm'
-							: 'text-muted-foreground hover:text-foreground'}"
-						onclick={() => (billing = 'monthly')}
-					>
-						Monthly
-					</button>
-					<button
-						class="rounded-full px-4 py-1.5 text-xs font-medium transition-all {billing === 'yearly'
-							? 'bg-background text-foreground shadow-sm'
-							: 'text-muted-foreground hover:text-foreground'}"
-						onclick={() => (billing = 'yearly')}
-					>
-						Yearly
-						{#if billing === 'yearly'}
-							<span class="ml-1.5 text-[10px] font-semibold text-green-500">Save $21</span>
-						{/if}
-					</button>
-				</div>
-			</div>
+			<div class="grid gap-4 sm:grid-cols-2">
+				<!-- Free plan -->
+				<div class="landing-card p-7 sm:p-8">
+					<p class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Free</p>
+					<div class="mt-2 flex items-baseline gap-1">
+						<span class="text-4xl font-bold tracking-tight text-foreground">$0</span>
+						<span class="text-sm text-muted-foreground">/forever</span>
+					</div>
+					<p class="mt-2 text-xs text-muted-foreground">3 boards, 20 items each</p>
 
-			<!-- Card -->
-			<div class="landing-card p-7 sm:p-8">
-				<div class="flex items-baseline gap-1">
-					<span class="text-4xl font-bold tracking-tight text-foreground">
-						{plans[billing].price}
-					</span>
-					<span class="text-sm text-muted-foreground">{plans[billing].period}</span>
+					<ul class="mt-7 space-y-3">
+						{#each freeFeatures as feature (feature)}
+							<li class="flex items-start gap-2.5 text-sm text-muted-foreground">
+								<Check class="mt-0.5 size-3.5 shrink-0 text-green-500" />
+								{feature}
+							</li>
+						{/each}
+					</ul>
+
+					<Button class="mt-8 w-full gap-2" variant="outline" size="lg" href="/register">
+						Get Started Free
+					</Button>
+
+					<p class="mt-3 text-center text-[11px] text-muted-foreground/40">
+						No credit card required.
+					</p>
 				</div>
 
-				{#if billing === 'yearly'}
-					<p class="mt-1.5 text-xs font-medium text-green-500">That's $8.25/mo — 2 months free</p>
-				{/if}
+				<!-- Pro plan -->
+				<div class="landing-card relative border-2 border-primary/40 p-7 sm:p-8">
+					<div class="absolute -top-3 right-4">
+						<span
+							class="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-0.5 text-[10px] font-semibold text-primary-foreground"
+						>
+							<Crown class="size-3" />
+							Full Access
+						</span>
+					</div>
 
-				<ul class="mt-7 space-y-3">
-					{#each pricingFeatures as feature (feature)}
-						<li class="flex items-start gap-2.5 text-sm text-muted-foreground">
+					<p class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Pro</p>
+					<div class="mt-2 flex items-baseline gap-2">
+						<span class="text-4xl font-bold tracking-tight text-foreground">
+							{plans[billing].price}
+						</span>
+						<span class="text-sm text-muted-foreground">{plans[billing].period}</span>
+					</div>
+
+					{#if billing === 'yearly'}
+						<p class="mt-1.5 text-xs font-medium text-green-500">$5.75/mo — 3 months free</p>
+					{/if}
+
+					<!-- Billing toggle -->
+					<div
+						class="mt-3 inline-flex items-center rounded-full border border-border/60 bg-muted/30 p-0.5"
+					>
+						<button
+							class="rounded-full px-3 py-1 text-[11px] font-medium transition-all {billing ===
+							'monthly'
+								? 'bg-background text-foreground shadow-sm'
+								: 'text-muted-foreground hover:text-foreground'}"
+							onclick={() => (billing = 'monthly')}
+						>
+							Monthly
+						</button>
+						<button
+							class="rounded-full px-3 py-1 text-[11px] font-medium transition-all {billing ===
+							'yearly'
+								? 'bg-background text-foreground shadow-sm'
+								: 'text-muted-foreground hover:text-foreground'}"
+							onclick={() => (billing = 'yearly')}
+						>
+							Yearly
+							{#if billing === 'yearly'}
+								<span class="ml-1 text-[10px] font-semibold text-green-500">Save $27</span>
+							{/if}
+						</button>
+					</div>
+
+					<ul class="mt-5 space-y-3">
+						<li class="flex items-start gap-2.5 text-sm font-medium text-foreground">
 							<Check class="mt-0.5 size-3.5 shrink-0 text-green-500" />
-							{feature}
+							Everything in Free, plus:
 						</li>
-					{/each}
-				</ul>
+						{#each proFeatures as feature (feature)}
+							<li class="flex items-start gap-2.5 text-sm text-muted-foreground">
+								<Check class="mt-0.5 size-3.5 shrink-0 text-green-500" />
+								{feature}
+							</li>
+						{/each}
+					</ul>
 
-				<Button class="mt-8 w-full gap-2" size="lg" href="/register">
-					Get Started Free
-					<svg
-						class="size-4"
-						viewBox="0 0 24 24"
-						fill="currentColor"
-						xmlns="http://www.w3.org/2000/svg"
-						><circle cx="12" cy="12" r="10" /><path
-							d="m10 8 4 4-4 4"
-							fill="none"
-							style="stroke: var(--primary)"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						/></svg
-					>
-				</Button>
+					<Button class="mt-8 w-full gap-2" size="lg" href="/register">
+						Start 14-Day Pro Trial
+						<svg
+							class="size-4"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+							xmlns="http://www.w3.org/2000/svg"
+							><circle cx="12" cy="12" r="10" /><path
+								d="m10 8 4 4-4 4"
+								fill="none"
+								style="stroke: var(--primary)"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/></svg
+						>
+					</Button>
 
-				<p class="mt-3 text-center text-[11px] text-muted-foreground/40">
-					No credit card required. Cancel anytime.
-				</p>
+					<p class="mt-3 text-center text-[11px] text-muted-foreground/40">
+						No credit card required. Cancel anytime.
+					</p>
+				</div>
 			</div>
 		</div>
 	</section>
@@ -867,8 +925,8 @@
 				<span class="hero-gradient bg-clip-text text-transparent">media backlog</span>?
 			</h2>
 			<p class="mx-auto mt-5 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
-				Start your 14-day free trial today. No credit card required. Track books, movies, games, and
-				more in one place.
+				Start tracking for free today. No credit card required. Books, movies, games, and more — all
+				in one place.
 			</p>
 			<div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
 				<Button size="lg" href="/register" class="w-full gap-2 sm:w-auto">

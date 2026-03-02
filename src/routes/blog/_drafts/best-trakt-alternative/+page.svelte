@@ -284,8 +284,8 @@
 	</p>
 
 	<p>
-		<strong>Weaknesses:</strong> No auto-scrobbling — all tracking is manual. No free tier ($9.99/mo or
-		$99/yr, with a 14-day free trial). Smaller community than established trackers.
+		<strong>Weaknesses:</strong> No auto-scrobbling — all tracking is manual. Limited free tier ($7.99/mo
+		or $69/yr for full access). Smaller community than established trackers.
 	</p>
 
 	<p>

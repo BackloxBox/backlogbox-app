@@ -7,7 +7,8 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { log } from '$lib/server/logger';
 import { getUserProfile } from '$lib/server/db/queries';
-import { hasAccess } from '$lib/server/access';
+import { getAccessLevel } from '$lib/server/access';
+import type { MediaType } from '$lib/types';
 
 // ---------------------------------------------------------------------------
 // Sentry — errors only, no performance tracing. No-op when DSN is unset.
@@ -59,14 +60,18 @@ const handleAdminAuth: Handle = async ({ event, resolve }) => {
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
 	if (building) {
 		event.locals.subscribed = false;
+		event.locals.accessLevel = 'none';
 		event.locals.trialEndsAt = null;
+		event.locals.freeBoards = null;
 		return resolve(event);
 	}
 
 	const session = await auth.api.getSession({ headers: event.request.headers });
 
 	event.locals.subscribed = false;
+	event.locals.accessLevel = 'none';
 	event.locals.trialEndsAt = null;
+	event.locals.freeBoards = null;
 
 	if (session) {
 		event.locals.session = session.session;
@@ -74,9 +79,13 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 
 		const profile = await getUserProfile(session.user.id);
 		if (profile) {
-			event.locals.subscribed = hasAccess(profile);
+			const level = getAccessLevel(profile);
+			event.locals.accessLevel = level;
+			event.locals.subscribed = level === 'paid';
 			event.locals.trialEndsAt =
 				profile.subscribed || profile.freeAccess ? null : profile.trialEndsAt;
+			event.locals.freeBoards =
+				(profile.freeBoards as MediaType[] | null) ?? (profile.interests as MediaType[] | null);
 		}
 	}
 

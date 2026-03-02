@@ -33,6 +33,8 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import X from '@lucide/svelte/icons/x';
 	import Clock from '@lucide/svelte/icons/clock';
+	import Lock from '@lucide/svelte/icons/lock';
+	import Crown from '@lucide/svelte/icons/crown';
 	import Share2 from '@lucide/svelte/icons/share-2';
 	import MessageSquareMore from '@lucide/svelte/icons/message-square-more';
 	import type { Component } from 'svelte';
@@ -47,6 +49,9 @@
 		podcasts: Podcast
 	};
 
+	const isFree = $derived(data.accessLevel === 'free');
+	const freeBoardSet = $derived(new Set(data.freeBoards));
+
 	/** Sidebar nav items sorted by user interests (selected first, unselected dimmed) */
 	const navItems = $derived.by(() => {
 		const interests = new Set(data.interests);
@@ -60,7 +65,9 @@
 				icon: SLUG_ICONS[slug],
 				color: type ? MEDIA_TYPE_COLORS[type] : undefined,
 				/** True if user selected this type during onboarding (or no interests set) */
-				highlighted: interests.size === 0 || (type !== undefined && interests.has(type))
+				highlighted: interests.size === 0 || (type !== undefined && interests.has(type)),
+				/** True if this board is read-only for a free-tier user */
+				locked: isFree && type !== undefined && !freeBoardSet.has(type)
 			};
 		});
 
@@ -83,7 +90,7 @@
 	let newListName = $state('');
 	let creatingList = $state(false);
 
-	const canCreateList = $derived(data.customLists.length < MAX_CUSTOM_LISTS);
+	const canCreateList = $derived(!isFree && data.customLists.length < MAX_CUSTOM_LISTS);
 
 	async function handleCreateList() {
 		const name = newListName.trim();
@@ -136,9 +143,10 @@
 			.toUpperCase()
 	);
 
-	/** Trial state — null means no active trial (subscribed or grandfathered) */
+	/** Trial state — null means no trial, 0 means expired, >0 means active countdown */
 	const trialDaysLeft = $derived(data.trialDaysLeft);
-	const trialUrgent = $derived(trialDaysLeft !== null && trialDaysLeft <= 3);
+	const trialActive = $derived(trialDaysLeft !== null && trialDaysLeft > 0);
+	const trialUrgent = $derived(trialDaysLeft !== null && trialDaysLeft <= 3 && trialDaysLeft > 0);
 
 	// Userjot feedback widget
 	$effect(() => {
@@ -268,10 +276,11 @@
 					<a
 						href={item.href}
 						class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-			{active
+		{active
 							? 'bg-sidebar-accent text-sidebar-accent-foreground'
 							: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}
-			{item.highlighted ? '' : 'opacity-50'}"
+		{item.highlighted ? '' : 'opacity-50'}
+		{item.locked ? 'opacity-40' : ''}"
 						onclick={() => (sidebarOpen = false)}
 					>
 						<span
@@ -284,7 +293,9 @@
 							<item.icon class="size-4" />
 						</span>
 						{item.label}
-						{#if itemCount}
+						{#if item.locked}
+							<Lock class="ml-auto size-3 text-muted-foreground/50" />
+						{:else if itemCount}
 							<span class="ml-auto text-[11px] text-muted-foreground tabular-nums">{itemCount}</span
 							>
 						{/if}
@@ -292,7 +303,7 @@
 				{/each}
 
 				<!-- Custom lists -->
-				{#if data.customLists.length > 0 || canCreateList}
+				{#if data.customLists.length > 0 || canCreateList || isFree}
 					<Separator class="my-1.5" />
 					<span
 						class="flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium tracking-wider text-muted-foreground/60 uppercase"
@@ -364,26 +375,39 @@
 								New list
 							</button>
 						{/if}
+					{:else if isFree}
+						<a
+							href="/subscribe"
+							class="flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground/50 transition hover:text-muted-foreground"
+							onclick={() => (sidebarOpen = false)}
+						>
+							<Crown class="size-4 shrink-0" />
+							<span class="text-xs">Upgrade for lists</span>
+						</a>
 					{/if}
 				{/if}
 			</div>
 
-			<!-- Trial banner + Share profile box -->
+			<!-- Trial / Free-tier banner + Share profile box -->
 			<div class="space-y-3 px-2">
-				{#if trialDaysLeft !== null}
+				{#if trialActive}
 					<a
 						href="/subscribe"
 						class="flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-xs transition
-						{trialUrgent
+				{trialUrgent
 							? 'border-red-400/50 bg-red-100 text-red-700 hover:bg-red-200 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25'
 							: 'border-amber-400/50 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-500/25'}"
 					>
 						<Clock class="size-3.5 shrink-0" />
-						{#if trialDaysLeft === 0}
-							Trial ends today
-						{:else}
-							{trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'} left in trial
-						{/if}
+						{trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'} left in trial
+					</a>
+				{:else if isFree}
+					<a
+						href="/subscribe"
+						class="flex items-center gap-2.5 rounded-lg border border-amber-400/50 bg-amber-50 px-3 py-2.5 text-xs transition hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:hover:bg-amber-500/20"
+					>
+						<Crown class="size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+						<span class="text-amber-700 dark:text-amber-300">Upgrade for full access</span>
 					</a>
 				{/if}
 

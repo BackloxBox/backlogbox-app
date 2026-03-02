@@ -80,7 +80,7 @@
 		description: defaultDescription,
 		offers: {
 			'@type': 'Offer',
-			price: '9.99',
+			price: '7.99',
 			priceCurrency: 'USD',
 			url: `${siteUrl}/subscribe`
 		}

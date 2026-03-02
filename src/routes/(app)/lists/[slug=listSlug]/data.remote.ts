@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
 import { command, query } from '$app/server';
-import { requireSubscription } from '$lib/server/auth-guard';
+import { requirePaid } from '$lib/server/auth-guard';
 import { log } from '$lib/server/logger';
 import {
 	getCustomListBySlug,
@@ -143,21 +143,21 @@ async function resolveList(userId: string, slug: string): Promise<string> {
 
 /** Fetch all items for a list (with field values) */
 export const getBoardItems = query(v.string(), async (slug) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const listId = await resolveList(userId, slug);
 	return getItemsByList(listId);
 });
 
 /** Fetch all custom fields for a list */
 export const getListFields = query(v.string(), async (slug) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const listId = await resolveList(userId, slug);
 	return getFieldsByList(listId);
 });
 
 /** Add an item to the list */
 export const addItem = command(addItemSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const listId = await resolveList(userId, data.slug);
 
 	return createCustomListItem(listId, {
@@ -172,7 +172,7 @@ export const addItem = command(addItemSchema, async (data) => {
 
 /** Update an item */
 export const updateItem = command(updateItemSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const listId = await resolveList(userId, data.slug);
 
 	const fields: Partial<{
@@ -203,7 +203,7 @@ export const updateItem = command(updateItemSchema, async (data) => {
 
 /** Delete an item */
 export const deleteItem = command(deleteItemSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const listId = await resolveList(userId, data.slug);
 
 	const deleted = await deleteCustomListItem(data.itemId, listId);
@@ -214,7 +214,7 @@ export const deleteItem = command(deleteItemSchema, async (data) => {
 
 /** Batch reorder items after drag-and-drop */
 export const reorderItems = command(reorderSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const listId = await resolveList(userId, data.slug);
 	await reorderCustomListItems(listId, data.updates);
 });
@@ -225,7 +225,7 @@ export const reorderItems = command(reorderSchema, async (data) => {
 
 /** Add a custom field to the list */
 export const addField = command(addFieldSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const listId = await resolveList(userId, data.slug);
 
 	try {
@@ -244,7 +244,7 @@ export const addField = command(addFieldSchema, async (data) => {
 
 /** Update a custom field */
 export const editField = command(updateFieldSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const listId = await resolveList(userId, data.slug);
 
 	const fields: Partial<{
@@ -263,7 +263,7 @@ export const editField = command(updateFieldSchema, async (data) => {
 
 /** Delete a custom field */
 export const removeField = command(deleteFieldSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const listId = await resolveList(userId, data.slug);
 
 	const deleted = await deleteCustomListField(data.fieldId, listId);
@@ -278,14 +278,14 @@ export const removeField = command(deleteFieldSchema, async (data) => {
 
 /** Upsert field values for an item (bulk) */
 export const setFieldValues = command(upsertFieldValuesSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const listId = await resolveList(userId, data.slug);
 	await upsertFieldValues(data.itemId, listId, data.values);
 });
 
 /** Remove a field value from an item */
 export const removeFieldValue = command(deleteFieldValueSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const listId = await resolveList(userId, data.slug);
 	await deleteFieldValue(data.itemId, listId, data.fieldId);
 });

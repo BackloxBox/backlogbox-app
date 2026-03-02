@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import {
 		MEDIA_TYPES,
 		MEDIA_TYPE_LABELS,
@@ -156,8 +156,7 @@
 				);
 			}
 
-			await invalidateAll();
-			goto('/dashboard');
+			await goto('/dashboard', { invalidateAll: true });
 		} catch {
 			toast.error('Something went wrong. Please try again.');
 		} finally {
@@ -170,8 +169,7 @@
 		try {
 			await skipOnboarding();
 			trackEvent('onboarding_skipped', { step: currentStep });
-			await invalidateAll();
-			goto('/dashboard');
+			await goto('/dashboard', { invalidateAll: true });
 		} catch {
 			toast.error('Something went wrong');
 		} finally {

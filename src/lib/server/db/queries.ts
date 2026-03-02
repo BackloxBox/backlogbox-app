@@ -626,7 +626,8 @@ export async function getUserProfile(userId: string) {
 			trialEndsAt: true,
 			deletedAt: true,
 			onboardingCompletedAt: true,
-			interests: true
+			interests: true,
+			freeBoards: true
 		}
 	});
 }
@@ -931,6 +932,15 @@ export async function getInProgressItems(userId: string, limit = 10): Promise<In
 // Sidebar counts
 // ---------------------------------------------------------------------------
 
+/** Item count for a single media type (used for free-tier limit checks) */
+export async function getItemCountForType(userId: string, type: MediaType): Promise<number> {
+	const [row] = await db
+		.select({ count: count() })
+		.from(mediaItem)
+		.where(and(eq(mediaItem.userId, userId), eq(mediaItem.type, type)));
+	return Number(row?.count ?? 0);
+}
+
 /** Item counts per media type for sidebar badges */
 export async function getItemCountsByType(
 	userId: string
@@ -1174,6 +1184,11 @@ export async function getWrappedStats(userId: string, year: number): Promise<Wra
 // ---------------------------------------------------------------------------
 // Onboarding
 // ---------------------------------------------------------------------------
+
+/** Set the free-tier board selection (max 3 media types the user keeps active) */
+export async function setFreeBoards(userId: string, boards: MediaType[]) {
+	await db.update(user).set({ freeBoards: boards }).where(eq(user.id, userId));
+}
 
 /** Mark onboarding complete and persist selected interests */
 export async function completeOnboarding(userId: string, interests: string[]) {

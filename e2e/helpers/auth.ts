@@ -42,6 +42,8 @@ export interface TestUserOptions {
 	name?: string;
 	/** Override email. Default: random UUID @test.local */
 	email?: string;
+	/** Email suffix for parallel-safe cleanup. E.g. "trial" → user@trial.test.local */
+	suite?: string;
 	/** Whether user has a paid subscription. Default: false */
 	subscribed?: boolean;
 	/** Whether user has freeAccess bypass. Default: false */
@@ -54,6 +56,10 @@ export interface TestUserOptions {
 	emailVerified?: boolean;
 	/** When onboarding was completed. Default: now (skips onboarding). Set to null for new-user onboarding tests. */
 	onboardingCompletedAt?: Date | null;
+	/** Media types selected during onboarding. Default: null */
+	interests?: string[] | null;
+	/** Media types chosen for free tier. Default: null (not yet picked) */
+	freeBoards?: string[] | null;
 }
 
 export interface TestUser {
@@ -74,7 +80,8 @@ export async function createTestUser(options: TestUserOptions = {}): Promise<Tes
 	const now = new Date();
 	const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-	const email = options.email ?? `test-${userId.slice(0, 8)}@test.local`;
+	const domain = options.suite ? `${options.suite}.test.local` : 'test.local';
+	const email = options.email ?? `test-${userId.slice(0, 8)}@${domain}`;
 
 	// Default onboardingCompletedAt to now so existing tests don't redirect to /onboarding.
 	// Pass null explicitly to test the onboarding flow for new users.
@@ -82,7 +89,7 @@ export async function createTestUser(options: TestUserOptions = {}): Promise<Tes
 		options.onboardingCompletedAt === undefined ? now : options.onboardingCompletedAt;
 
 	await db`
-		INSERT INTO "user" (id, name, email, email_verified, subscribed, free_access, trial_ends_at, deleted_at, onboarding_completed_at, created_at, updated_at)
+		INSERT INTO "user" (id, name, email, email_verified, subscribed, free_access, trial_ends_at, deleted_at, onboarding_completed_at, interests, free_boards, created_at, updated_at)
 		VALUES (
 			${userId},
 			${options.name ?? 'Test User'},
@@ -93,6 +100,8 @@ export async function createTestUser(options: TestUserOptions = {}): Promise<Tes
 			${options.trialEndsAt ?? null},
 			${options.deletedAt ?? null},
 			${onboardingCompleted},
+			${options.interests ?? null},
+			${options.freeBoards ?? null},
 			${now},
 			${now}
 		)
@@ -146,9 +155,11 @@ export async function authenticate(context: BrowserContext, sessionToken: string
 
 /**
  * Clean up test users created during tests.
- * Deletes all users with @test.local emails (cascades to sessions).
+ * Pass a suffix to only delete users from a specific test file (parallel-safe).
+ * Without a suffix, deletes all @test.local users.
  */
-export async function cleanupTestUsers(): Promise<void> {
+export async function cleanupTestUsers(suffix?: string): Promise<void> {
 	const db = sql();
-	await db`DELETE FROM "user" WHERE email LIKE '%@test.local'`;
+	const pattern = suffix ? `%@${suffix}.test.local` : '%@test.local';
+	await db`DELETE FROM "user" WHERE email LIKE ${pattern}`;
 }
