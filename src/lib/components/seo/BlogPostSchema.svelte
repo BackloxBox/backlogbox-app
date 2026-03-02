@@ -68,7 +68,12 @@
 		datePublished: post.publishedAt,
 		dateModified: post.updatedAt,
 		author: { '@type': 'Organization', name: 'BacklogBox' },
-		publisher: { '@type': 'Organization', name: 'BacklogBox', url: siteUrl },
+		publisher: {
+			'@type': 'Organization',
+			name: 'BacklogBox',
+			url: siteUrl,
+			logo: `${siteUrl}/backlogbox-logo.svg`
+		},
 		mainEntityOfPage: pageUrl
 	})}</${'script'}>`}
 

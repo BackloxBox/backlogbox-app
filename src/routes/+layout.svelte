@@ -63,7 +63,10 @@
 	<!-- Open Graph (site-wide defaults, pages override per-page fields) -->
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="BacklogBox" />
+	<meta property="og:locale" content="en_US" />
 	<meta property="og:url" content={canonicalUrl} />
+	<meta property="og:title" content={defaultTitle} />
+	<meta property="og:description" content={defaultDescription} />
 	<meta property="og:image" content={defaultImage} />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />

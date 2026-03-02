@@ -280,6 +280,14 @@
 					>Best Media Tracker Apps in 2026: Track Books, Movies, Games & More</span
 				>
 			</a>
+			<a
+				href="/blog/tbr-pile-management-guide"
+				class="block rounded-lg border border-border/40 p-4 text-sm transition-colors hover:border-border hover:bg-card/30"
+			>
+				<span class="font-medium text-foreground"
+					>TBR Pile Out of Control? A Practical Guide to Managing Your To-Be-Read List</span
+				>
+			</a>
 		</div>
 	</div>
 </article>

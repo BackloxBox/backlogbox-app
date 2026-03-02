@@ -7,5 +7,25 @@ Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /subscribe
 Disallow: /healthz
+Disallow: /admin
+
+# AI search engine crawlers — explicitly allowed for GEO visibility
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
 
 Sitemap: https://backlogbox.com/sitemap.xml

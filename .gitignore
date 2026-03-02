@@ -29,3 +29,6 @@ test-results
 
 .agents
 .tmp
+
+# Blog drafts (local only, not served)
+drafts
