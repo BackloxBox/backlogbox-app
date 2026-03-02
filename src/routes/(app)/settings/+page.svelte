@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -8,9 +9,11 @@
 	import { Switch } from '$lib/components/ui/switch/index.js';
 	import { authClient } from '$lib/auth-client';
 	import { toast } from 'svelte-sonner';
+	import { restartOnboarding } from '../onboarding/onboarding.remote';
 	import Link from '@lucide/svelte/icons/link';
 	import Check from '@lucide/svelte/icons/check';
 	import CreditCard from '@lucide/svelte/icons/credit-card';
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -18,6 +21,7 @@
 	let profilePublic = $derived(data.profile?.profilePublic ?? false);
 	let copied = $state(false);
 	let portalLoading = $state(false);
+	let resettingOnboarding = $state(false);
 
 	const username = $derived(data.profile?.username ?? '');
 	const shareUrl = $derived(username && profilePublic ? `${page.url.origin}/@${username}` : null);
@@ -35,6 +39,19 @@
 			await authClient.customer.portal();
 		} finally {
 			portalLoading = false;
+		}
+	}
+
+	async function handleRestartOnboarding() {
+		resettingOnboarding = true;
+		try {
+			await restartOnboarding();
+			await invalidateAll();
+			goto('/onboarding');
+		} catch {
+			toast.error('Failed to restart onboarding');
+		} finally {
+			resettingOnboarding = false;
 		}
 	}
 </script>
@@ -141,6 +158,25 @@
 		<Button variant="outline" class="gap-2" disabled={portalLoading} onclick={openPortal}>
 			<CreditCard class="size-3.5" />
 			{portalLoading ? 'Opening...' : 'Manage Subscription'}
+		</Button>
+	</div>
+
+	<Separator class="my-8" />
+
+	<!-- Onboarding section -->
+	<div class="space-y-4">
+		<h2 class="text-sm font-medium text-foreground">Onboarding</h2>
+		<p class="text-xs text-muted-foreground">
+			Re-run the onboarding flow to update your interests and discover new content.
+		</p>
+		<Button
+			variant="outline"
+			class="gap-2"
+			disabled={resettingOnboarding}
+			onclick={handleRestartOnboarding}
+		>
+			<RotateCcw class="size-3.5" />
+			{resettingOnboarding ? 'Restarting...' : 'Restart onboarding'}
 		</Button>
 	</div>
 

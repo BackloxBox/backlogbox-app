@@ -27,6 +27,11 @@ const mockInsert = vi.fn().mockReturnValue({ values: mockInsertValues });
 const mockDeleteWhere = vi.fn().mockReturnValue({ returning: mockDeleteReturning });
 const mockDelete = vi.fn().mockReturnValue({ where: mockDeleteWhere });
 
+const mockUpdateSet = vi.fn();
+const mockUpdateWhere = vi.fn();
+mockUpdateSet.mockReturnValue({ where: mockUpdateWhere });
+const mockUpdate = vi.fn().mockReturnValue({ set: mockUpdateSet });
+
 vi.mock('./index', () => ({
 	db: {
 		query: {
@@ -37,11 +42,19 @@ vi.mock('./index', () => ({
 			}
 		},
 		insert: (...args: unknown[]) => mockInsert(...args),
-		delete: (...args: unknown[]) => mockDelete(...args)
+		delete: (...args: unknown[]) => mockDelete(...args),
+		update: (...args: unknown[]) => mockUpdate(...args)
 	}
 }));
 
-import { updateMediaItemMeta, getNotesByItem, createNote, deleteNoteById } from './queries';
+import {
+	updateMediaItemMeta,
+	getNotesByItem,
+	createNote,
+	deleteNoteById,
+	completeOnboarding,
+	resetOnboarding
+} from './queries';
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -155,5 +168,50 @@ describe('deleteNoteById — ownership check', () => {
 
 		expect(result).toBe(true);
 		expect(mockDelete).toHaveBeenCalledOnce();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Onboarding queries
+// ---------------------------------------------------------------------------
+
+describe('completeOnboarding', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it('calls db.update with onboardingCompletedAt and interests', async () => {
+		await completeOnboarding('user-1', ['movie', 'book']);
+
+		expect(mockUpdate).toHaveBeenCalledOnce();
+		expect(mockUpdateSet).toHaveBeenCalledOnce();
+
+		const setArg = mockUpdateSet.mock.calls[0][0];
+		expect(setArg.onboardingCompletedAt).toBeInstanceOf(Date);
+		expect(setArg.interests).toEqual(['movie', 'book']);
+
+		expect(mockUpdateWhere).toHaveBeenCalledOnce();
+	});
+
+	it('stores empty interests array when no types selected', async () => {
+		await completeOnboarding('user-1', []);
+
+		const setArg = mockUpdateSet.mock.calls[0][0];
+		expect(setArg.interests).toEqual([]);
+	});
+});
+
+describe('resetOnboarding', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it('sets onboardingCompletedAt and interests to null', async () => {
+		await resetOnboarding('user-1');
+
+		expect(mockUpdate).toHaveBeenCalledOnce();
+		expect(mockUpdateSet).toHaveBeenCalledOnce();
+
+		const setArg = mockUpdateSet.mock.calls[0][0];
+		expect(setArg.onboardingCompletedAt).toBeNull();
+		expect(setArg.interests).toBeNull();
+
+		expect(mockUpdateWhere).toHaveBeenCalledOnce();
 	});
 });

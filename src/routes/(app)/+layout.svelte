@@ -47,17 +47,31 @@
 		podcasts: Podcast
 	};
 
-	const navItems = MEDIA_TYPE_SLUGS.map((slug) => {
-		const type = slugToMediaType(slug);
-		return {
-			href: `/${slug}`,
-			slug,
-			type,
-			label: type ? MEDIA_TYPE_LABELS[type].plural : slug,
-			icon: SLUG_ICONS[slug],
-			color: type ? MEDIA_TYPE_COLORS[type] : undefined
-		};
+	/** Sidebar nav items sorted by user interests (selected first, unselected dimmed) */
+	const navItems = $derived.by(() => {
+		const interests = new Set(data.interests);
+		const all = MEDIA_TYPE_SLUGS.map((slug) => {
+			const type = slugToMediaType(slug);
+			return {
+				href: `/${slug}`,
+				slug,
+				type,
+				label: type ? MEDIA_TYPE_LABELS[type].plural : slug,
+				icon: SLUG_ICONS[slug],
+				color: type ? MEDIA_TYPE_COLORS[type] : undefined,
+				/** True if user selected this type during onboarding (or no interests set) */
+				highlighted: interests.size === 0 || (type !== undefined && interests.has(type))
+			};
+		});
+
+		// Sort: highlighted (selected interests) first, preserving relative order within each group
+		if (interests.size > 0) {
+			return [...all].sort((a, b) => Number(b.highlighted) - Number(a.highlighted));
+		}
+		return all;
 	});
+
+	const isOnboarding = $derived(page.url.pathname.startsWith('/onboarding'));
 
 	let sidebarOpen = $state(false);
 	const dashboardActive = $derived(page.url.pathname === '/dashboard');
@@ -177,304 +191,312 @@
 	});
 </script>
 
-<div class="flex h-screen bg-background text-foreground">
-	<!-- Mobile sidebar toggle -->
-	<Button
-		variant="outline"
-		size="icon"
-		class="fixed top-3 left-3 z-50 lg:hidden"
-		onclick={() => (sidebarOpen = !sidebarOpen)}
-		aria-label="Toggle sidebar"
-	>
-		<Menu class="size-4" />
-	</Button>
+{#if isOnboarding}
+	<!-- Full-page layout for onboarding (no sidebar) -->
+	{@render children()}
+{:else}
+	<div class="flex h-screen bg-background text-foreground">
+		<!-- Mobile sidebar toggle -->
+		<Button
+			variant="outline"
+			size="icon"
+			class="fixed top-3 left-3 z-50 lg:hidden"
+			onclick={() => (sidebarOpen = !sidebarOpen)}
+			aria-label="Toggle sidebar"
+		>
+			<Menu class="size-4" />
+		</Button>
 
-	<!-- Sidebar backdrop (mobile) -->
-	{#if sidebarOpen}
-		<div
-			class="fixed inset-0 z-30 bg-black/50 lg:hidden"
-			onclick={() => (sidebarOpen = false)}
-			onkeydown={() => {}}
-			role="presentation"
-		></div>
-	{/if}
-
-	<!-- Sidebar -->
-	<nav
-		class="fixed z-40 flex h-full w-56 flex-col border-r border-sidebar-border bg-sidebar transition-transform lg:relative lg:translate-x-0
-		{sidebarOpen ? 'translate-x-0' : '-translate-x-full'}"
-	>
-		<!-- Logo -->
-		<div class="flex h-14 items-center gap-2 px-4 pl-14 lg:pl-4">
-			<a href="/dashboard" class="flex items-center gap-2 text-foreground">
-				<img src="/backlogbox-logo.svg" alt="" class="size-5" />
-				<span class="text-sm font-semibold tracking-tight">BacklogBox</span>
-			</a>
-		</div>
-
-		<Separator />
-
-		<!-- Nav links -->
-		<div class="flex-1 space-y-0.5 overflow-y-auto p-2">
-			<a
-				href="/discover"
-				class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-				{discoverActive
-					? 'bg-sidebar-accent text-sidebar-accent-foreground'
-					: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+		<!-- Sidebar backdrop (mobile) -->
+		{#if sidebarOpen}
+			<div
+				class="fixed inset-0 z-30 bg-black/50 lg:hidden"
 				onclick={() => (sidebarOpen = false)}
-			>
-				<span class="shrink-0" style:color="#8B5CF6">
-					<Compass class="size-4" />
-				</span>
-				Discover
-			</a>
-			<a
-				href="/dashboard"
-				class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-				{dashboardActive
-					? 'bg-sidebar-accent text-sidebar-accent-foreground'
-					: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
-				onclick={() => (sidebarOpen = false)}
-			>
-				<span class="shrink-0" style:color="#f59e0b">
-					<LayoutDashboard class="size-4" />
-				</span>
-				Dashboard
-			</a>
-			<Separator class="my-1.5" />
-			{#each navItems as item (item.slug)}
-				{@const active = page.url.pathname === item.href}
-				{@const itemCount = item.type ? data.itemCounts[item.type] : undefined}
+				onkeydown={() => {}}
+				role="presentation"
+			></div>
+		{/if}
+
+		<!-- Sidebar -->
+		<nav
+			data-testid="app-sidebar"
+			class="fixed z-40 flex h-full w-56 flex-col border-r border-sidebar-border bg-sidebar transition-transform lg:relative lg:translate-x-0
+			{sidebarOpen ? 'translate-x-0' : '-translate-x-full'}"
+		>
+			<!-- Logo -->
+			<div class="flex h-14 items-center gap-2 px-4 pl-14 lg:pl-4">
+				<a href="/dashboard" class="flex items-center gap-2 text-foreground">
+					<img src="/backlogbox-logo.svg" alt="" class="size-5" />
+					<span class="text-sm font-semibold tracking-tight">BacklogBox</span>
+				</a>
+			</div>
+
+			<Separator />
+
+			<!-- Nav links -->
+			<div class="flex-1 space-y-0.5 overflow-y-auto p-2">
 				<a
-					href={item.href}
+					href="/discover"
 					class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-			{active
+					{discoverActive
 						? 'bg-sidebar-accent text-sidebar-accent-foreground'
 						: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
 					onclick={() => (sidebarOpen = false)}
 				>
-					<span
-						class="shrink-0 transition-colors {active
-							? ''
-							: 'text-muted-foreground group-hover:text-[var(--icon-color)]'}"
-						style:color={active ? item.color : undefined}
-						style:--icon-color={item.color}
-					>
-						<item.icon class="size-4" />
+					<span class="shrink-0" style:color="#8B5CF6">
+						<Compass class="size-4" />
 					</span>
-					{item.label}
-					{#if itemCount}
-						<span class="ml-auto text-[11px] text-muted-foreground tabular-nums">{itemCount}</span>
-					{/if}
+					Discover
 				</a>
-			{/each}
-
-			<!-- Custom lists -->
-			{#if data.customLists.length > 0 || canCreateList}
-				<Separator class="my-1.5" />
-				<span
-					class="flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium tracking-wider text-muted-foreground/60 uppercase"
-					>Lists
-					{#if data.customListItemCount > 0}
-						<span class="text-[10px] text-muted-foreground/40 tabular-nums"
-							>{data.customListItemCount}</span
-						>
-					{/if}
-				</span>
-				{#each data.customLists as list (list.id)}
-					{@const listActive = page.url.pathname === `/lists/${list.slug}`}
-					{@const Icon = getIconComponent(list.icon)}
-					<a
-						href="/lists/{list.slug}"
-						class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-						{listActive
-							? 'bg-sidebar-accent text-sidebar-accent-foreground'
-							: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
-						onclick={() => (sidebarOpen = false)}
-					>
-						<span class="shrink-0 text-muted-foreground">
-							<Icon class="size-4" />
-						</span>
-						<span class="truncate">{list.name}</span>
-					</a>
-				{/each}
-				{#if canCreateList}
-					{#if showNewListInput}
-						<div class="flex items-center gap-1 px-1.5 py-1">
-							<Input
-								type="text"
-								bind:value={newListName}
-								onkeydown={handleNewListKeydown}
-								placeholder="List name…"
-								disabled={creatingList}
-								class="h-7 text-xs"
-								autofocus
-							/>
-							<Button
-								variant="ghost"
-								size="icon"
-								class="size-7 shrink-0 text-emerald-500 hover:text-emerald-600"
-								disabled={!newListName.trim() || creatingList}
-								onclick={handleCreateList}
-								aria-label="Create list"
-							>
-								<Check class="size-3.5" />
-							</Button>
-							<Button
-								variant="ghost"
-								size="icon"
-								class="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-								onclick={() => {
-									showNewListInput = false;
-									newListName = '';
-								}}
-								aria-label="Cancel"
-							>
-								<X class="size-3.5" />
-							</Button>
-						</div>
-					{:else}
-						<button
-							class="flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-							onclick={() => (showNewListInput = true)}
-						>
-							<Plus class="size-4 shrink-0" />
-							New list
-						</button>
-					{/if}
-				{/if}
-			{/if}
-		</div>
-
-		<!-- Trial banner + Share profile box -->
-		<div class="space-y-3 px-2">
-			{#if trialDaysLeft !== null}
 				<a
-					href="/subscribe"
-					class="flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-xs transition
-					{trialUrgent
-						? 'border-red-400/50 bg-red-100 text-red-700 hover:bg-red-200 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25'
-						: 'border-amber-400/50 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-500/25'}"
-				>
-					<Clock class="size-3.5 shrink-0" />
-					{#if trialDaysLeft === 0}
-						Trial ends today
-					{:else}
-						{trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'} left in trial
-					{/if}
-				</a>
-			{/if}
-
-			{#if shareUrl}
-				<button
-					class="flex w-full gap-2.5 rounded-lg border px-3 py-3 text-left transition
-					{copied
-						? 'border-emerald-500/50 bg-emerald-200 text-emerald-800 dark:border-emerald-400/40 dark:bg-emerald-500/25 dark:text-emerald-300'
-						: 'border-emerald-400/50 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25'}"
-					onclick={copyShareLink}
-				>
-					<Share2 class="mt-0.5 size-4 shrink-0" />
-					<div>
-						{#if copied}
-							<p class="text-sm font-medium">Link copied!</p>
-						{:else}
-							<p class="text-sm font-medium">Share your profile</p>
-							<p class="text-[11px] opacity-70">Let others see your boards</p>
-						{/if}
-					</div>
-				</button>
-			{:else if showSharingNudge}
-				<a
-					href="/settings"
-					class="flex gap-2.5 rounded-lg border border-emerald-400/50 bg-emerald-50 px-3 py-3 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20"
+					href="/dashboard"
+					class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+					{dashboardActive
+						? 'bg-sidebar-accent text-sidebar-accent-foreground'
+						: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
 					onclick={() => (sidebarOpen = false)}
 				>
-					<Share2 class="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-					<div>
-						<p class="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-							Set up profile sharing
-						</p>
-						<p class="text-[11px] text-emerald-600/70 dark:text-emerald-400/60">
-							Make your boards public
-						</p>
-					</div>
+					<span class="shrink-0" style:color="#f59e0b">
+						<LayoutDashboard class="size-4" />
+					</span>
+					Dashboard
 				</a>
-			{/if}
-		</div>
-
-		<!-- Bottom nav -->
-		<div class="space-y-0.5 p-2">
-			<a
-				href="/settings"
-				class="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-				{page.url.pathname === '/settings'
-					? 'bg-sidebar-accent text-sidebar-accent-foreground'
-					: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
-				onclick={() => (sidebarOpen = false)}
-			>
-				<Settings
-					class="size-4 shrink-0 {page.url.pathname === '/settings'
-						? 'text-foreground'
-						: 'text-muted-foreground'}"
-				/>
-				Settings
-			</a>
-			<button
-				onclick={() => {
-					const uj = (
-						globalThis as unknown as { uj?: { showWidget: (o?: { section?: string }) => void } }
-					).uj;
-					uj?.showWidget({ section: 'feedback' });
-					sidebarOpen = false;
-				}}
-				class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium text-sidebar-foreground
-					transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-			>
-				<MessageSquareMore class="size-4 shrink-0 text-muted-foreground" />
-				Got Feedback?
-			</button>
-		</div>
-
-		<Separator />
-
-		<!-- User footer -->
-		<div class="p-2">
-			<div class="mb-1.5 flex items-center gap-2.5 px-2">
-				<div
-					class="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground"
-				>
-					{initials}
-				</div>
-				<span class="truncate text-xs text-muted-foreground">{data.user.name}</span>
-			</div>
-			<div class="flex items-center gap-1">
-				<form method="post" action="/signout" use:enhance class="flex-1">
-					<button
-						class="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm text-sidebar-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+				<Separator class="my-1.5" />
+				{#each navItems as item (item.slug)}
+					{@const active = page.url.pathname === item.href}
+					{@const itemCount = item.type ? data.itemCounts[item.type] : undefined}
+					<a
+						href={item.href}
+						class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+			{active
+							? 'bg-sidebar-accent text-sidebar-accent-foreground'
+							: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}
+			{item.highlighted ? '' : 'opacity-50'}"
+						onclick={() => (sidebarOpen = false)}
 					>
-						<LogOut class="size-3.5" />
-						Sign out
-					</button>
-				</form>
-				<Button
-					variant="ghost"
-					size="icon"
-					class="size-8 shrink-0"
-					onclick={toggleMode}
-					aria-label="Toggle theme"
-				>
-					<Sun class="size-3.5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-					<Moon
-						class="absolute size-3.5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"
-					/>
-				</Button>
-			</div>
-		</div>
-	</nav>
+						<span
+							class="shrink-0 transition-colors {active
+								? ''
+								: 'text-muted-foreground group-hover:text-[var(--icon-color)]'}"
+							style:color={active ? item.color : undefined}
+							style:--icon-color={item.color}
+						>
+							<item.icon class="size-4" />
+						</span>
+						{item.label}
+						{#if itemCount}
+							<span class="ml-auto text-[11px] text-muted-foreground tabular-nums">{itemCount}</span
+							>
+						{/if}
+					</a>
+				{/each}
 
-	<!-- Main content -->
-	<main class="min-h-0 flex-1 overflow-auto">
-		{@render children()}
-	</main>
-</div>
+				<!-- Custom lists -->
+				{#if data.customLists.length > 0 || canCreateList}
+					<Separator class="my-1.5" />
+					<span
+						class="flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium tracking-wider text-muted-foreground/60 uppercase"
+						>Lists
+						{#if data.customListItemCount > 0}
+							<span class="text-[10px] text-muted-foreground/40 tabular-nums"
+								>{data.customListItemCount}</span
+							>
+						{/if}
+					</span>
+					{#each data.customLists as list (list.id)}
+						{@const listActive = page.url.pathname === `/lists/${list.slug}`}
+						{@const Icon = getIconComponent(list.icon)}
+						<a
+							href="/lists/{list.slug}"
+							class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+							{listActive
+								? 'bg-sidebar-accent text-sidebar-accent-foreground'
+								: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+							onclick={() => (sidebarOpen = false)}
+						>
+							<span class="shrink-0 text-muted-foreground">
+								<Icon class="size-4" />
+							</span>
+							<span class="truncate">{list.name}</span>
+						</a>
+					{/each}
+					{#if canCreateList}
+						{#if showNewListInput}
+							<div class="flex items-center gap-1 px-1.5 py-1">
+								<Input
+									type="text"
+									bind:value={newListName}
+									onkeydown={handleNewListKeydown}
+									placeholder="List name…"
+									disabled={creatingList}
+									class="h-7 text-xs"
+									autofocus
+								/>
+								<Button
+									variant="ghost"
+									size="icon"
+									class="size-7 shrink-0 text-emerald-500 hover:text-emerald-600"
+									disabled={!newListName.trim() || creatingList}
+									onclick={handleCreateList}
+									aria-label="Create list"
+								>
+									<Check class="size-3.5" />
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon"
+									class="size-7 shrink-0 text-muted-foreground hover:text-foreground"
+									onclick={() => {
+										showNewListInput = false;
+										newListName = '';
+									}}
+									aria-label="Cancel"
+								>
+									<X class="size-3.5" />
+								</Button>
+							</div>
+						{:else}
+							<button
+								class="flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+								onclick={() => (showNewListInput = true)}
+							>
+								<Plus class="size-4 shrink-0" />
+								New list
+							</button>
+						{/if}
+					{/if}
+				{/if}
+			</div>
+
+			<!-- Trial banner + Share profile box -->
+			<div class="space-y-3 px-2">
+				{#if trialDaysLeft !== null}
+					<a
+						href="/subscribe"
+						class="flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-xs transition
+						{trialUrgent
+							? 'border-red-400/50 bg-red-100 text-red-700 hover:bg-red-200 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25'
+							: 'border-amber-400/50 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-500/25'}"
+					>
+						<Clock class="size-3.5 shrink-0" />
+						{#if trialDaysLeft === 0}
+							Trial ends today
+						{:else}
+							{trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'} left in trial
+						{/if}
+					</a>
+				{/if}
+
+				{#if shareUrl}
+					<button
+						class="flex w-full gap-2.5 rounded-lg border px-3 py-3 text-left transition
+						{copied
+							? 'border-emerald-500/50 bg-emerald-200 text-emerald-800 dark:border-emerald-400/40 dark:bg-emerald-500/25 dark:text-emerald-300'
+							: 'border-emerald-400/50 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25'}"
+						onclick={copyShareLink}
+					>
+						<Share2 class="mt-0.5 size-4 shrink-0" />
+						<div>
+							{#if copied}
+								<p class="text-sm font-medium">Link copied!</p>
+							{:else}
+								<p class="text-sm font-medium">Share your profile</p>
+								<p class="text-[11px] opacity-70">Let others see your boards</p>
+							{/if}
+						</div>
+					</button>
+				{:else if showSharingNudge}
+					<a
+						href="/settings"
+						class="flex gap-2.5 rounded-lg border border-emerald-400/50 bg-emerald-50 px-3 py-3 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20"
+						onclick={() => (sidebarOpen = false)}
+					>
+						<Share2 class="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+						<div>
+							<p class="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+								Set up profile sharing
+							</p>
+							<p class="text-[11px] text-emerald-600/70 dark:text-emerald-400/60">
+								Make your boards public
+							</p>
+						</div>
+					</a>
+				{/if}
+			</div>
+
+			<!-- Bottom nav -->
+			<div class="space-y-0.5 p-2">
+				<a
+					href="/settings"
+					class="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+					{page.url.pathname === '/settings'
+						? 'bg-sidebar-accent text-sidebar-accent-foreground'
+						: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+					onclick={() => (sidebarOpen = false)}
+				>
+					<Settings
+						class="size-4 shrink-0 {page.url.pathname === '/settings'
+							? 'text-foreground'
+							: 'text-muted-foreground'}"
+					/>
+					Settings
+				</a>
+				<button
+					onclick={() => {
+						const uj = (
+							globalThis as unknown as { uj?: { showWidget: (o?: { section?: string }) => void } }
+						).uj;
+						uj?.showWidget({ section: 'feedback' });
+						sidebarOpen = false;
+					}}
+					class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium text-sidebar-foreground
+						transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+				>
+					<MessageSquareMore class="size-4 shrink-0 text-muted-foreground" />
+					Got Feedback?
+				</button>
+			</div>
+
+			<Separator />
+
+			<!-- User footer -->
+			<div class="p-2">
+				<div class="mb-1.5 flex items-center gap-2.5 px-2">
+					<div
+						class="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground"
+					>
+						{initials}
+					</div>
+					<span class="truncate text-xs text-muted-foreground">{data.user.name}</span>
+				</div>
+				<div class="flex items-center gap-1">
+					<form method="post" action="/signout" use:enhance class="flex-1">
+						<button
+							class="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm text-sidebar-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+						>
+							<LogOut class="size-3.5" />
+							Sign out
+						</button>
+					</form>
+					<Button
+						variant="ghost"
+						size="icon"
+						class="size-8 shrink-0"
+						onclick={toggleMode}
+						aria-label="Toggle theme"
+					>
+						<Sun class="size-3.5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+						<Moon
+							class="absolute size-3.5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"
+						/>
+					</Button>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Main content -->
+		<main class="min-h-0 flex-1 overflow-auto">
+			{@render children()}
+		</main>
+	</div>
+{/if}

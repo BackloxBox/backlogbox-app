@@ -624,7 +624,9 @@ export async function getUserProfile(userId: string) {
 			subscribed: true,
 			freeAccess: true,
 			trialEndsAt: true,
-			deletedAt: true
+			deletedAt: true,
+			onboardingCompletedAt: true,
+			interests: true
 		}
 	});
 }
@@ -1167,4 +1169,24 @@ export async function getWrappedStats(userId: string, year: number): Promise<Wra
 		totalEstimatedHours,
 		averageRating
 	};
+}
+
+// ---------------------------------------------------------------------------
+// Onboarding
+// ---------------------------------------------------------------------------
+
+/** Mark onboarding complete and persist selected interests */
+export async function completeOnboarding(userId: string, interests: string[]) {
+	await db
+		.update(user)
+		.set({ onboardingCompletedAt: new Date(), interests })
+		.where(eq(user.id, userId));
+}
+
+/** Reset onboarding so the user sees the flow again (from settings) */
+export async function resetOnboarding(userId: string) {
+	await db
+		.update(user)
+		.set({ onboardingCompletedAt: null, interests: null })
+		.where(eq(user.id, userId));
 }

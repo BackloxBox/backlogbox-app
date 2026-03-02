@@ -52,6 +52,8 @@ export interface TestUserOptions {
 	deletedAt?: Date | null;
 	/** Whether email is verified. Default: true */
 	emailVerified?: boolean;
+	/** When onboarding was completed. Default: now (skips onboarding). Set to null for new-user onboarding tests. */
+	onboardingCompletedAt?: Date | null;
 }
 
 export interface TestUser {
@@ -74,8 +76,13 @@ export async function createTestUser(options: TestUserOptions = {}): Promise<Tes
 
 	const email = options.email ?? `test-${userId.slice(0, 8)}@test.local`;
 
+	// Default onboardingCompletedAt to now so existing tests don't redirect to /onboarding.
+	// Pass null explicitly to test the onboarding flow for new users.
+	const onboardingCompleted =
+		options.onboardingCompletedAt === undefined ? now : options.onboardingCompletedAt;
+
 	await db`
-		INSERT INTO "user" (id, name, email, email_verified, subscribed, free_access, trial_ends_at, deleted_at, created_at, updated_at)
+		INSERT INTO "user" (id, name, email, email_verified, subscribed, free_access, trial_ends_at, deleted_at, onboarding_completed_at, created_at, updated_at)
 		VALUES (
 			${userId},
 			${options.name ?? 'Test User'},
@@ -85,6 +92,7 @@ export async function createTestUser(options: TestUserOptions = {}): Promise<Tes
 			${options.freeAccess ?? false},
 			${options.trialEndsAt ?? null},
 			${options.deletedAt ?? null},
+			${onboardingCompleted},
 			${now},
 			${now}
 		)

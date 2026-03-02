@@ -21,12 +21,20 @@ export const load: LayoutServerLoad = async (event) => {
 		getItemCountsByType(userId),
 		getTotalCustomListItemCount(userId)
 	]);
+
+	// Redirect to onboarding if not completed (but don't redirect-loop on /onboarding itself)
+	const needsOnboarding = !profile?.onboardingCompletedAt;
+	if (needsOnboarding && !event.url.pathname.startsWith('/onboarding')) {
+		redirect(302, '/onboarding');
+	}
+
 	return {
 		user: event.locals.user,
 		profile: profile ?? null,
 		customLists,
 		itemCounts,
 		customListItemCount,
+		interests: profile?.interests ?? [],
 		trialDaysLeft: trialDaysRemaining(event.locals.trialEndsAt)
 	};
 };

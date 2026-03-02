@@ -13,6 +13,10 @@ export const user = pgTable('user', {
 	subscribed: boolean('subscribed').default(false).notNull(),
 	freeAccess: boolean('free_access').default(false).notNull(),
 	trialEndsAt: timestamp('trial_ends_at'),
+	/** Set when user completes (or skips) the onboarding flow. Null = needs onboarding. */
+	onboardingCompletedAt: timestamp('onboarding_completed_at'),
+	/** Media types the user selected during onboarding (cosmetic sidebar ordering). */
+	interests: text('interests').array(),
 	deletedAt: timestamp('deleted_at'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')

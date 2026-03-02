@@ -18,6 +18,7 @@ export function colStub(): Record<string, unknown> {
 	self.primaryKey = chain;
 	self.references = chain;
 	self.$onUpdate = chain;
+	self.array = chain;
 	return self;
 }
 
