@@ -30,6 +30,7 @@
 		removeNote
 	} from '../../../routes/(app)/[type=mediaType]/data.remote';
 	import { toast } from 'svelte-sonner';
+	import UpgradeBanner from '$lib/components/UpgradeBanner.svelte';
 
 	/** Human-friendly descriptions for TMDB series status values */
 	const SERIES_STATUS_DESCRIPTIONS: Record<string, string> = {
@@ -46,9 +47,21 @@
 		onClose: () => void;
 		onUpdate: (fields: Record<string, unknown>, meta?: Record<string, unknown>) => Promise<void>;
 		onDelete: () => Promise<void>;
+		/** When true, the panel is view-only (locked board for free user) */
+		readonly?: boolean;
+		/** When true, notes are a paid feature — show upgrade CTA instead of form */
+		notesPaid?: boolean;
 	};
 
-	let { item, mediaType, onClose, onUpdate, onDelete }: Props = $props();
+	let {
+		item,
+		mediaType,
+		onClose,
+		onUpdate,
+		onDelete,
+		readonly: isReadonly = false,
+		notesPaid = false
+	}: Props = $props();
 
 	let saving = $state(false);
 	let deleting = $state(false);
@@ -685,28 +698,37 @@
 				<div class="mt-5 space-y-3">
 					<Label>Notes</Label>
 
-					<!-- Add note form -->
-					<div class="space-y-2">
-						<Textarea
-							rows={2}
-							placeholder="Add a note..."
-							bind:value={newNoteText}
-							onkeydown={(e: KeyboardEvent) => {
-								if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddNote();
-							}}
+					{#if notesPaid || isReadonly}
+						<UpgradeBanner
+							message={isReadonly
+								? 'Upgrade to manage this board and add notes'
+								: 'Upgrade to add notes to your items'}
+							variant="inline"
 						/>
-						<div class="flex justify-end">
-							<Button
-								size="sm"
-								class="gap-1.5"
-								onclick={handleAddNote}
-								disabled={addingNote || !newNoteText.trim()}
-							>
-								<Send class="size-3.5" />
-								{addingNote ? 'Adding...' : 'Add note'}
-							</Button>
+					{:else}
+						<!-- Add note form -->
+						<div class="space-y-2">
+							<Textarea
+								rows={2}
+								placeholder="Add a note..."
+								bind:value={newNoteText}
+								onkeydown={(e: KeyboardEvent) => {
+									if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddNote();
+								}}
+							/>
+							<div class="flex justify-end">
+								<Button
+									size="sm"
+									class="gap-1.5"
+									onclick={handleAddNote}
+									disabled={addingNote || !newNoteText.trim()}
+								>
+									<Send class="size-3.5" />
+									{addingNote ? 'Adding...' : 'Add note'}
+								</Button>
+							</div>
 						</div>
-					</div>
+					{/if}
 
 					<!-- Timeline -->
 					{#if notesLoading}
@@ -774,34 +796,36 @@
 			</AlertDialog.Root>
 
 			<!-- Footer actions -->
-			<Sheet.Footer class="border-t border-border px-5 py-4">
-				<AlertDialog.Root>
-					<AlertDialog.Trigger>
-						{#snippet child({ props })}
-							<Button {...props} variant="destructive" class="w-full" disabled={deleting}>
-								{deleting ? 'Deleting...' : 'Delete item'}
-							</Button>
-						{/snippet}
-					</AlertDialog.Trigger>
-					<AlertDialog.Content>
-						<AlertDialog.Header>
-							<AlertDialog.Title>Delete item?</AlertDialog.Title>
-							<AlertDialog.Description>
-								This will permanently delete this item and all its notes. This cannot be undone.
-							</AlertDialog.Description>
-						</AlertDialog.Header>
-						<AlertDialog.Footer>
-							<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-							<AlertDialog.Action
-								class="text-destructive-foreground bg-destructive hover:bg-destructive/90"
-								onclick={handleDelete}
-							>
-								Delete
-							</AlertDialog.Action>
-						</AlertDialog.Footer>
-					</AlertDialog.Content>
-				</AlertDialog.Root>
-			</Sheet.Footer>
+			{#if !isReadonly}
+				<Sheet.Footer class="border-t border-border px-5 py-4">
+					<AlertDialog.Root>
+						<AlertDialog.Trigger>
+							{#snippet child({ props })}
+								<Button {...props} variant="destructive" class="w-full" disabled={deleting}>
+									{deleting ? 'Deleting...' : 'Delete item'}
+								</Button>
+							{/snippet}
+						</AlertDialog.Trigger>
+						<AlertDialog.Content>
+							<AlertDialog.Header>
+								<AlertDialog.Title>Delete item?</AlertDialog.Title>
+								<AlertDialog.Description>
+									This will permanently delete this item and all its notes. This cannot be undone.
+								</AlertDialog.Description>
+							</AlertDialog.Header>
+							<AlertDialog.Footer>
+								<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+								<AlertDialog.Action
+									class="text-destructive-foreground bg-destructive hover:bg-destructive/90"
+									onclick={handleDelete}
+								>
+									Delete
+								</AlertDialog.Action>
+							</AlertDialog.Footer>
+						</AlertDialog.Content>
+					</AlertDialog.Root>
+				</Sheet.Footer>
+			{/if}
 		{/if}
 	</Sheet.Content>
 </Sheet.Root>

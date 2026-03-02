@@ -5,15 +5,20 @@ import {
 	getCustomListsByUser,
 	getTotalCustomListItemCount
 } from '$lib/server/db/custom-list-queries';
-import { trialDaysRemaining } from '$lib/server/access';
+import { trialDaysRemaining, needsBoardSelection } from '$lib/server/access';
+import { FREE_LIMITS } from '$lib/server/limits';
+import type { MediaType } from '$lib/types';
 
 export const load: LayoutServerLoad = async (event) => {
 	if (!event.locals.user) {
 		redirect(302, '/login');
 	}
-	if (!event.locals.subscribed) {
+
+	// Soft-deleted users have accessLevel 'none' — redirect to /subscribe
+	if (event.locals.accessLevel === 'none') {
 		redirect(302, '/subscribe');
 	}
+
 	const userId = event.locals.user.id;
 	const [profile, customLists, itemCounts, customListItemCount] = await Promise.all([
 		getUserProfile(userId),
@@ -28,6 +33,24 @@ export const load: LayoutServerLoad = async (event) => {
 		redirect(302, '/onboarding');
 	}
 
+	const accessLevel = event.locals.accessLevel;
+
+	// Free users with >N interests who haven't picked their free boards yet → interstitial
+	if (
+		needsBoardSelection(
+			accessLevel,
+			profile?.freeBoards ?? null,
+			profile?.interests ?? null,
+			FREE_LIMITS.maxActiveBoards
+		) &&
+		!event.url.pathname.startsWith('/choose-boards')
+	) {
+		redirect(302, '/choose-boards');
+	}
+
+	const freeBoards =
+		(profile?.freeBoards as MediaType[] | null) ?? (profile?.interests as MediaType[] | null);
+
 	return {
 		user: event.locals.user,
 		profile: profile ?? null,
@@ -35,6 +58,8 @@ export const load: LayoutServerLoad = async (event) => {
 		itemCounts,
 		customListItemCount,
 		interests: profile?.interests ?? [],
+		accessLevel,
+		freeBoards: freeBoards ?? [],
 		trialDaysLeft: trialDaysRemaining(event.locals.trialEndsAt)
 	};
 };

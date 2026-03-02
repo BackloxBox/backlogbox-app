@@ -17,6 +17,11 @@ export const user = pgTable('user', {
 	onboardingCompletedAt: timestamp('onboarding_completed_at'),
 	/** Media types the user selected during onboarding (cosmetic sidebar ordering). */
 	interests: text('interests').array(),
+	/**
+	 * Media types the user chose to keep on the free tier (set via trial→free interstitial).
+	 * Null until explicitly chosen. Falls back to `interests` when null.
+	 */
+	freeBoards: text('free_boards').array(),
 	deletedAt: timestamp('deleted_at'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')

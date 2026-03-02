@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { hasAccess, trialDaysRemaining, type AccessProfile } from './access';
+import {
+	hasAccess,
+	getAccessLevel,
+	trialDaysRemaining,
+	needsBoardSelection,
+	type AccessProfile
+} from './access';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -23,54 +29,95 @@ function daysFromNow(days: number): Date {
 }
 
 // ---------------------------------------------------------------------------
-// hasAccess
+// getAccessLevel
+// ---------------------------------------------------------------------------
+
+describe('getAccessLevel', () => {
+	it('returns "free" for authenticated user with no subscription, trial, or freeAccess', () => {
+		expect(getAccessLevel(profile())).toBe('free');
+	});
+
+	it('returns "paid" when subscribed', () => {
+		expect(getAccessLevel(profile({ subscribed: true }))).toBe('paid');
+	});
+
+	it('returns "paid" when freeAccess flag set', () => {
+		expect(getAccessLevel(profile({ freeAccess: true }))).toBe('paid');
+	});
+
+	it('returns "paid" during active trial', () => {
+		expect(getAccessLevel(profile({ trialEndsAt: daysFromNow(7) }))).toBe('paid');
+	});
+
+	it('returns "free" after trial expiry', () => {
+		expect(getAccessLevel(profile({ trialEndsAt: daysFromNow(-1) }))).toBe('free');
+	});
+
+	it('returns "none" when soft-deleted even if subscribed', () => {
+		expect(getAccessLevel(profile({ subscribed: true, deletedAt: new Date() }))).toBe('none');
+	});
+
+	it('returns "none" when soft-deleted even with active trial', () => {
+		expect(getAccessLevel(profile({ trialEndsAt: daysFromNow(7), deletedAt: new Date() }))).toBe(
+			'none'
+		);
+	});
+
+	it('returns "none" when soft-deleted even with freeAccess', () => {
+		expect(getAccessLevel(profile({ freeAccess: true, deletedAt: new Date() }))).toBe('none');
+	});
+
+	it('returns "paid" when subscribed and trial expired (subscription wins)', () => {
+		expect(getAccessLevel(profile({ subscribed: true, trialEndsAt: daysFromNow(-30) }))).toBe(
+			'paid'
+		);
+	});
+
+	it('returns "free" when trial is exactly now (edge: trialEndsAt = now)', () => {
+		expect(getAccessLevel(profile({ trialEndsAt: new Date() }))).toBe('free');
+	});
+
+	it('returns "paid" with trial ending in 1ms', () => {
+		const almostExpired = new Date(Date.now() + 1);
+		expect(getAccessLevel(profile({ trialEndsAt: almostExpired }))).toBe('paid');
+	});
+});
+
+// ---------------------------------------------------------------------------
+// hasAccess — backward compat wrapper, should be true for free + paid
 // ---------------------------------------------------------------------------
 
 describe('hasAccess', () => {
-	it('denies access with no subscription, no trial, no freeAccess', () => {
-		expect(hasAccess(profile())).toBe(false);
+	it('returns true for free tier (expired trial, authenticated)', () => {
+		expect(hasAccess(profile({ trialEndsAt: daysFromNow(-1) }))).toBe(true);
 	});
 
-	it('grants access when subscribed', () => {
+	it('returns true for free tier (no trial at all)', () => {
+		expect(hasAccess(profile())).toBe(true);
+	});
+
+	it('returns true when subscribed', () => {
 		expect(hasAccess(profile({ subscribed: true }))).toBe(true);
 	});
 
-	it('grants access when freeAccess flag set', () => {
+	it('returns true when freeAccess flag set', () => {
 		expect(hasAccess(profile({ freeAccess: true }))).toBe(true);
 	});
 
-	it('grants access during active trial', () => {
+	it('returns true during active trial', () => {
 		expect(hasAccess(profile({ trialEndsAt: daysFromNow(7) }))).toBe(true);
 	});
 
-	it('denies access after trial expiry', () => {
-		expect(hasAccess(profile({ trialEndsAt: daysFromNow(-1) }))).toBe(false);
-	});
-
-	it('denies access when soft-deleted even if subscribed', () => {
+	it('returns false when soft-deleted even if subscribed', () => {
 		expect(hasAccess(profile({ subscribed: true, deletedAt: new Date() }))).toBe(false);
 	});
 
-	it('denies access when soft-deleted even with active trial', () => {
+	it('returns false when soft-deleted even with active trial', () => {
 		expect(hasAccess(profile({ trialEndsAt: daysFromNow(7), deletedAt: new Date() }))).toBe(false);
 	});
 
-	it('denies access when soft-deleted even with freeAccess', () => {
+	it('returns false when soft-deleted even with freeAccess', () => {
 		expect(hasAccess(profile({ freeAccess: true, deletedAt: new Date() }))).toBe(false);
-	});
-
-	it('grants access when subscribed and trial expired (subscription wins)', () => {
-		expect(hasAccess(profile({ subscribed: true, trialEndsAt: daysFromNow(-30) }))).toBe(true);
-	});
-
-	it('denies access when trial is exactly now (edge: trialEndsAt = now)', () => {
-		// trialEndsAt === new Date() means the trial has ended (> comparison fails)
-		expect(hasAccess(profile({ trialEndsAt: new Date() }))).toBe(false);
-	});
-
-	it('grants access with trial ending in 1ms', () => {
-		const almostExpired = new Date(Date.now() + 1);
-		expect(hasAccess(profile({ trialEndsAt: almostExpired }))).toBe(true);
 	});
 });
 
@@ -112,5 +159,54 @@ describe('trialDaysRemaining', () => {
 		vi.setSystemTime(new Date('2026-03-01T12:00:00Z'));
 		const endsAt = new Date('2026-03-02T12:00:00Z');
 		expect(trialDaysRemaining(endsAt)).toBe(1);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// needsBoardSelection
+// ---------------------------------------------------------------------------
+
+describe('needsBoardSelection', () => {
+	const MAX = 3;
+
+	it('returns false for paid users regardless of interests', () => {
+		expect(needsBoardSelection('paid', null, ['a', 'b', 'c', 'd', 'e'], MAX)).toBe(false);
+	});
+
+	it('returns false for none access level', () => {
+		expect(needsBoardSelection('none', null, ['a', 'b', 'c', 'd'], MAX)).toBe(false);
+	});
+
+	it('returns false when freeBoards already set', () => {
+		expect(needsBoardSelection('free', ['a', 'b', 'c'], ['a', 'b', 'c', 'd'], MAX)).toBe(false);
+	});
+
+	it('returns false when interests fit within limit', () => {
+		expect(needsBoardSelection('free', null, ['a', 'b', 'c'], MAX)).toBe(false);
+	});
+
+	it('returns false when interests equal the limit exactly', () => {
+		expect(needsBoardSelection('free', null, ['a', 'b', 'c'], MAX)).toBe(false);
+	});
+
+	it('returns true when free user has >N interests and no freeBoards', () => {
+		expect(needsBoardSelection('free', null, ['a', 'b', 'c', 'd'], MAX)).toBe(true);
+	});
+
+	it('returns true when free user has 5 interests and no freeBoards', () => {
+		expect(needsBoardSelection('free', null, ['a', 'b', 'c', 'd', 'e'], MAX)).toBe(true);
+	});
+
+	it('returns false when freeBoards is empty array', () => {
+		// Empty array means "hasn't chosen yet" — same as null for length check
+		expect(needsBoardSelection('free', [], ['a', 'b', 'c', 'd'], MAX)).toBe(true);
+	});
+
+	it('returns false when interests is null', () => {
+		expect(needsBoardSelection('free', null, null, MAX)).toBe(false);
+	});
+
+	it('returns false when interests is empty', () => {
+		expect(needsBoardSelection('free', null, [], MAX)).toBe(false);
 	});
 });

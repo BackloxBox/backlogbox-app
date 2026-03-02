@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { query } from '$app/server';
-import { requireSubscription } from '$lib/server/auth-guard';
+import { requireUserId } from '$lib/server/auth-guard';
 import { getSearchProvider, type SearchResult } from '$lib/server/search';
 import { getOrFetch, getOrFetchValue } from '$lib/server/search/cache';
 import { fetchBookDescription } from '$lib/server/search/openlibrary';
@@ -32,7 +32,7 @@ const searchSchema = v.object({
  * Uses getOrFetch for coalescing (no SWR — search should always feel fresh).
  */
 export const searchMedia = query(searchSchema, async (input): Promise<SearchResult[]> => {
-	requireSubscription();
+	requireUserId();
 
 	const type = slugToMediaType(input.slug);
 	if (!type) error(400, `Invalid media type slug: ${input.slug}`);
@@ -56,7 +56,7 @@ export const searchMedia = query(searchSchema, async (input): Promise<SearchResu
 export const getSeriesDetails = query(
 	v.number(),
 	async (tmdbId): Promise<TmdbSeriesDetailsResult | null> => {
-		requireSubscription();
+		requireUserId();
 		try {
 			return await getOrFetchValue<TmdbSeriesDetailsResult | null>(
 				`detail:series:${tmdbId}`,
@@ -74,7 +74,7 @@ export const getSeriesDetails = query(
 export const getMovieDetails = query(
 	v.number(),
 	async (tmdbId): Promise<TmdbMovieDetailsResult | null> => {
-		requireSubscription();
+		requireUserId();
 		try {
 			return await getOrFetchValue<TmdbMovieDetailsResult | null>(
 				`detail:movie:${tmdbId}`,
@@ -90,7 +90,7 @@ export const getMovieDetails = query(
 
 /** Fetch book description from OpenLibrary works endpoint */
 export const getBookDescription = query(v.string(), async (workKey): Promise<string | null> => {
-	requireSubscription();
+	requireUserId();
 	try {
 		return await getOrFetchValue<string | null>(`detail:book:${workKey}`, 'openlibrary', () =>
 			fetchBookDescription(workKey)

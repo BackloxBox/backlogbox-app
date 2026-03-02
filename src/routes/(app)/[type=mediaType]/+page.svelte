@@ -30,6 +30,9 @@
 	import { toast } from 'svelte-sonner';
 	import { handleSubscriptionError } from '$lib/subscription-guard';
 	import { trackEvent } from '$lib/analytics';
+	import UpgradeBanner from '$lib/components/UpgradeBanner.svelte';
+	import type { AccessLevel } from '$lib/server/access';
+	import type { MediaType } from '$lib/types';
 
 	/** Param matcher guarantees this is a valid slug — narrow the type */
 	function asSlug(s: string): MediaTypeSlug {
@@ -42,6 +45,19 @@
 	const mediaType = $derived(slugToMediaType(slug));
 	const typeLabel = $derived(mediaType ? MEDIA_TYPE_LABELS[mediaType].plural : '');
 	const statusLabels = $derived(mediaType ? STATUS_LABELS[mediaType] : null);
+
+	// Free-tier access checks (from layout data)
+	const accessLevel = $derived(page.data.accessLevel as AccessLevel);
+	const freeBoards = $derived(page.data.freeBoards as MediaType[]);
+	const isFree = $derived(accessLevel === 'free');
+	const boardLocked = $derived(
+		isFree && mediaType !== undefined && !freeBoards.includes(mediaType)
+	);
+	const itemCount = $derived(
+		mediaType ? ((page.data.itemCounts as Record<string, number>)[mediaType] ?? 0) : 0
+	);
+	const itemLimit = $derived(isFree ? 20 : Infinity);
+	const atItemLimit = $derived(isFree && itemCount >= itemLimit);
 
 	let addModalOpen = $state(false);
 	let selectedItem = $state<MediaItemWithMeta | null>(null);
@@ -232,15 +248,33 @@
 
 <div class="flex h-full flex-col">
 	<header class="flex h-14 items-center justify-between px-6 pl-14 lg:pl-6">
-		<h1 class="text-lg font-semibold tracking-tight text-foreground">{typeLabel}</h1>
+		<div class="flex items-center gap-2">
+			<h1 class="text-lg font-semibold tracking-tight text-foreground">{typeLabel}</h1>
+			{#if isFree && !boardLocked}
+				<span
+					class="text-xs tabular-nums {atItemLimit ? 'text-red-500' : 'text-muted-foreground'}"
+					title="Items on this board"
+				>
+					{itemCount}/{itemLimit}
+				</span>
+			{/if}
+		</div>
 		<div class="flex items-center gap-2">
 			<BoardSearch bind:value={searchQuery} />
-			<Button size="sm" onclick={() => (addModalOpen = true)}>
-				<Plus class="size-4" />
-				Add
-			</Button>
+			{#if !boardLocked}
+				<Button size="sm" onclick={() => (addModalOpen = true)} disabled={atItemLimit}>
+					<Plus class="size-4" />
+					{atItemLimit ? 'Limit reached' : 'Add'}
+				</Button>
+			{/if}
 		</div>
 	</header>
+
+	{#if boardLocked}
+		<div class="px-6">
+			<UpgradeBanner message="This board is read-only on the free plan. Upgrade to manage it." />
+		</div>
+	{/if}
 
 	<Separator />
 
@@ -308,5 +342,7 @@
 		onClose={() => (selectedItem = null)}
 		onUpdate={handleUpdateItem}
 		onDelete={handleDeleteItem}
+		readonly={boardLocked}
+		notesPaid={isFree && !boardLocked}
 	/>
 {/if}

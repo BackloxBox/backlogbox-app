@@ -7,6 +7,11 @@ export const load: PageServerLoad = async (event) => {
 	const user = event.locals.user;
 	if (!user) redirect(302, '/login');
 
+	// Wrapped is a paid feature
+	if (event.locals.accessLevel !== 'paid') {
+		redirect(302, '/subscribe');
+	}
+
 	const yearParam = Number(event.params.year);
 	if (!Number.isFinite(yearParam) || yearParam < 2020 || yearParam > 2100) {
 		redirect(302, '/dashboard');

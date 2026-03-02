@@ -13,6 +13,43 @@ export interface BlogPost {
 /** Ordered newest-first so iteration without sorting produces correct display order. */
 export const posts: readonly BlogPost[] = [
 	{
+		slug: 'tbr-pile-management-guide',
+		title: 'TBR Pile Out of Control? A Practical Guide to Managing Your To-Be-Read List',
+		description:
+			'Your TBR pile keeps growing and the guilt is real. Learn practical strategies to organize your to-be-read list, pick your next book faster, and actually enjoy reading again.',
+		publishedAt: '2026-03-03',
+		updatedAt: '2026-03-03',
+		author: 'BacklogBox Team',
+		readingTime: '8 min read',
+		keywords: [
+			'TBR pile',
+			'to be read pile',
+			'reading backlog',
+			'TBR list management',
+			'book backlog',
+			'too many books to read',
+			'reading tracker'
+		]
+	},
+	{
+		slug: 'personal-kanban-for-entertainment',
+		title: 'Personal Kanban for Entertainment: Organize What You Watch, Read & Play',
+		description:
+			'Learn how to apply the Kanban method to your entertainment backlog. Organize movies, books, games, and TV shows with visual boards that actually reduce decision fatigue.',
+		publishedAt: '2026-02-27',
+		updatedAt: '2026-02-27',
+		author: 'BacklogBox Team',
+		readingTime: '9 min read',
+		keywords: [
+			'personal kanban',
+			'kanban entertainment',
+			'kanban media tracking',
+			'kanban board personal',
+			'visual task board entertainment',
+			'media organization method'
+		]
+	},
+	{
 		slug: 'best-media-tracker-apps',
 		title: 'Best Media Tracker Apps in 2026: Track Books, Movies, Games & More',
 		description:

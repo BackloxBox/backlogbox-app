@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { dev } from '$app/environment';
 	import {
 		MEDIA_TYPE_SLUGS,
@@ -45,6 +46,8 @@
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 	import SettingsIcon from '@lucide/svelte/icons/settings';
 	import type { Component } from 'svelte';
+	import type { AccessLevel } from '$lib/server/access';
+	import UpgradeBanner from '$lib/components/UpgradeBanner.svelte';
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Film from '@lucide/svelte/icons/film';
 	import Tv from '@lucide/svelte/icons/tv';
@@ -59,6 +62,8 @@
 		podcasts: Podcast
 	};
 
+	const isFree = $derived((page.data.accessLevel as AccessLevel) === 'free');
+
 	let activeTab = $state<MediaTypeSlug>('movies');
 	let addingIds = $state(new Set<string>());
 
@@ -66,9 +71,9 @@
 
 	const ANTICIPATED_TABS = new Set<MediaTypeSlug>(['movies', 'series', 'games']);
 
-	// Fetch data reactively when tab changes
+	// Fetch data reactively when tab changes (skip paid-only queries for free users)
 	const trendingQuery = $derived(getTrending(activeTab));
-	const recsQuery = $derived(getRecommendations(activeTab));
+	const recsQuery = $derived(!isFree ? getRecommendations(activeTab) : null);
 	const anticipatedQuery = $derived(
 		ANTICIPATED_TABS.has(activeTab) ? getAnticipated(activeTab) : null
 	);
@@ -76,7 +81,7 @@
 	// Unwrap response data
 	const trendingData = $derived(trendingQuery.current?.data ?? []);
 	const trendingDebug = $derived(trendingQuery.current?._debug ?? null);
-	const recsData = $derived(recsQuery.current?.data ?? []);
+	const recsData = $derived(recsQuery?.current?.data ?? []);
 	const anticipatedData = $derived(anticipatedQuery?.current?.data ?? []);
 	const anticipatedDebug = $derived(anticipatedQuery?.current?._debug ?? null);
 
@@ -289,22 +294,29 @@
 					<span style:color="#3B82F6"><Sparkles class="size-5" /></span>
 					<h2 class="text-lg font-semibold">For You</h2>
 				</div>
-				<Button
-					variant="ghost"
-					size="sm"
-					class="h-7 gap-1.5 text-xs text-muted-foreground"
-					onclick={() => (manageExcludedOpen = true)}
-				>
-					<SettingsIcon class="size-3" />
-					Manage
-				</Button>
+				{#if !isFree}
+					<Button
+						variant="ghost"
+						size="sm"
+						class="h-7 gap-1.5 text-xs text-muted-foreground"
+						onclick={() => (manageExcludedOpen = true)}
+					>
+						<SettingsIcon class="size-3" />
+						Manage
+					</Button>
+				{/if}
 			</div>
 
-			{#if recsQuery.error}
+			{#if isFree}
+				<UpgradeBanner
+					message="Personalized recommendations are a paid feature. Upgrade to get suggestions based on your library."
+					variant="overlay"
+				/>
+			{:else if recsQuery?.error}
 				<p class="py-8 text-center text-sm text-muted-foreground">
 					Could not load recommendations right now.
 				</p>
-			{:else if recsQuery.loading}
+			{:else if recsQuery?.loading}
 				{#each Array(2) as _, i (i)}
 					<div class="space-y-3">
 						<div class="h-4 w-48 animate-pulse rounded bg-muted"></div>

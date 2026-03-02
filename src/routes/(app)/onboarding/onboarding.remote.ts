@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { query, command } from '$app/server';
-import { requireSubscription } from '$lib/server/auth-guard';
+import { requireUserId, requirePaid } from '$lib/server/auth-guard';
 import { getOrFetch, discoverKey } from '$lib/server/search/cache';
 import { fetchTrendingMovies, fetchTrendingSeries } from '$lib/server/search/tmdb';
 import { fetchTrendingGames } from '$lib/server/search/igdb';
@@ -12,7 +12,6 @@ import {
 	MEDIA_TYPES,
 	MEDIA_TYPE_SLUGS,
 	slugToMediaType,
-	mediaTypeToSlug,
 	type MediaType,
 	type MetaFieldsFor
 } from '$lib/types';
@@ -48,7 +47,7 @@ const interestsSchema = v.array(v.picklist([...MEDIA_TYPES]));
 export const getOnboardingTrending = query(
 	interestsSchema,
 	async (interests): Promise<Record<string, SearchResult[]>> => {
-		requireSubscription();
+		requireUserId();
 		const result: Record<string, SearchResult[]> = {};
 
 		await Promise.all(
@@ -89,7 +88,7 @@ const completeOnboardingSchema = v.object({
 
 /** Complete onboarding: persist interests, batch-create selected items */
 export const finishOnboarding = command(completeOnboardingSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requireUserId();
 
 	// Insert items sequentially to avoid transaction conflicts
 	let addedCount = 0;
@@ -130,7 +129,7 @@ export const finishOnboarding = command(completeOnboardingSchema, async (data) =
 
 /** Skip onboarding entirely — marks as completed with no interests */
 export const skipOnboarding = command(async () => {
-	const userId = requireSubscription();
+	const userId = requireUserId();
 	await completeOnboarding(userId, []);
 	log.info({ userId }, 'onboarding skipped');
 });
@@ -139,9 +138,9 @@ export const skipOnboarding = command(async () => {
 // Reset onboarding (from settings)
 // ---------------------------------------------------------------------------
 
-/** Reset onboarding so the user can redo it */
+/** Reset onboarding so the user can redo it. Paid-only to prevent free-tier gaming. */
 export const restartOnboarding = command(async () => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	await resetOnboarding(userId);
 	log.info({ userId }, 'onboarding reset');
 });

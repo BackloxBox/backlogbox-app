@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import {
 		MEDIA_TYPES,
 		MEDIA_TYPE_LABELS,
@@ -23,6 +23,7 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 	import type { Component } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	const TYPE_ICONS: Record<MediaType, Component<{ class?: string }>> = {
 		book: BookOpen,
@@ -48,11 +49,11 @@
 	let currentStep = $state(1);
 
 	// Step 1: interest selection
-	let selectedInterests = $state(new Set<MediaType>());
+	let selectedInterests = new SvelteSet<MediaType>();
 
 	// Step 2: item selection
 	let trendingByType = $state<Record<string, SearchResult[]>>({});
-	let selectedItems = $state(new Set<string>()); // "type:externalId" keys
+	let selectedItems = new SvelteSet<string>(); // "type:externalId" keys
 	let loadingTrending = $state(false);
 
 	// Submission
@@ -97,13 +98,11 @@
 
 	function toggleItem(type: MediaType, result: SearchResult) {
 		const key = itemKey(type, result);
-		const next = new Set(selectedItems);
-		if (next.has(key)) {
-			next.delete(key);
+		if (selectedItems.has(key)) {
+			selectedItems.delete(key);
 		} else {
-			next.add(key);
+			selectedItems.add(key);
 		}
-		selectedItems = next;
 	}
 
 	function isSelected(type: MediaType, result: SearchResult): boolean {
@@ -156,8 +155,7 @@
 				);
 			}
 
-			await invalidateAll();
-			goto('/dashboard');
+			await goto('/dashboard', { invalidateAll: true });
 		} catch {
 			toast.error('Something went wrong. Please try again.');
 		} finally {
@@ -170,8 +168,7 @@
 		try {
 			await skipOnboarding();
 			trackEvent('onboarding_skipped', { step: currentStep });
-			await invalidateAll();
-			goto('/dashboard');
+			await goto('/dashboard', { invalidateAll: true });
 		} catch {
 			toast.error('Something went wrong');
 		} finally {
@@ -256,10 +253,8 @@
 							? `0 4px 20px color-mix(in oklch, ${color} 15%, transparent)`
 							: undefined}
 						onclick={() => {
-							const next = new Set(selectedInterests);
-							if (next.has(type)) next.delete(type);
-							else next.add(type);
-							selectedInterests = next;
+							if (selectedInterests.has(type)) selectedInterests.delete(type);
+							else selectedInterests.add(type);
 						}}
 					>
 						{#if selected}
@@ -418,7 +413,7 @@
 				class="flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
 				onclick={() => {
 					currentStep = 1;
-					selectedItems = new Set();
+					selectedItems.clear();
 				}}
 				disabled={submitting}
 			>

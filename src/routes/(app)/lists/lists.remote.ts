@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
 import { command, query } from '$app/server';
-import { requireSubscription } from '$lib/server/auth-guard';
+import { requireUserId, requirePaid } from '$lib/server/auth-guard';
 import { log } from '$lib/server/logger';
 import {
 	createCustomList,
@@ -38,13 +38,13 @@ const deleteListSchema = v.object({
 
 /** Fetch all custom lists for the current user (sidebar + list page) */
 export const getLists = query(v.undefined(), async () => {
-	const userId = requireSubscription();
+	const userId = requireUserId();
 	return getCustomListsByUser(userId);
 });
 
 /** Create a new custom list */
 export const addList = command(createListSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 
 	try {
 		return await createCustomList(userId, {
@@ -62,7 +62,7 @@ export const addList = command(createListSchema, async (data) => {
 
 /** Update a custom list (name, icon, visibility) */
 export const editList = command(updateListSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 
 	// Ownership check
 	const list = await getCustomListById(data.listId);
@@ -80,7 +80,7 @@ export const editList = command(updateListSchema, async (data) => {
 
 /** Delete a custom list */
 export const removeList = command(deleteListSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 
 	const deleted = await deleteCustomList(data.listId, userId);
 	if (!deleted) error(404, 'List not found');

@@ -28,7 +28,7 @@
 		{
 			question: 'Is Letterboxd worth paying for?',
 			answer:
-				'Letterboxd Pro ($49.99/yr) adds stats, filters, and custom posters. Patron ($99.99/yr) adds even more. If you are a dedicated movie logger who wants analytics, it is worth it. The core logging and community features are free.'
+				'Letterboxd Pro ($19/yr) adds stats, filters, and custom posters. Patron ($49/yr) adds even more. If you are a dedicated movie logger who wants analytics, it is worth it. The core logging and community features are free.'
 		}
 	] as const;
 </script>
@@ -175,8 +175,8 @@
 			priority, group by genre, or separate "definitely watching this weekend" from "maybe someday."
 		</li>
 		<li>
-			<strong>Stats behind a paywall</strong> — Basic viewing stats require Letterboxd Pro ($49.99/yr)
-			or Patron ($99.99/yr). The free tier gives you logging but no analytics.
+			<strong>Stats behind a paywall</strong> — Basic viewing stats require Letterboxd Pro ($19/yr) or
+			Patron ($49/yr). The free tier gives you logging but no analytics.
 		</li>
 		<li>
 			<strong>No Kanban or priority system</strong> — You cannot drag movies between columns like Backlog,
@@ -201,7 +201,7 @@
 	</p>
 
 	<p>
-		The VIP tier ($30/yr) adds advanced filtering, custom lists, and detailed stats. The calendar
+		The VIP tier ($60/yr) adds advanced filtering, custom lists, and detailed stats. The calendar
 		view showing upcoming episodes is genuinely useful for keeping up with airing shows.
 	</p>
 
@@ -302,7 +302,7 @@
 
 	<p>
 		The Discover page surfaces trending titles, recommendations, and upcoming releases across all
-		media types. Public profiles let you share your boards. The pricing is $9.99/mo or $99/yr with a
+		media types. Public profiles let you share your boards. The pricing is $7.99/mo or $69/yr with a
 		14-day free trial, no credit card required.
 	</p>
 

@@ -1,7 +1,13 @@
 import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
 import { command, query } from '$app/server';
-import { requireSubscription } from '$lib/server/auth-guard';
+import {
+	requireUserId,
+	requireActiveBoard,
+	requireItemLimit,
+	requirePaid
+} from '$lib/server/auth-guard';
+import { getItemCountForType } from '$lib/server/db/queries';
 import { log } from '$lib/server/logger';
 import {
 	createMediaItem,
@@ -292,14 +298,16 @@ function pick<T extends Record<string, unknown>, K extends keyof T>(
 // --- Remote functions ---
 
 export const getBoardItems = query(v.string(), async (slug) => {
-	const userId = requireSubscription();
+	const userId = requireUserId();
 	const type = resolveType(slug);
 	return getItemsByTypeAndUser(userId, type);
 });
 
 export const addItem = command(addItemSchema, async (data) => {
-	const userId = requireSubscription();
 	const type = resolveType(data.slug);
+	const userId = requireActiveBoard(type);
+	const currentCount = await getItemCountForType(userId, type);
+	requireItemLimit(type, currentCount);
 
 	const meta = extractMeta(type, data);
 
@@ -321,8 +329,8 @@ export const addItem = command(addItemSchema, async (data) => {
 });
 
 export const updateItem = command(updateItemSchema, async (data) => {
-	const userId = requireSubscription();
 	const type = resolveType(data.slug);
+	const userId = requireActiveBoard(type);
 
 	if (data.fields && Object.keys(data.fields).length > 0) {
 		await updateMediaItemFields(data.id, userId, data.fields);
@@ -334,8 +342,8 @@ export const updateItem = command(updateItemSchema, async (data) => {
 });
 
 export const deleteItem = command(deleteItemSchema, async (data) => {
-	const userId = requireSubscription();
 	const type = resolveType(data.slug);
+	const userId = requireActiveBoard(type);
 	const deleted = await deleteMediaItem(data.id, userId);
 	if (!deleted) error(404, 'Item not found');
 
@@ -343,15 +351,15 @@ export const deleteItem = command(deleteItemSchema, async (data) => {
 });
 
 export const reorderItems = command(reorderSchema, async (data) => {
-	const userId = requireSubscription();
-	resolveType(data.slug);
+	const type = resolveType(data.slug);
+	const userId = requireActiveBoard(type);
 	await reorderMediaItems(userId, data.updates);
 });
 
 // --- Notes ---
 
 export const getItemNotes = query(v.pipe(v.string(), v.nonEmpty()), async (mediaItemId) => {
-	const userId = requireSubscription();
+	const userId = requireUserId();
 	return getNotesByItem(mediaItemId, userId);
 });
 
@@ -361,7 +369,7 @@ const addNoteSchema = v.object({
 });
 
 export const addNote = command(addNoteSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const note = await createNote(data.mediaItemId, userId, data.content);
 	if (!note) error(404, 'Item not found');
 	return note;
@@ -372,7 +380,7 @@ const deleteNoteSchema = v.object({
 });
 
 export const removeNote = command(deleteNoteSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	const deleted = await deleteNoteById(data.noteId, userId);
 	if (!deleted) error(404, 'Note not found');
 });

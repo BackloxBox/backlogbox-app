@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { query, command } from '$app/server';
 import { dev } from '$app/environment';
-import { requireSubscription } from '$lib/server/auth-guard';
+import { requireUserId, requirePaid } from '$lib/server/auth-guard';
 import {
 	getOrFetch,
 	discoverKey,
@@ -81,7 +81,7 @@ export interface DebugStats {
 }
 
 export const getDebugStats = query(async (): Promise<DebugStats | null> => {
-	requireSubscription();
+	requirePaid();
 	if (!dev) return null;
 	return {
 		cache: getCacheStats(),
@@ -113,7 +113,7 @@ const TRENDING_PROVIDERS: Record<string, string> = {
 
 /** Fetch trending items for a media type, with caching + coalescing + SWR */
 export const getTrending = query(slugSchema, async (slug): Promise<TrendingResponse> => {
-	const userId = requireSubscription();
+	const userId = requireUserId();
 	const type = slugToMediaType(slug);
 	if (!type) error(400, `Invalid slug: ${slug}`);
 
@@ -151,7 +151,7 @@ const ANTICIPATED_PROVIDERS: Record<string, string> = {
 
 /** Fetch anticipated/upcoming items for a media type */
 export const getAnticipated = query(slugSchema, async (slug): Promise<TrendingResponse> => {
-	const userId = requireSubscription();
+	const userId = requireUserId();
 	const type = slugToMediaType(slug);
 	if (!type) error(400, `Invalid slug: ${slug}`);
 
@@ -179,7 +179,7 @@ export const getAnticipated = query(slugSchema, async (slug): Promise<TrendingRe
 export const getRecommendations = query(
 	slugSchema,
 	async (slug): Promise<RecommendationsResponse> => {
-		const userId = requireSubscription();
+		const userId = requirePaid();
 		const type = slugToMediaType(slug);
 		if (!type) error(400, `Invalid slug: ${slug}`);
 
@@ -325,13 +325,13 @@ const excludeSeedSchema = v.object({ mediaItemId: v.pipe(v.string(), v.nonEmpty(
 
 /** Mute a seed item so it no longer drives recommendations */
 export const excludeSeed = command(excludeSeedSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	await addExcludedSeed(userId, data.mediaItemId);
 });
 
 /** Restore a previously excluded seed */
 export const undoExcludeSeed = command(excludeSeedSchema, async (data) => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	await removeExcludedSeed(userId, data.mediaItemId);
 });
 
@@ -345,6 +345,6 @@ export type ExcludedSeedItem = {
 
 /** Fetch all excluded seeds for the manage UI */
 export const fetchExcludedSeeds = query(async (): Promise<ExcludedSeedItem[]> => {
-	const userId = requireSubscription();
+	const userId = requirePaid();
 	return getExcludedSeeds(userId);
 });

@@ -23,6 +23,8 @@
 	let portalLoading = $state(false);
 	let resettingOnboarding = $state(false);
 
+	const isFree = $derived(data.accessLevel === 'free');
+
 	const username = $derived(data.profile?.username ?? '');
 	const shareUrl = $derived(username && profilePublic ? `${page.url.origin}/@${username}` : null);
 
@@ -166,18 +168,25 @@
 	<!-- Onboarding section -->
 	<div class="space-y-4">
 		<h2 class="text-sm font-medium text-foreground">Onboarding</h2>
-		<p class="text-xs text-muted-foreground">
-			Re-run the onboarding flow to update your interests and discover new content.
-		</p>
-		<Button
-			variant="outline"
-			class="gap-2"
-			disabled={resettingOnboarding}
-			onclick={handleRestartOnboarding}
-		>
-			<RotateCcw class="size-3.5" />
-			{resettingOnboarding ? 'Restarting...' : 'Restart onboarding'}
-		</Button>
+		{#if isFree}
+			<p class="text-xs text-muted-foreground">
+				<a href="/subscribe" class="font-medium underline">Upgrade to Pro</a> to change your interests
+				and re-run onboarding.
+			</p>
+		{:else}
+			<p class="text-xs text-muted-foreground">
+				Re-run the onboarding flow to update your interests and discover new content.
+			</p>
+			<Button
+				variant="outline"
+				class="gap-2"
+				disabled={resettingOnboarding}
+				onclick={handleRestartOnboarding}
+			>
+				<RotateCcw class="size-3.5" />
+				{resettingOnboarding ? 'Restarting...' : 'Restart onboarding'}
+			</Button>
+		{/if}
 	</div>
 
 	<Separator class="my-8" />
