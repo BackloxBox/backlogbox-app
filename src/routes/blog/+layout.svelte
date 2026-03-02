@@ -22,6 +22,7 @@
 			<!-- Desktop -->
 			<div class="hidden items-center gap-1 md:flex">
 				<Button variant="ghost" size="sm" href="/blog">Blog</Button>
+				<Button variant="ghost" size="sm" href="/#pricing">Pricing</Button>
 				<Button
 					variant="ghost"
 					size="icon"
@@ -77,6 +78,12 @@
 						class="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
 					>
 						Blog
+					</a>
+					<a
+						href="/#pricing"
+						class="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+					>
+						Pricing
 					</a>
 					<a
 						href="/login"

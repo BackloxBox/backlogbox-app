@@ -41,6 +41,8 @@
 
 	let { children, data } = $props();
 
+	// --- SEO: prevent indexing of authenticated app routes ---
+
 	const SLUG_ICONS: Record<MediaTypeSlug, Component<{ class?: string }>> = {
 		books: BookOpen,
 		movies: Film,
@@ -198,6 +200,10 @@
 		});
 	});
 </script>
+
+<svelte:head>
+	<meta name="robots" content="noindex" />
+</svelte:head>
 
 {#if isOnboarding}
 	<!-- Full-page layout for onboarding (no sidebar) -->

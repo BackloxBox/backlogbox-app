@@ -90,8 +90,8 @@ export const posts: readonly BlogPost[] = [
 		title: 'Best Goodreads & Letterboxd Alternative: Why You Need an All-in-One Media Tracker',
 		description:
 			'Tired of juggling Goodreads, Letterboxd, Backloggd, and Trakt? Compare single-media trackers vs. all-in-one solutions and find a better way to organize your backlog.',
-		publishedAt: '2026-02-17',
-		updatedAt: '2026-02-17',
+		publishedAt: '2026-02-14',
+		updatedAt: '2026-02-14',
 		author: 'BacklogBox Team',
 		readingTime: '7 min read',
 		keywords: [
@@ -108,8 +108,8 @@ export const posts: readonly BlogPost[] = [
 		title: 'Game Backlog Management: A Complete Guide to Tackling Your Pile of Shame',
 		description:
 			'Struggling with an overwhelming game backlog? Learn the Kanban method, priority frameworks, and practical strategies to finally tackle your pile of shame.',
-		publishedAt: '2026-02-17',
-		updatedAt: '2026-02-17',
+		publishedAt: '2026-02-10',
+		updatedAt: '2026-02-10',
 		author: 'BacklogBox Team',
 		readingTime: '9 min read',
 		keywords: [
