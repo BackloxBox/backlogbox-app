@@ -126,7 +126,7 @@
 
 <ModeWatcher defaultMode="dark" />
 <Toaster richColors />
-<Tooltip.Provider>
+<Tooltip.Provider delayDuration={300} skipDelayDuration={150}>
 	<IosInstallHint />
 	{#if dev}
 		<CacheDebugOverlay />
