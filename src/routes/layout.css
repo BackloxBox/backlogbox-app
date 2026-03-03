@@ -136,6 +136,32 @@
 	}
 }
 
+/* ------------------------------------------------------------------ */
+/* Reduced motion: kill all animation/transition for a11y              */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* Tactile button press — subtle scale on :active (Emil Kowalski #1)  */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: no-preference) {
+	button:active:not(:disabled),
+	[role='button']:active:not(:disabled),
+	a[data-slot='button']:active {
+		transform: scale(0.97);
+		transition: transform 100ms ease-out;
+	}
+}
+
 @layer base {
 	* {
 		@apply border-border outline-ring/50;

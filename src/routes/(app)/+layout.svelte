@@ -37,6 +37,8 @@
 	import Crown from '@lucide/svelte/icons/crown';
 	import Share2 from '@lucide/svelte/icons/share-2';
 	import MessageSquareMore from '@lucide/svelte/icons/message-square-more';
+	import { fade } from 'svelte/transition';
+	import { prefersReducedMotion } from 'svelte/motion';
 	import type { Component } from 'svelte';
 
 	let { children, data } = $props();
@@ -225,6 +227,7 @@
 		{#if sidebarOpen}
 			<div
 				class="fixed inset-0 z-30 bg-black/50 lg:hidden"
+				transition:fade={{ duration: prefersReducedMotion.current ? 0 : 150 }}
 				onclick={() => (sidebarOpen = false)}
 				onkeydown={() => {}}
 				role="presentation"

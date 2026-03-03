@@ -2,16 +2,27 @@
 	import { useSortable } from '@dnd-kit-svelte/svelte/sortable';
 	import CustomCardBody from './CustomCardBody.svelte';
 	import type { CustomListItemWithFields } from '$lib/server/db/custom-list-queries';
+	import type { SvelteSet } from 'svelte/reactivity';
 
 	type Props = {
 		item: CustomListItemWithFields;
 		index?: number;
 		group?: string;
 		isOverlay?: boolean;
+		recentlyCompleted?: SvelteSet<string>;
 		onclick?: (item: CustomListItemWithFields) => void;
 	};
 
-	let { item, index = 0, group = '', isOverlay = false, onclick }: Props = $props();
+	let {
+		item,
+		index = 0,
+		group = '',
+		isOverlay = false,
+		recentlyCompleted,
+		onclick
+	}: Props = $props();
+
+	const glowing = $derived(recentlyCompleted?.has(item.id) ?? false);
 
 	const sortable = useSortable({
 		id: () => item.id,
@@ -33,7 +44,8 @@
 		tabindex="0"
 		class="cursor-pointer rounded-lg border border-border bg-card p-2.5 transition select-none
 		{isDragging ? 'opacity-30' : 'opacity-100'}
-		{isOverlay ? 'shadow-lg ring-2 ring-ring' : 'hover:bg-accent'}"
+		{isOverlay ? 'shadow-lg ring-2 ring-ring' : 'hover:bg-accent'}
+		{glowing ? 'neon-glow' : ''}"
 		onclick={() => onclick?.(item)}
 		onkeydown={(e) => {
 			if (e.key === 'Enter' || e.key === ' ') onclick?.(item);
@@ -49,3 +61,22 @@
 		<CustomCardBody {item} />
 	</div>
 {/if}
+
+<style>
+	@keyframes neon-flash {
+		0% {
+			box-shadow:
+				0 0 8px #22c55e,
+				0 0 20px #22c55e60;
+			border-color: #22c55e;
+		}
+		100% {
+			box-shadow: none;
+			border-color: var(--color-border);
+		}
+	}
+
+	:global(.neon-glow) {
+		animation: neon-flash 0.8s ease-out;
+	}
+</style>
