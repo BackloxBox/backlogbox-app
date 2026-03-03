@@ -44,11 +44,11 @@
 
 	/** IDs of items that just appeared on the board — used for card-enter animation */
 	let recentlyAdded = new SvelteSet<string>();
-	let knownIds = new Set<string>();
+	let knownIds = new SvelteSet<string>();
 
 	/** Diff current items against known IDs to detect newly added items */
 	$effect(() => {
-		const currentIds = new Set<string>();
+		const currentIds = new SvelteSet<string>();
 		for (const status of MEDIA_STATUSES) {
 			for (const item of groupedItems[status]) currentIds.add(item.id);
 		}

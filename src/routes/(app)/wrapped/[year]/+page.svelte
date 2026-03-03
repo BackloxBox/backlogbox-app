@@ -3,6 +3,7 @@
 	import { MEDIA_TYPES, MEDIA_TYPE_LABELS, MEDIA_TYPE_COLORS, type MediaType } from '$lib/types';
 	import { Tween, prefersReducedMotion } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
+	import { SvelteSet } from 'svelte/reactivity';
 	import MediaCover from '$lib/components/board/MediaCover.svelte';
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Film from '@lucide/svelte/icons/film';
@@ -105,12 +106,11 @@
 	// ---------------------------------------------------------------------------
 
 	/** Tracks which card indices have been revealed */
-	let revealed = $state<Set<number>>(new Set());
+	const revealed = new SvelteSet<number>();
 
 	function observeReveal(node: HTMLElement, index: number) {
 		if (!browser || noMotion) {
 			revealed.add(index);
-			revealed = new Set(revealed);
 			return;
 		}
 
@@ -119,7 +119,6 @@
 				for (const entry of entries) {
 					if (entry.isIntersecting) {
 						revealed.add(index);
-						revealed = new Set(revealed);
 						observer.disconnect();
 					}
 				}
