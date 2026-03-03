@@ -5,16 +5,18 @@
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import type { CustomListStatus } from '$lib/types';
 	import type { CustomListItemWithFields } from '$lib/server/db/custom-list-queries';
+	import type { SvelteSet } from 'svelte/reactivity';
 
 	type Props = {
 		status: CustomListStatus;
 		label: string;
 		color: string;
 		items: CustomListItemWithFields[];
+		recentlyCompleted?: SvelteSet<string>;
 		onCardClick?: (item: CustomListItemWithFields) => void;
 	};
 
-	let { status, label, color, items, onCardClick }: Props = $props();
+	let { status, label, color, items, recentlyCompleted, onCardClick }: Props = $props();
 
 	const { ref, isDropTarget } = useDroppable({
 		id: () => status,
@@ -41,7 +43,7 @@
 	<ScrollArea class="min-h-0 flex-1" scrollbarYClasses="hidden">
 		<div class="flex flex-col gap-1.5 p-2" data-group={status}>
 			{#each items as item, index (item.id)}
-				<CustomKanbanCard {item} {index} group={status} onclick={onCardClick} />
+				<CustomKanbanCard {item} {index} group={status} {recentlyCompleted} onclick={onCardClick} />
 			{/each}
 
 			{#if items.length === 0}

@@ -2,8 +2,11 @@
 	import Search from '@lucide/svelte/icons/search';
 	import X from '@lucide/svelte/icons/x';
 	import { onMount } from 'svelte';
+	import { fade, scale } from 'svelte/transition';
+	import { prefersReducedMotion } from 'svelte/motion';
 
 	let { value = $bindable('') }: { value: string } = $props();
+	const noMotion = $derived(prefersReducedMotion.current);
 
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let expanded = $state(false);
@@ -49,7 +52,11 @@
 
 <div class="relative flex items-center">
 	{#if expanded}
-		<div class="relative flex items-center">
+		<div
+			class="relative flex items-center"
+			in:scale={{ start: 0.95, duration: noMotion ? 0 : 150, opacity: 0 }}
+			out:fade={{ duration: noMotion ? 0 : 100 }}
+		>
 			<Search class="pointer-events-none absolute left-2.5 size-3.5 text-muted-foreground" />
 			<input
 				bind:this={inputEl}
@@ -79,6 +86,7 @@
 		<button
 			type="button"
 			onclick={open}
+			in:fade={{ duration: noMotion ? 0 : 150, delay: 50 }}
 			class="hidden items-center gap-1.5 rounded-md border border-input bg-background
 				px-2.5 py-1.5 text-muted-foreground shadow-xs transition
 				hover:bg-accent hover:text-foreground sm:flex"

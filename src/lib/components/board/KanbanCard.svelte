@@ -10,6 +10,7 @@
 		group?: string;
 		isOverlay?: boolean;
 		recentlyCompleted?: SvelteSet<string>;
+		recentlyAdded?: SvelteSet<string>;
 		onclick?: (item: MediaItemWithMeta) => void;
 	};
 
@@ -19,10 +20,12 @@
 		group = '',
 		isOverlay = false,
 		recentlyCompleted,
+		recentlyAdded,
 		onclick
 	}: Props = $props();
 
 	const glowing = $derived(recentlyCompleted?.has(item.id) ?? false);
+	const entering = $derived(recentlyAdded?.has(item.id) ?? false);
 
 	const sortable = useSortable({
 		id: () => item.id,
@@ -45,7 +48,8 @@
 		class="cursor-pointer rounded-lg border border-border bg-card p-2.5 transition select-none
 		{isDragging ? 'opacity-30' : 'opacity-100'}
 		{isOverlay ? 'shadow-lg ring-2 ring-ring' : 'hover:bg-accent'}
-		{glowing ? 'neon-glow' : ''}"
+		{glowing ? 'neon-glow' : ''}
+		{entering ? 'card-enter' : ''}"
 		onclick={() => onclick?.(item)}
 		onkeydown={(e) => {
 			if (e.key === 'Enter' || e.key === ' ') onclick?.(item);

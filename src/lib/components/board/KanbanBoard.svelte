@@ -42,6 +42,34 @@
 	/** IDs of items that just moved to the "completed" column — used for glow animation */
 	let recentlyCompleted = new SvelteSet<string>();
 
+	/** IDs of items that just appeared on the board — used for card-enter animation */
+	let recentlyAdded = new SvelteSet<string>();
+	let knownIds = new SvelteSet<string>();
+
+	/** Diff current items against known IDs to detect newly added items */
+	$effect(() => {
+		const currentIds = new SvelteSet<string>();
+		for (const status of MEDIA_STATUSES) {
+			for (const item of groupedItems[status]) currentIds.add(item.id);
+		}
+
+		// Skip the initial render — don't animate items already on the board
+		if (knownIds.size > 0) {
+			const newIds: string[] = [];
+			for (const id of currentIds) {
+				if (!knownIds.has(id)) newIds.push(id);
+			}
+			if (newIds.length > 0) {
+				for (const id of newIds) recentlyAdded.add(id);
+				setTimeout(() => {
+					for (const id of newIds) recentlyAdded.delete(id);
+				}, 300);
+			}
+		}
+
+		knownIds = currentIds;
+	});
+
 	const STORAGE_PREFIX = 'bb:expanded:';
 	const DEFAULT_EXPANDED: MediaStatus[] = ['in_progress', 'backlog'];
 
@@ -142,6 +170,7 @@
 						color={STATUS_COLORS[status]}
 						items={columns[status] ?? []}
 						{recentlyCompleted}
+						{recentlyAdded}
 						{onCardClick}
 					/>
 				{/each}

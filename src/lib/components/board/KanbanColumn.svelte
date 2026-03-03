@@ -13,10 +13,12 @@
 		color: string;
 		items: MediaItemWithMeta[];
 		recentlyCompleted?: SvelteSet<string>;
+		recentlyAdded?: SvelteSet<string>;
 		onCardClick?: (item: MediaItemWithMeta) => void;
 	};
 
-	let { status, label, color, items, recentlyCompleted, onCardClick }: Props = $props();
+	let { status, label, color, items, recentlyCompleted, recentlyAdded, onCardClick }: Props =
+		$props();
 
 	const { ref, isDropTarget } = useDroppable({
 		id: () => status,
@@ -43,7 +45,14 @@
 	<ScrollArea class="min-h-0 flex-1" scrollbarYClasses="hidden">
 		<div class="flex flex-col gap-1.5 p-2" data-group={status}>
 			{#each items as item, index (item.id)}
-				<KanbanCard {item} {index} group={status} {recentlyCompleted} onclick={onCardClick} />
+				<KanbanCard
+					{item}
+					{index}
+					group={status}
+					{recentlyCompleted}
+					{recentlyAdded}
+					onclick={onCardClick}
+				/>
 			{/each}
 
 			{#if items.length === 0}
