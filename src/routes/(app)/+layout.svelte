@@ -254,10 +254,10 @@
 			<div class="flex-1 space-y-0.5 overflow-y-auto p-2">
 				<a
 					href="/discover"
-					class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-					{discoverActive
-						? 'bg-sidebar-accent text-sidebar-accent-foreground'
-						: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+					class="group flex items-center gap-2.5 rounded-lg border-l-2 px-3 py-1.5 text-sm font-medium transition
+				{discoverActive
+						? 'border-[#8B5CF6] bg-sidebar-accent text-sidebar-accent-foreground'
+						: 'border-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
 					onclick={() => (sidebarOpen = false)}
 				>
 					<span class="shrink-0" style:color="#8B5CF6">
@@ -267,10 +267,10 @@
 				</a>
 				<a
 					href="/dashboard"
-					class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-					{dashboardActive
-						? 'bg-sidebar-accent text-sidebar-accent-foreground'
-						: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+					class="group flex items-center gap-2.5 rounded-lg border-l-2 px-3 py-1.5 text-sm font-medium transition
+				{dashboardActive
+						? 'border-[#f59e0b] bg-sidebar-accent text-sidebar-accent-foreground'
+						: 'border-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
 					onclick={() => (sidebarOpen = false)}
 				>
 					<span class="shrink-0" style:color="#f59e0b">
@@ -284,12 +284,13 @@
 					{@const itemCount = item.type ? data.itemCounts[item.type] : undefined}
 					<a
 						href={item.href}
-						class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-		{active
+						class="group flex items-center gap-2.5 rounded-lg border-l-2 px-3 py-1.5 text-sm font-medium transition
+	{active
 							? 'bg-sidebar-accent text-sidebar-accent-foreground'
-							: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}
-		{item.highlighted ? '' : 'opacity-50'}
-		{item.locked ? 'opacity-40' : ''}"
+							: 'border-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}
+	{item.highlighted ? '' : 'opacity-50'}
+	{item.locked ? 'opacity-40' : ''}"
+						style:border-left-color={active ? item.color : undefined}
 						onclick={() => (sidebarOpen = false)}
 					>
 						<span
@@ -328,10 +329,10 @@
 						{@const Icon = getIconComponent(list.icon)}
 						<a
 							href="/lists/{list.slug}"
-							class="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-							{listActive
-								? 'bg-sidebar-accent text-sidebar-accent-foreground'
-								: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+							class="group flex items-center gap-2.5 rounded-lg border-l-2 px-3 py-1.5 text-sm font-medium transition
+						{listActive
+								? 'border-sidebar-primary bg-sidebar-accent text-sidebar-accent-foreground'
+								: 'border-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
 							onclick={() => (sidebarOpen = false)}
 						>
 							<span class="shrink-0 text-muted-foreground">
@@ -461,10 +462,10 @@
 			<div class="space-y-0.5 p-2">
 				<a
 					href="/settings"
-					class="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-					{page.url.pathname === '/settings'
-						? 'bg-sidebar-accent text-sidebar-accent-foreground'
-						: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+					class="flex items-center gap-2.5 rounded-lg border-l-2 px-3 py-1.5 text-sm font-medium transition
+				{page.url.pathname === '/settings'
+						? 'border-sidebar-primary bg-sidebar-accent text-sidebar-accent-foreground'
+						: 'border-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
 					onclick={() => (sidebarOpen = false)}
 				>
 					<Settings
