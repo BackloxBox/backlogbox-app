@@ -2,6 +2,7 @@
 	import './layout.css';
 	import { dev } from '$app/environment';
 	import { page } from '$app/state';
+	import { onNavigate } from '$app/navigation';
 	import { env } from '$env/dynamic/public';
 	import { onMount } from 'svelte';
 	import { ModeWatcher } from 'mode-watcher';
@@ -16,6 +17,17 @@
 
 	// --- Analytics (pageviews auto-tracked via defaults: '2026-01-30') ---
 	initPostHog(env.PUBLIC_POSTHOG_KEY, env.PUBLIC_POSTHOG_HOST);
+
+	// --- View Transitions API — subtle crossfade between pages ---
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 
 	// --- PWA service worker registration ---
 	onMount(async () => {

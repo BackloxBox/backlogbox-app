@@ -46,6 +46,8 @@
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 	import SettingsIcon from '@lucide/svelte/icons/settings';
 	import type { Component } from 'svelte';
+	import { fade } from 'svelte/transition';
+	import { prefersReducedMotion } from 'svelte/motion';
 	import type { AccessLevel } from '$lib/server/access';
 	import UpgradeBanner from '$lib/components/UpgradeBanner.svelte';
 	import BookOpen from '@lucide/svelte/icons/book-open';
@@ -62,6 +64,7 @@
 		podcasts: Podcast
 	};
 
+	const noMotion = $derived(prefersReducedMotion.current);
 	const isFree = $derived((page.data.accessLevel as AccessLevel) === 'free');
 
 	let activeTab = $state<MediaTypeSlug>('movies');
@@ -286,42 +289,352 @@
 		{/each}
 	</div>
 
-	<!-- Recommendations -->
-	{#if type !== 'podcast'}
-		<section class="space-y-6">
-			<div class="flex items-center justify-between gap-2">
-				<div class="flex items-center gap-2">
-					<span style:color="#3B82F6"><Sparkles class="size-5" /></span>
-					<h2 class="text-lg font-semibold">For You</h2>
-				</div>
-				{#if !isFree}
-					<Button
-						variant="ghost"
-						size="sm"
-						class="h-7 gap-1.5 text-xs text-muted-foreground"
-						onclick={() => (manageExcludedOpen = true)}
-					>
-						<SettingsIcon class="size-3" />
-						Manage
-					</Button>
-				{/if}
-			</div>
+	{#key activeTab}
+		<div in:fade={{ duration: noMotion ? 0 : 200, delay: 50 }}>
+			<!-- Recommendations -->
+			{#if type !== 'podcast'}
+				<section class="space-y-6">
+					<div class="flex items-center justify-between gap-2">
+						<div class="flex items-center gap-2">
+							<span style:color="#3B82F6"><Sparkles class="size-5" /></span>
+							<h2 class="text-lg font-semibold">For You</h2>
+						</div>
+						{#if !isFree}
+							<Button
+								variant="ghost"
+								size="sm"
+								class="h-7 gap-1.5 text-xs text-muted-foreground"
+								onclick={() => (manageExcludedOpen = true)}
+							>
+								<SettingsIcon class="size-3" />
+								Manage
+							</Button>
+						{/if}
+					</div>
 
-			{#if isFree}
-				<UpgradeBanner
-					message="Personalized recommendations are a paid feature. Upgrade to get suggestions based on your library."
-					variant="overlay"
-				/>
-			{:else if recsQuery?.error}
-				<p class="py-8 text-center text-sm text-muted-foreground">
-					Could not load recommendations right now.
-				</p>
-			{:else if recsQuery?.loading}
-				{#each Array(2) as _, i (i)}
-					<div class="space-y-3">
-						<div class="h-4 w-48 animate-pulse rounded bg-muted"></div>
+					{#if isFree}
+						<UpgradeBanner
+							message="Personalized recommendations are a paid feature. Upgrade to get suggestions based on your library."
+							variant="overlay"
+						/>
+					{:else if recsQuery?.error}
+						<p class="py-8 text-center text-sm text-muted-foreground">
+							Could not load recommendations right now.
+						</p>
+					{:else if recsQuery?.loading}
+						{#each Array(2) as _, i (i)}
+							<div class="space-y-3">
+								<div class="h-4 w-48 animate-pulse rounded bg-muted"></div>
+								<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
+									{#each Array(5) as _, j (j)}
+										<div class="animate-pulse space-y-1.5">
+											<div class="aspect-[2/3] rounded-md bg-muted"></div>
+											<div class="h-3 w-3/4 rounded bg-muted"></div>
+											<div class="h-3 w-1/2 rounded bg-muted"></div>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/each}
+					{:else if recsData.length === 0}
+						<div
+							class="flex h-40 items-center justify-center rounded-lg border border-dashed bg-muted/40 text-center text-sm text-muted-foreground"
+						>
+							Add some {type ? MEDIA_TYPE_LABELS[type].plural.toLowerCase() : 'items'} to your library
+							to get personalized recommendations.
+						</div>
+					{:else}
+						{#each recsData as group, i (i)}
+							<div
+								class="space-y-3 rounded-lg border border-border/50 bg-muted/20 p-4 {showDebug &&
+								group._debug
+									? debugBorderClass(group._debug)
+									: ''}"
+							>
+								<div class="flex items-center justify-between gap-2">
+									<h3 class="text-sm font-medium text-muted-foreground">
+										Because you added
+										<span
+											class="font-semibold text-foreground"
+											style:color={type ? MEDIA_TYPE_COLORS[type] : undefined}
+										>
+											{group.seedTitle}
+										</span>
+									</h3>
+									<div class="flex shrink-0 items-center gap-1.5">
+										{#if showDebug && group._debug}
+											<span
+												class="rounded border px-1.5 py-0.5 font-mono text-[10px] {debugBadgeClass(
+													group._debug
+												)}"
+											>
+												{debugLabel(group._debug)}
+											</span>
+										{/if}
+										<Tooltip.Root>
+											<Tooltip.Trigger>
+												<button
+													class="rounded-md p-1 text-muted-foreground/60 transition hover:bg-muted hover:text-muted-foreground"
+													onclick={() => (excludeConfirm = { group })}
+													aria-label="Don't recommend based on {group.seedTitle}"
+												>
+													<EyeOff class="size-3.5" />
+												</button>
+											</Tooltip.Trigger>
+											<Tooltip.Content>
+												<p>Don't recommend based on this</p>
+											</Tooltip.Content>
+										</Tooltip.Root>
+									</div>
+								</div>
+								<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
+									{#each group.items as result (result.externalId)}
+										{@const isAdding = addingIds.has(result.externalId)}
+										<div class="group space-y-1.5">
+											<div class="relative aspect-[2/3] overflow-hidden rounded-md">
+												{#if result.coverUrl}
+													<img
+														src={result.coverUrl}
+														alt={result.title}
+														loading="lazy"
+														class="h-full w-full object-cover"
+													/>
+												{:else}
+													<div
+														class="flex h-full w-full items-center justify-center text-xl font-semibold text-white/80 select-none"
+														style:background-color="hsl({titleToHue(result.title)} 40% 30%)"
+													>
+														{result.title.trim().charAt(0).toUpperCase()}
+													</div>
+												{/if}
+												{#if result.description}
+													<Popover.Root>
+														<Popover.Trigger
+															class="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/50 text-white/80 transition-opacity hover:bg-black/70 sm:opacity-0 sm:group-hover:opacity-100"
+														>
+															<Info class="size-3" />
+														</Popover.Trigger>
+														<Popover.Content
+															class="max-h-64 w-64 overflow-y-auto text-xs"
+															side="bottom"
+															align="end"
+														>
+															<p>{result.description}</p>
+														</Popover.Content>
+													</Popover.Root>
+												{/if}
+												<div
+													class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+												>
+													<div class="flex w-full gap-px">
+														<Button
+															variant="secondary"
+															size="sm"
+															class="h-7 flex-1 rounded-r-none text-xs"
+															disabled={isAdding}
+															onclick={() => handleAdd(result)}
+														>
+															{#if isAdding}
+																<LoaderCircle class="size-3 animate-spin" />
+															{:else}
+																<Plus class="size-3" />
+															{/if}
+															Add
+														</Button>
+														<DropdownMenu.Root>
+															<DropdownMenu.Trigger
+																class="flex h-7 items-center rounded-r-md bg-secondary px-1 text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:pointer-events-none disabled:opacity-50"
+																disabled={isAdding}
+															>
+																<ChevronDown class="size-3" />
+															</DropdownMenu.Trigger>
+															<DropdownMenu.Portal>
+																<DropdownMenu.Content align="end" class="min-w-[8rem]">
+																	{#each MEDIA_STATUSES as s (s)}
+																		<DropdownMenu.Item onclick={() => handleAdd(result, s)}>
+																			{type ? STATUS_LABELS[type][s] : s}
+																		</DropdownMenu.Item>
+																	{/each}
+																</DropdownMenu.Content>
+															</DropdownMenu.Portal>
+														</DropdownMenu.Root>
+													</div>
+												</div>
+											</div>
+											<p class="truncate text-xs font-medium">{result.title}</p>
+											<p class="truncate text-[11px] text-muted-foreground">
+												{subtitle(result)}
+											</p>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/each}
+					{/if}
+				</section>
+				<Separator />
+			{/if}
+
+			<!-- Anticipated / Upcoming -->
+			{#if anticipatedQuery}
+				<section class="space-y-3">
+					<div class="flex items-center justify-between gap-2">
+						<div class="flex items-center gap-2">
+							<span style:color="#F97316"><Rocket class="size-5" /></span>
+							<h2 class="text-lg font-semibold">{anticipatedLabel}</h2>
+						</div>
+						{#if showDebug && anticipatedDebug}
+							<span
+								class="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] {debugBadgeClass(
+									anticipatedDebug
+								)}"
+							>
+								{debugLabel(anticipatedDebug)}
+							</span>
+						{/if}
+					</div>
+
+					<div
+						class="rounded-lg border border-border/50 bg-muted/20 p-4 {showDebug && anticipatedDebug
+							? debugBorderClass(anticipatedDebug)
+							: ''}"
+					>
+						{#if anticipatedQuery.error}
+							<p class="py-8 text-center text-sm text-muted-foreground">
+								Could not load {anticipatedLabel.toLowerCase()} items right now.
+							</p>
+						{:else if anticipatedQuery.loading}
+							<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
+								{#each Array(10) as _, i (i)}
+									<div class="animate-pulse space-y-1.5">
+										<div class="aspect-[2/3] rounded-md bg-muted"></div>
+										<div class="h-3 w-3/4 rounded bg-muted"></div>
+										<div class="h-3 w-1/2 rounded bg-muted"></div>
+									</div>
+								{/each}
+							</div>
+						{:else if anticipatedData.length === 0}
+							<p class="py-8 text-center text-sm text-muted-foreground">
+								No {anticipatedLabel.toLowerCase()} items available right now.
+							</p>
+						{:else}
+							<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
+								{#each anticipatedData.slice(0, 20) as result (result.externalId)}
+									{@const isAdding = addingIds.has(result.externalId)}
+									<div class="group space-y-1.5">
+										<div class="relative aspect-[2/3] overflow-hidden rounded-md">
+											{#if result.coverUrl}
+												<img
+													src={result.coverUrl}
+													alt={result.title}
+													loading="lazy"
+													class="h-full w-full object-cover"
+												/>
+											{:else}
+												<div
+													class="flex h-full w-full items-center justify-center text-xl font-semibold text-white/80 select-none"
+													style:background-color="hsl({titleToHue(result.title)} 40% 30%)"
+												>
+													{result.title.trim().charAt(0).toUpperCase()}
+												</div>
+											{/if}
+											{#if result.description}
+												<Popover.Root>
+													<Popover.Trigger
+														class="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/50 text-white/80 transition-opacity hover:bg-black/70 sm:opacity-0 sm:group-hover:opacity-100"
+													>
+														<Info class="size-3" />
+													</Popover.Trigger>
+													<Popover.Content
+														class="max-h-64 w-64 overflow-y-auto text-xs"
+														side="bottom"
+														align="end"
+													>
+														<p>{result.description}</p>
+													</Popover.Content>
+												</Popover.Root>
+											{/if}
+											<div
+												class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+											>
+												<div class="flex w-full gap-px">
+													<Button
+														variant="secondary"
+														size="sm"
+														class="h-7 flex-1 rounded-r-none text-xs"
+														disabled={isAdding}
+														onclick={() => handleAdd(result)}
+													>
+														{#if isAdding}
+															<LoaderCircle class="size-3 animate-spin" />
+														{:else}
+															<Plus class="size-3" />
+														{/if}
+														Add
+													</Button>
+													<DropdownMenu.Root>
+														<DropdownMenu.Trigger
+															class="flex h-7 items-center rounded-r-md bg-secondary px-1 text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:pointer-events-none disabled:opacity-50"
+															disabled={isAdding}
+														>
+															<ChevronDown class="size-3" />
+														</DropdownMenu.Trigger>
+														<DropdownMenu.Portal>
+															<DropdownMenu.Content align="end" class="min-w-[8rem]">
+																{#each MEDIA_STATUSES as s (s)}
+																	<DropdownMenu.Item onclick={() => handleAdd(result, s)}>
+																		{type ? STATUS_LABELS[type][s] : s}
+																	</DropdownMenu.Item>
+																{/each}
+															</DropdownMenu.Content>
+														</DropdownMenu.Portal>
+													</DropdownMenu.Root>
+												</div>
+											</div>
+										</div>
+										<p class="truncate text-xs font-medium">{result.title}</p>
+										<p class="truncate text-[11px] text-muted-foreground">
+											{subtitle(result, { showFullDate: true })}
+										</p>
+									</div>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				</section>
+				<Separator />
+			{/if}
+
+			<!-- Trending -->
+			<section class="space-y-3">
+				<div class="flex items-center justify-between gap-2">
+					<div class="flex items-center gap-2">
+						<span style:color="#A855F7"><TrendingUp class="size-5" /></span>
+						<h2 class="text-lg font-semibold">Trending</h2>
+					</div>
+					{#if showDebug && trendingDebug}
+						<span
+							class="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] {debugBadgeClass(
+								trendingDebug
+							)}"
+						>
+							{debugLabel(trendingDebug)}
+						</span>
+					{/if}
+				</div>
+
+				<div
+					class="rounded-lg border border-border/50 bg-muted/20 p-4 {showDebug && trendingDebug
+						? debugBorderClass(trendingDebug)
+						: ''}"
+				>
+					{#if trendingQuery.error}
+						<p class="py-8 text-center text-sm text-muted-foreground">
+							Could not load trending items right now.
+						</p>
+					{:else if trendingQuery.loading}
 						<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
-							{#each Array(5) as _, j (j)}
+							{#each Array(10) as _, i (i)}
 								<div class="animate-pulse space-y-1.5">
 									<div class="aspect-[2/3] rounded-md bg-muted"></div>
 									<div class="h-3 w-3/4 rounded bg-muted"></div>
@@ -329,61 +642,13 @@
 								</div>
 							{/each}
 						</div>
-					</div>
-				{/each}
-			{:else if recsData.length === 0}
-				<div
-					class="flex h-40 items-center justify-center rounded-lg border border-dashed bg-muted/40 text-center text-sm text-muted-foreground"
-				>
-					Add some {type ? MEDIA_TYPE_LABELS[type].plural.toLowerCase() : 'items'} to your library to
-					get personalized recommendations.
-				</div>
-			{:else}
-				{#each recsData as group, i (i)}
-					<div
-						class="space-y-3 rounded-lg border border-border/50 bg-muted/20 p-4 {showDebug &&
-						group._debug
-							? debugBorderClass(group._debug)
-							: ''}"
-					>
-						<div class="flex items-center justify-between gap-2">
-							<h3 class="text-sm font-medium text-muted-foreground">
-								Because you added
-								<span
-									class="font-semibold text-foreground"
-									style:color={type ? MEDIA_TYPE_COLORS[type] : undefined}
-								>
-									{group.seedTitle}
-								</span>
-							</h3>
-							<div class="flex shrink-0 items-center gap-1.5">
-								{#if showDebug && group._debug}
-									<span
-										class="rounded border px-1.5 py-0.5 font-mono text-[10px] {debugBadgeClass(
-											group._debug
-										)}"
-									>
-										{debugLabel(group._debug)}
-									</span>
-								{/if}
-								<Tooltip.Root>
-									<Tooltip.Trigger>
-										<button
-											class="rounded-md p-1 text-muted-foreground/60 transition hover:bg-muted hover:text-muted-foreground"
-											onclick={() => (excludeConfirm = { group })}
-											aria-label="Don't recommend based on {group.seedTitle}"
-										>
-											<EyeOff class="size-3.5" />
-										</button>
-									</Tooltip.Trigger>
-									<Tooltip.Content>
-										<p>Don't recommend based on this</p>
-									</Tooltip.Content>
-								</Tooltip.Root>
-							</div>
-						</div>
+					{:else if trendingData.length === 0}
+						<p class="py-8 text-center text-sm text-muted-foreground">
+							No trending items available right now.
+						</p>
+					{:else}
 						<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
-							{#each group.items as result (result.externalId)}
+							{#each trendingData.slice(0, 20) as result (result.externalId)}
 								{@const isAdding = addingIds.has(result.externalId)}
 								<div class="group space-y-1.5">
 									<div class="relative aspect-[2/3] overflow-hidden rounded-md">
@@ -457,273 +722,15 @@
 										</div>
 									</div>
 									<p class="truncate text-xs font-medium">{result.title}</p>
-									<p class="truncate text-[11px] text-muted-foreground">
-										{subtitle(result)}
-									</p>
+									<p class="truncate text-[11px] text-muted-foreground">{subtitle(result)}</p>
 								</div>
 							{/each}
 						</div>
-					</div>
-				{/each}
-			{/if}
-		</section>
-		<Separator />
-	{/if}
-
-	<!-- Anticipated / Upcoming -->
-	{#if anticipatedQuery}
-		<section class="space-y-3">
-			<div class="flex items-center justify-between gap-2">
-				<div class="flex items-center gap-2">
-					<span style:color="#F97316"><Rocket class="size-5" /></span>
-					<h2 class="text-lg font-semibold">{anticipatedLabel}</h2>
+					{/if}
 				</div>
-				{#if showDebug && anticipatedDebug}
-					<span
-						class="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] {debugBadgeClass(
-							anticipatedDebug
-						)}"
-					>
-						{debugLabel(anticipatedDebug)}
-					</span>
-				{/if}
-			</div>
-
-			<div
-				class="rounded-lg border border-border/50 bg-muted/20 p-4 {showDebug && anticipatedDebug
-					? debugBorderClass(anticipatedDebug)
-					: ''}"
-			>
-				{#if anticipatedQuery.error}
-					<p class="py-8 text-center text-sm text-muted-foreground">
-						Could not load {anticipatedLabel.toLowerCase()} items right now.
-					</p>
-				{:else if anticipatedQuery.loading}
-					<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
-						{#each Array(10) as _, i (i)}
-							<div class="animate-pulse space-y-1.5">
-								<div class="aspect-[2/3] rounded-md bg-muted"></div>
-								<div class="h-3 w-3/4 rounded bg-muted"></div>
-								<div class="h-3 w-1/2 rounded bg-muted"></div>
-							</div>
-						{/each}
-					</div>
-				{:else if anticipatedData.length === 0}
-					<p class="py-8 text-center text-sm text-muted-foreground">
-						No {anticipatedLabel.toLowerCase()} items available right now.
-					</p>
-				{:else}
-					<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
-						{#each anticipatedData.slice(0, 20) as result (result.externalId)}
-							{@const isAdding = addingIds.has(result.externalId)}
-							<div class="group space-y-1.5">
-								<div class="relative aspect-[2/3] overflow-hidden rounded-md">
-									{#if result.coverUrl}
-										<img
-											src={result.coverUrl}
-											alt={result.title}
-											loading="lazy"
-											class="h-full w-full object-cover"
-										/>
-									{:else}
-										<div
-											class="flex h-full w-full items-center justify-center text-xl font-semibold text-white/80 select-none"
-											style:background-color="hsl({titleToHue(result.title)} 40% 30%)"
-										>
-											{result.title.trim().charAt(0).toUpperCase()}
-										</div>
-									{/if}
-									{#if result.description}
-										<Popover.Root>
-											<Popover.Trigger
-												class="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/50 text-white/80 transition-opacity hover:bg-black/70 sm:opacity-0 sm:group-hover:opacity-100"
-											>
-												<Info class="size-3" />
-											</Popover.Trigger>
-											<Popover.Content
-												class="max-h-64 w-64 overflow-y-auto text-xs"
-												side="bottom"
-												align="end"
-											>
-												<p>{result.description}</p>
-											</Popover.Content>
-										</Popover.Root>
-									{/if}
-									<div
-										class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
-									>
-										<div class="flex w-full gap-px">
-											<Button
-												variant="secondary"
-												size="sm"
-												class="h-7 flex-1 rounded-r-none text-xs"
-												disabled={isAdding}
-												onclick={() => handleAdd(result)}
-											>
-												{#if isAdding}
-													<LoaderCircle class="size-3 animate-spin" />
-												{:else}
-													<Plus class="size-3" />
-												{/if}
-												Add
-											</Button>
-											<DropdownMenu.Root>
-												<DropdownMenu.Trigger
-													class="flex h-7 items-center rounded-r-md bg-secondary px-1 text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:pointer-events-none disabled:opacity-50"
-													disabled={isAdding}
-												>
-													<ChevronDown class="size-3" />
-												</DropdownMenu.Trigger>
-												<DropdownMenu.Portal>
-													<DropdownMenu.Content align="end" class="min-w-[8rem]">
-														{#each MEDIA_STATUSES as s (s)}
-															<DropdownMenu.Item onclick={() => handleAdd(result, s)}>
-																{type ? STATUS_LABELS[type][s] : s}
-															</DropdownMenu.Item>
-														{/each}
-													</DropdownMenu.Content>
-												</DropdownMenu.Portal>
-											</DropdownMenu.Root>
-										</div>
-									</div>
-								</div>
-								<p class="truncate text-xs font-medium">{result.title}</p>
-								<p class="truncate text-[11px] text-muted-foreground">
-									{subtitle(result, { showFullDate: true })}
-								</p>
-							</div>
-						{/each}
-					</div>
-				{/if}
-			</div>
-		</section>
-		<Separator />
-	{/if}
-
-	<!-- Trending -->
-	<section class="space-y-3">
-		<div class="flex items-center justify-between gap-2">
-			<div class="flex items-center gap-2">
-				<span style:color="#A855F7"><TrendingUp class="size-5" /></span>
-				<h2 class="text-lg font-semibold">Trending</h2>
-			</div>
-			{#if showDebug && trendingDebug}
-				<span
-					class="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] {debugBadgeClass(
-						trendingDebug
-					)}"
-				>
-					{debugLabel(trendingDebug)}
-				</span>
-			{/if}
+			</section>
 		</div>
-
-		<div
-			class="rounded-lg border border-border/50 bg-muted/20 p-4 {showDebug && trendingDebug
-				? debugBorderClass(trendingDebug)
-				: ''}"
-		>
-			{#if trendingQuery.error}
-				<p class="py-8 text-center text-sm text-muted-foreground">
-					Could not load trending items right now.
-				</p>
-			{:else if trendingQuery.loading}
-				<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
-					{#each Array(10) as _, i (i)}
-						<div class="animate-pulse space-y-1.5">
-							<div class="aspect-[2/3] rounded-md bg-muted"></div>
-							<div class="h-3 w-3/4 rounded bg-muted"></div>
-							<div class="h-3 w-1/2 rounded bg-muted"></div>
-						</div>
-					{/each}
-				</div>
-			{:else if trendingData.length === 0}
-				<p class="py-8 text-center text-sm text-muted-foreground">
-					No trending items available right now.
-				</p>
-			{:else}
-				<div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
-					{#each trendingData.slice(0, 20) as result (result.externalId)}
-						{@const isAdding = addingIds.has(result.externalId)}
-						<div class="group space-y-1.5">
-							<div class="relative aspect-[2/3] overflow-hidden rounded-md">
-								{#if result.coverUrl}
-									<img
-										src={result.coverUrl}
-										alt={result.title}
-										loading="lazy"
-										class="h-full w-full object-cover"
-									/>
-								{:else}
-									<div
-										class="flex h-full w-full items-center justify-center text-xl font-semibold text-white/80 select-none"
-										style:background-color="hsl({titleToHue(result.title)} 40% 30%)"
-									>
-										{result.title.trim().charAt(0).toUpperCase()}
-									</div>
-								{/if}
-								{#if result.description}
-									<Popover.Root>
-										<Popover.Trigger
-											class="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/50 text-white/80 transition-opacity hover:bg-black/70 sm:opacity-0 sm:group-hover:opacity-100"
-										>
-											<Info class="size-3" />
-										</Popover.Trigger>
-										<Popover.Content
-											class="max-h-64 w-64 overflow-y-auto text-xs"
-											side="bottom"
-											align="end"
-										>
-											<p>{result.description}</p>
-										</Popover.Content>
-									</Popover.Root>
-								{/if}
-								<div
-									class="absolute inset-x-0 bottom-0 flex bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
-								>
-									<div class="flex w-full gap-px">
-										<Button
-											variant="secondary"
-											size="sm"
-											class="h-7 flex-1 rounded-r-none text-xs"
-											disabled={isAdding}
-											onclick={() => handleAdd(result)}
-										>
-											{#if isAdding}
-												<LoaderCircle class="size-3 animate-spin" />
-											{:else}
-												<Plus class="size-3" />
-											{/if}
-											Add
-										</Button>
-										<DropdownMenu.Root>
-											<DropdownMenu.Trigger
-												class="flex h-7 items-center rounded-r-md bg-secondary px-1 text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:pointer-events-none disabled:opacity-50"
-												disabled={isAdding}
-											>
-												<ChevronDown class="size-3" />
-											</DropdownMenu.Trigger>
-											<DropdownMenu.Portal>
-												<DropdownMenu.Content align="end" class="min-w-[8rem]">
-													{#each MEDIA_STATUSES as s (s)}
-														<DropdownMenu.Item onclick={() => handleAdd(result, s)}>
-															{type ? STATUS_LABELS[type][s] : s}
-														</DropdownMenu.Item>
-													{/each}
-												</DropdownMenu.Content>
-											</DropdownMenu.Portal>
-										</DropdownMenu.Root>
-									</div>
-								</div>
-							</div>
-							<p class="truncate text-xs font-medium">{result.title}</p>
-							<p class="truncate text-[11px] text-muted-foreground">{subtitle(result)}</p>
-						</div>
-					{/each}
-				</div>
-			{/if}
-		</div>
-	</section>
+	{/key}
 </div>
 
 <!-- Exclude confirmation dialog -->

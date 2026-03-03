@@ -22,6 +22,9 @@
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import { fly, fade } from 'svelte/transition';
+	import { prefersReducedMotion } from 'svelte/motion';
+	import { cubicOut } from 'svelte/easing';
 	import type { Component } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
@@ -60,6 +63,8 @@
 	let submitting = $state(false);
 
 	const selectedCount = $derived(selectedItems.size);
+
+	const noMotion = $derived(prefersReducedMotion.current);
 
 	trackEvent('onboarding_started');
 
@@ -202,7 +207,11 @@
 	<!-- ===================================================================== -->
 	<!-- STEP 1: Interest Selection                                            -->
 	<!-- ===================================================================== -->
-	<div class="flex min-h-screen flex-col items-center justify-center">
+	<div
+		class="flex min-h-screen flex-col items-center justify-center"
+		in:fly={{ x: noMotion ? 0 : -40, duration: noMotion ? 0 : 300, easing: cubicOut }}
+		out:fade={{ duration: noMotion ? 0 : 150 }}
+	>
 		<div class="flex flex-col items-center">
 			<!-- Logo -->
 			<div class="onboarding-fade flex items-center gap-2.5" style="animation-delay: 0ms">
@@ -307,7 +316,11 @@
 	<!-- ===================================================================== -->
 	<!-- STEP 2: Seed Your Backlog                                             -->
 	<!-- ===================================================================== -->
-	<div class="flex min-h-screen w-full flex-col justify-center py-6">
+	<div
+		class="flex min-h-screen w-full flex-col justify-center py-6"
+		in:fly={{ x: noMotion ? 0 : 40, duration: noMotion ? 0 : 300, easing: cubicOut }}
+		out:fade={{ duration: noMotion ? 0 : 150 }}
+	>
 		<div class="onboarding-fade text-center" style="animation-delay: 0ms">
 			<h1 class="onboarding-gradient text-2xl font-bold tracking-tight sm:text-3xl">
 				Add some items to get started
