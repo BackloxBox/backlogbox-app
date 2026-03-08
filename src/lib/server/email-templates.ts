@@ -165,20 +165,55 @@ export function emailVerificationTemplate(params: { url: string; name: string })
 	});
 }
 
-export function trialExpiryWarningTemplate(params: {
+export function welcomeTemplate(params: { name: string; appUrl: string }): string {
+	return baseTemplate({
+		preheader: 'Your media backlog finally has a home',
+		heading: 'Welcome to BacklogBox',
+		body: `<p style="margin:0 0 16px 0;">Hey ${params.name},</p>
+<p style="margin:0 0 16px 0;">Welcome aboard! Your 14-day free trial is now active.</p>
+<p style="margin:0 0 16px 0;">BacklogBox is your personal space to track everything you're watching, reading, playing, and listening to. No more forgetting that show someone recommended or losing track of where you left off.</p>
+<p style="margin:0 0 8px 0;">Here are a few things you can do right away:</p>
+<ul class="email-text" style="margin:0 0 16px 0;padding-left:20px;font-size:15px;line-height:1.6;">
+  <li>Add books, movies, series, games, or podcasts to your backlog</li>
+  <li>Drag and drop items between columns as you progress</li>
+  <li>Discover new things based on what you already love</li>
+</ul>
+<p style="margin:0;">Jump in and start adding your first items.</p>`,
+		buttonText: 'Open BacklogBox',
+		buttonUrl: params.appUrl,
+		footer:
+			'You received this email because you just signed up for BacklogBox.<br>Your 14-day free trial is now active.'
+	});
+}
+
+export function subscriptionConfirmedTemplate(params: { name: string; appUrl: string }): string {
+	return baseTemplate({
+		preheader: 'Thanks for subscribing to BacklogBox',
+		heading: "You're all set!",
+		body: `<p style="margin:0 0 16px 0;">Hey ${params.name},</p>
+<p style="margin:0 0 16px 0;">Thanks for subscribing! You now have full, unlimited access to BacklogBox &mdash; all boards, unlimited items, discover recommendations, and everything else.</p>
+<p style="margin:0 0 16px 0;">Your support means a lot. BacklogBox is a small, independent project and subscribers like you are what keep it going.</p>
+<p style="margin:0;">If you ever need anything or have feedback, just reply to this email. I read every one.</p>`,
+		buttonText: 'Open BacklogBox',
+		buttonUrl: params.appUrl,
+		footer: 'You received this email because you subscribed to BacklogBox.'
+	});
+}
+
+export function subscriptionCancelledTemplate(params: {
 	name: string;
-	daysLeft: number;
 	subscribeUrl: string;
 }): string {
 	return baseTemplate({
-		preheader: `Your BacklogBox data will be deleted in ${params.daysLeft} days`,
-		heading: 'Your data will be deleted soon',
+		preheader: "We're sorry to see you go",
+		heading: 'Your subscription has been cancelled',
 		body: `<p style="margin:0 0 16px 0;">Hey ${params.name},</p>
-<p style="margin:0 0 16px 0;">Your free trial ended a while ago, and your BacklogBox data (boards, lists, and tracking history) will be permanently deleted in <strong>${params.daysLeft} days</strong>.</p>
-<p style="margin:0;">Subscribe now to keep everything — pick up right where you left off.</p>`,
-		buttonText: 'Subscribe Now',
+<p style="margin:0 0 16px 0;">Your BacklogBox subscription has been cancelled. You'll still have access until the end of your current billing period.</p>
+<p style="margin:0 0 16px 0;">After that, your account moves to the free tier and your data stays safe for 90 days. If you change your mind, you can resubscribe anytime and everything will still be here.</p>
+<p style="margin:0;">If something wasn't working for you, I'd genuinely love to hear about it &mdash; just reply to this email.</p>`,
+		buttonText: 'Resubscribe',
 		buttonUrl: params.subscribeUrl,
 		footer:
-			'You received this email because your BacklogBox trial has expired.<br>Subscribe to keep your data, or it will be removed after the retention period.'
+			'You received this email because your BacklogBox subscription was cancelled.<br>Your data will be kept for 90 days.'
 	});
 }

@@ -8,10 +8,16 @@ import { env } from '$env/dynamic/private';
 import { building, dev } from '$app/environment';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
-import { setUserSubscribed, setTrialStarted } from '$lib/server/db/queries';
+import { setUserSubscribed, setTrialStarted, getUserForEmail } from '$lib/server/db/queries';
 import { log } from '$lib/server/logger';
 import { sendEmail } from '$lib/server/email';
-import { passwordResetTemplate, emailVerificationTemplate } from '$lib/server/email-templates';
+import {
+	passwordResetTemplate,
+	emailVerificationTemplate,
+	welcomeTemplate,
+	subscriptionConfirmedTemplate,
+	subscriptionCancelledTemplate
+} from '$lib/server/email-templates';
 
 function createAuth() {
 	const polarClient = new Polar({
@@ -39,6 +45,16 @@ function createAuth() {
 								'oauth signup, starting trial'
 							);
 							await setTrialStarted(account.userId);
+							const appUrl = env.BETTER_AUTH_URL ?? 'https://backlogbox.com';
+							const u = await getUserForEmail(account.userId);
+							if (u) {
+								void sendEmail({
+									to: u.email,
+									subject: 'Welcome to BacklogBox',
+									html: welcomeTemplate({ name: u.name, appUrl }),
+									replyTo: 'yorick@backlogbox.com'
+								});
+							}
 						}
 					}
 				}
@@ -80,6 +96,13 @@ function createAuth() {
 			async afterEmailVerification(verifiedUser) {
 				log.info({ userId: verifiedUser.id }, 'email verified, starting trial');
 				await setTrialStarted(verifiedUser.id);
+				const appUrl = env.BETTER_AUTH_URL ?? 'https://backlogbox.com';
+				void sendEmail({
+					to: verifiedUser.email,
+					subject: 'Welcome to BacklogBox',
+					html: welcomeTemplate({ name: verifiedUser.name, appUrl }),
+					replyTo: 'yorick@backlogbox.com'
+				});
 			}
 		},
 		socialProviders: {
@@ -132,6 +155,16 @@ function createAuth() {
 							}
 							log.info({ userId, subscriptionId: payload.data.id }, 'subscription activated');
 							await setUserSubscribed(userId, true);
+							const appUrl = env.BETTER_AUTH_URL ?? 'https://backlogbox.com';
+							const u = await getUserForEmail(userId);
+							if (u) {
+								void sendEmail({
+									to: u.email,
+									subject: "You're all set!",
+									html: subscriptionConfirmedTemplate({ name: u.name, appUrl }),
+									replyTo: 'yorick@backlogbox.com'
+								});
+							}
 						},
 						onSubscriptionRevoked: async (payload) => {
 							const userId = payload.data.customer.externalId;
@@ -144,6 +177,19 @@ function createAuth() {
 							}
 							log.info({ userId, subscriptionId: payload.data.id }, 'subscription revoked');
 							await setUserSubscribed(userId, false);
+							const appUrl = env.BETTER_AUTH_URL ?? 'https://backlogbox.com';
+							const u = await getUserForEmail(userId);
+							if (u) {
+								void sendEmail({
+									to: u.email,
+									subject: 'Your subscription has been cancelled',
+									html: subscriptionCancelledTemplate({
+										name: u.name,
+										subscribeUrl: `${appUrl}/subscribe`
+									}),
+									replyTo: 'yorick@backlogbox.com'
+								});
+							}
 						},
 						onCustomerStateChanged: async (payload) => {
 							const userId = payload.data.externalId;

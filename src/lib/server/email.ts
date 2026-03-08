@@ -13,6 +13,7 @@ interface SendEmailParams {
 	to: string;
 	subject: string;
 	html: string;
+	replyTo?: string;
 }
 
 /**
@@ -21,7 +22,7 @@ interface SendEmailParams {
  * No-ops during SvelteKit build.
  * Logs to console when RESEND_API_KEY is unset (local dev).
  */
-export async function sendEmail({ to, subject, html }: SendEmailParams): Promise<void> {
+export async function sendEmail({ to, subject, html, replyTo }: SendEmailParams): Promise<void> {
 	if (building) return;
 
 	if (!env.RESEND_API_KEY) {
@@ -32,7 +33,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
 
 	const from = env.EMAIL_FROM ?? 'BacklogBox <noreply@backlogbox.com>';
 
-	const { error } = await resend().emails.send({ from, to: [to], subject, html });
+	const { error } = await resend().emails.send({ from, to: [to], subject, html, replyTo });
 
 	if (error) {
 		log.error({ error, to, subject }, 'email send failed');

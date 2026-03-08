@@ -632,6 +632,16 @@ export async function getUserProfile(userId: string) {
 	});
 }
 
+/** Get user name + email for transactional emails */
+export async function getUserForEmail(
+	userId: string
+): Promise<{ name: string; email: string } | undefined> {
+	return db.query.user.findFirst({
+		where: eq(user.id, userId),
+		columns: { name: true, email: true }
+	});
+}
+
 /** Set user subscription status (called from Polar webhooks) */
 export async function setUserSubscribed(userId: string, subscribed: boolean) {
 	await db.update(user).set({ subscribed }).where(eq(user.id, userId));
