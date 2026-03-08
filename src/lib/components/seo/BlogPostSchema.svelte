@@ -25,7 +25,7 @@
 </script>
 
 <svelte:head>
-	<title>{post.title} | BacklogBox Blog</title>
+	<title>{post.title} | BacklogBox</title>
 	<meta name="description" content={post.description} />
 	<meta name="keywords" content={post.keywords.join(', ')} />
 	<link rel="canonical" href={pageUrl} />

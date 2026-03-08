@@ -154,6 +154,16 @@
 
 	const faqItems = [
 		{
+			question: 'What is a media backlog tracker?',
+			answer:
+				'A media backlog tracker helps you organize everything you want to watch, read, and play. Instead of scattered watchlists and mental notes, you get a single place to manage your books, movies, TV shows, games, and podcasts — with visual boards that show your progress.'
+		},
+		{
+			question: 'Can I track books, movies, and games in one app?',
+			answer:
+				'Yes. BacklogBox has dedicated Kanban boards for books, movies, TV series, games, and podcasts — all in one app. You can also create custom lists for anything else, like wines or travel destinations.'
+		},
+		{
 			question: 'Is there a free plan?',
 			answer:
 				'Yes! BacklogBox is free forever with 3 media boards and 20 items per board. Every new account also starts with a 14-day trial of the full Pro plan — no credit card required.'
@@ -162,11 +172,6 @@
 			question: 'What happens when my trial ends?',
 			answer:
 				"You're never locked out. When your trial ends, you keep free plan access with your data intact. Boards beyond your 3 free picks become read-only, and items over the 20-per-board limit are preserved — you just can't add more until you upgrade."
-		},
-		{
-			question: 'What media types can I track?',
-			answer:
-				'BacklogBox has dedicated boards for books, movies, TV series, games, and podcasts. Pro users can also create custom lists for anything else — wines, restaurants, travel destinations, and more.'
 		},
 		{
 			question: 'How is BacklogBox different from Goodreads or Letterboxd?',

@@ -81,12 +81,25 @@
 		applicationCategory: 'LifestyleApplication',
 		operatingSystem: 'Web',
 		description: defaultDescription,
-		offers: {
-			'@type': 'Offer',
-			price: '7.99',
-			priceCurrency: 'USD',
-			url: `${siteUrl}/subscribe`
-		}
+		screenshot: `${siteUrl}/hero.webp`,
+		featureList:
+			'Kanban boards for books, movies, TV series, games, and podcasts. Auto-search and metadata fill. Discover and recommendations. Dashboard and stats. Ratings, notes, and progress tracking. Year in Review (Wrapped). Custom lists for anything. Public profile and sharing.',
+		offers: [
+			{
+				'@type': 'Offer',
+				price: '0',
+				priceCurrency: 'USD',
+				description: 'Free plan — 3 boards, 20 items each',
+				url: `${siteUrl}/register`
+			},
+			{
+				'@type': 'Offer',
+				price: '7.99',
+				priceCurrency: 'USD',
+				description: 'Pro plan — unlimited boards and items',
+				url: `${siteUrl}/subscribe`
+			}
+		]
 	})}</${'script'}>`}
 
 	<!-- Structured data: WebSite -->

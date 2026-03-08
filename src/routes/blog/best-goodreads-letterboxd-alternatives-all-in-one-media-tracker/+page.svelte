@@ -257,19 +257,11 @@
 		</p>
 		<div class="space-y-3">
 			<a
-				href="/blog/how-to-organize-your-media-backlog"
+				href="/blog/best-letterboxd-alternative"
 				class="block rounded-lg border border-border/40 p-4 text-sm transition-colors hover:border-border hover:bg-card/30"
 			>
 				<span class="font-medium text-foreground"
-					>How to Organize Your Media Backlog: Books, Movies, Games & More</span
-				>
-			</a>
-			<a
-				href="/blog/game-backlog-management-guide"
-				class="block rounded-lg border border-border/40 p-4 text-sm transition-colors hover:border-border hover:bg-card/30"
-			>
-				<span class="font-medium text-foreground"
-					>Game Backlog Management: A Complete Guide to Tackling Your Pile of Shame</span
+					>Best Letterboxd Alternatives in 2026: Movie & TV Trackers Compared</span
 				>
 			</a>
 			<a
@@ -278,6 +270,14 @@
 			>
 				<span class="font-medium text-foreground"
 					>Best Media Tracker Apps in 2026: Track Books, Movies, Games & More</span
+				>
+			</a>
+			<a
+				href="/blog/how-to-organize-your-media-backlog"
+				class="block rounded-lg border border-border/40 p-4 text-sm transition-colors hover:border-border hover:bg-card/30"
+			>
+				<span class="font-medium text-foreground"
+					>How to Organize Your Media Backlog: Books, Movies, Games & More</span
 				>
 			</a>
 			<a

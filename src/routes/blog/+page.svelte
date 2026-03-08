@@ -55,7 +55,9 @@
 </svelte:head>
 
 <div>
-	<h1 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Blog</h1>
+	<h1 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+		Media Tracking Tips & Guides
+	</h1>
 	<p class="mt-3 text-base leading-relaxed text-muted-foreground">
 		Tips, guides, and strategies for organizing your media backlog.
 	</p>
