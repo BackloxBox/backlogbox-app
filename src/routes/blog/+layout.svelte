@@ -140,6 +140,8 @@
 	/* ------------------------------------------------------------------ */
 	/* Shared prose styles for blog post articles                          */
 	/* ------------------------------------------------------------------ */
+
+	/* Headings */
 	:global(.prose-custom h2) {
 		margin-top: 2.5rem;
 		margin-bottom: 0.75rem;
@@ -155,6 +157,8 @@
 		font-weight: 600;
 		color: var(--foreground);
 	}
+
+	/* Body text */
 	:global(.prose-custom :not(.not-prose) > p) {
 		margin-bottom: 1rem;
 		line-height: 1.75;
@@ -164,17 +168,12 @@
 		font-size: 1.0625rem;
 		color: var(--foreground);
 	}
-	:global(.prose-custom ul),
-	:global(.prose-custom ol) {
-		margin-top: 1.25rem;
-		margin-bottom: 1rem;
-		padding-left: 1.5rem;
-		color: var(--muted-foreground);
+	:global(.prose-custom strong) {
+		color: var(--foreground);
+		font-weight: 600;
 	}
-	:global(.prose-custom li) {
-		margin-bottom: 0.375rem;
-		line-height: 1.75;
-	}
+
+	/* Links */
 	:global(.prose-custom :not(.not-prose) > a:not([data-slot='button'])) {
 		color: var(--primary);
 		text-decoration: underline;
@@ -183,22 +182,91 @@
 	:global(.prose-custom :not(.not-prose) > a:not([data-slot='button']):hover) {
 		opacity: 0.8;
 	}
-	:global(.prose-custom strong) {
-		color: var(--foreground);
+
+	/* Lists */
+	:global(.prose-custom ul) {
+		margin-top: 1rem;
+		margin-bottom: 1rem;
+		padding-left: 0;
+		list-style: none;
+		color: var(--muted-foreground);
+	}
+	:global(.prose-custom ol) {
+		margin-top: 1rem;
+		margin-bottom: 1rem;
+		padding-left: 0;
+		list-style: none;
+		counter-reset: ol-counter;
+		color: var(--muted-foreground);
+	}
+	:global(.prose-custom ul > li) {
+		position: relative;
+		padding-left: 1.5rem;
+		margin-bottom: 0.5rem;
+		line-height: 1.75;
+	}
+	:global(.prose-custom ul > li::before) {
+		content: '';
+		position: absolute;
+		left: 0.25rem;
+		top: 0.75rem;
+		width: 5px;
+		height: 5px;
+		border-radius: 9999px;
+		background-color: var(--primary);
+	}
+	:global(.prose-custom ol > li) {
+		position: relative;
+		padding-left: 2rem;
+		margin-bottom: 0.5rem;
+		line-height: 1.75;
+		counter-increment: ol-counter;
+	}
+	:global(.prose-custom ol > li::before) {
+		content: counter(ol-counter);
+		position: absolute;
+		left: 0;
+		top: 0.05rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.375rem;
+		height: 1.375rem;
+		font-size: 0.7rem;
 		font-weight: 600;
+		color: var(--primary-foreground);
+		background-color: var(--primary);
+		border-radius: 9999px;
 	}
-	:global(.prose-custom table) {
-		border-collapse: collapse;
-		width: 100%;
+
+	/* Inline code */
+	:global(.prose-custom code:not(pre code)) {
+		padding: 0.15rem 0.4rem;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		font-family: 'Geist Mono', ui-monospace, monospace;
+		color: var(--foreground);
+		background-color: var(--muted);
+		border-radius: 0.25rem;
 	}
-	:global(.prose-custom th),
-	:global(.prose-custom td) {
-		white-space: nowrap;
+
+	/* Blockquote */
+	:global(.prose-custom blockquote) {
+		margin: 1.5rem 0;
+		padding: 0.75rem 1.25rem;
+		border-left: 3px solid var(--primary);
+		background-color: var(--muted);
+		border-radius: 0 0.375rem 0.375rem 0;
 	}
-	@media (max-width: 639px) {
-		:global(.prose-custom th),
-		:global(.prose-custom td) {
-			white-space: normal;
-		}
+	:global(.prose-custom blockquote p) {
+		color: var(--foreground);
+		font-style: italic;
+	}
+
+	/* Horizontal rule */
+	:global(.prose-custom hr) {
+		margin: 2.5rem 0;
+		border: none;
+		border-top: 1px solid hsl(var(--border) / 0.4);
 	}
 </style>

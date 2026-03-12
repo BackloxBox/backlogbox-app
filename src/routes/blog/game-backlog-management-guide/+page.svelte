@@ -309,7 +309,7 @@
 				class="block rounded-lg border border-border/40 p-4 text-sm transition-colors hover:border-border hover:bg-card/30"
 			>
 				<span class="font-medium text-foreground"
-					>Best Goodreads & Letterboxd Alternative: Why You Need an All-in-One Media Tracker</span
+					>Best Goodreads Alternative in 2026: Book Trackers Compared</span
 				>
 			</a>
 			<a

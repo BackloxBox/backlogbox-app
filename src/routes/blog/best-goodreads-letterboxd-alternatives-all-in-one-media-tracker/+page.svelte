@@ -31,7 +31,7 @@
 </script>
 
 <article class="prose-custom">
-	<BlogPostSchema {post} {faqItems} breadcrumbLabel="Goodreads & Letterboxd Alternatives" />
+	<BlogPostSchema {post} {faqItems} breadcrumbLabel="Best Goodreads Alternative" />
 
 	<p class="lead">
 		If you are serious about tracking what you read, watch, and play, you probably have accounts on
@@ -285,7 +285,7 @@
 				class="block rounded-lg border border-border/40 p-4 text-sm transition-colors hover:border-border hover:bg-card/30"
 			>
 				<span class="font-medium text-foreground"
-					>TBR Pile Out of Control? A Practical Guide to Managing Your To-Be-Read List</span
+					>TBR Pile Out of Control? How to Finally Manage Your Reading List</span
 				>
 			</a>
 		</div>

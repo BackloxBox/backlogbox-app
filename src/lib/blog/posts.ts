@@ -13,6 +13,42 @@ export interface BlogPost {
 /** Ordered newest-first so iteration without sorting produces correct display order. */
 export const posts: readonly BlogPost[] = [
 	{
+		slug: 'import-letterboxd-watchlist',
+		title: 'How to Import Your Letterboxd Watchlist into BacklogBox',
+		description:
+			'Move your Letterboxd watch history and watchlist into BacklogBox in 3 steps. Ratings, watch dates, and poster art transfer automatically.',
+		publishedAt: '2026-03-12',
+		updatedAt: '2026-03-12',
+		author: 'BacklogBox Team',
+		readingTime: '3 min read',
+		keywords: [
+			'import letterboxd',
+			'letterboxd export',
+			'letterboxd csv import',
+			'letterboxd to backlogbox',
+			'transfer letterboxd data',
+			'movie tracker import'
+		]
+	},
+	{
+		slug: 'import-goodreads-library',
+		title: 'How to Import Your Goodreads Library into BacklogBox',
+		description:
+			'Transfer your Goodreads reading history to BacklogBox in 3 steps. Ratings, read dates, and cover art come along automatically.',
+		publishedAt: '2026-03-12',
+		updatedAt: '2026-03-12',
+		author: 'BacklogBox Team',
+		readingTime: '3 min read',
+		keywords: [
+			'import goodreads',
+			'goodreads export',
+			'goodreads csv import',
+			'goodreads to backlogbox',
+			'transfer goodreads data',
+			'book tracker import'
+		]
+	},
+	{
 		slug: 'best-letterboxd-alternative',
 		title: 'Best Letterboxd Alternatives in 2026: Movie & TV Trackers Compared',
 		description:
@@ -35,7 +71,7 @@ export const posts: readonly BlogPost[] = [
 	},
 	{
 		slug: 'tbr-pile-management-guide',
-		title: 'TBR Pile Out of Control? A Practical Guide to Managing Your To-Be-Read List',
+		title: 'TBR Pile Out of Control? How to Finally Manage Your Reading List',
 		description:
 			'Your TBR pile keeps growing and the guilt is real. Practical strategies to organize your to-be-read list and pick your next book faster.',
 		publishedAt: '2026-03-03',
@@ -115,27 +151,27 @@ export const posts: readonly BlogPost[] = [
 	},
 	{
 		slug: 'best-goodreads-letterboxd-alternatives-all-in-one-media-tracker',
-		title: 'Best Goodreads & Letterboxd Alternative: Why You Need an All-in-One Media Tracker',
+		title: 'Best Goodreads Alternative in 2026: Book Trackers Compared',
 		description:
-			'Tired of juggling Goodreads, Letterboxd, Backloggd, and Trakt? Compare single-media trackers vs. all-in-one solutions for your backlog.',
+			'Looking for a Goodreads alternative? Compare the top book tracking apps and all-in-one media trackers that go beyond just books.',
 		publishedAt: '2026-02-14',
-		updatedAt: '2026-02-14',
+		updatedAt: '2026-03-12',
 		author: 'BacklogBox Team',
 		readingTime: '7 min read',
 		keywords: [
 			'goodreads alternative',
 			'goodreads alternative 2026',
-			'letterboxd alternative',
+			'best goodreads alternative',
+			'book tracker app',
 			'backloggd alternative',
 			'trakt alternative',
 			'all-in-one media tracker',
-			'media tracker app',
 			'book movie game tracker'
 		]
 	},
 	{
 		slug: 'game-backlog-management-guide',
-		title: 'Game Backlog Management: A Complete Guide to Tackling Your Pile of Shame',
+		title: 'Game Backlog Management: How to Tackle Your Pile of Shame',
 		description:
 			'Struggling with an overwhelming game backlog? Learn the Kanban method, priority frameworks, and practical strategies to finally tackle your pile of shame.',
 		publishedAt: '2026-02-10',

@@ -293,7 +293,7 @@
 				class="block rounded-lg border border-border/40 p-4 text-sm transition-colors hover:border-border hover:bg-card/30"
 			>
 				<span class="font-medium text-foreground"
-					>Game Backlog Management: A Complete Guide to Tackling Your Pile of Shame</span
+					>Game Backlog Management: How to Tackle Your Pile of Shame</span
 				>
 			</a>
 			<a
