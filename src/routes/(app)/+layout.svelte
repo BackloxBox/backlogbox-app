@@ -21,6 +21,7 @@
 	import Moon from '@lucide/svelte/icons/moon';
 	import Menu from '@lucide/svelte/icons/menu';
 	import LogOut from '@lucide/svelte/icons/log-out';
+	import Import from '@lucide/svelte/icons/download';
 	import Settings from '@lucide/svelte/icons/settings';
 	import Check from '@lucide/svelte/icons/check';
 	import BookOpen from '@lucide/svelte/icons/book-open';
@@ -457,9 +458,24 @@
 			<!-- Bottom nav -->
 			<div class="space-y-0.5 p-2">
 				<a
+					href="/import"
+					class="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+				{page.url.pathname === '/import'
+						? 'bg-sidebar-accent text-sidebar-accent-foreground'
+						: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
+					onclick={() => (sidebarOpen = false)}
+				>
+					<Import
+						class="size-4 shrink-0 {page.url.pathname === '/import'
+							? 'text-foreground'
+							: 'text-muted-foreground'}"
+					/>
+					Import
+				</a>
+				<a
 					href="/settings"
 					class="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
-					{page.url.pathname === '/settings'
+				{page.url.pathname === '/settings'
 						? 'bg-sidebar-accent text-sidebar-accent-foreground'
 						: 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}"
 					onclick={() => (sidebarOpen = false)}
