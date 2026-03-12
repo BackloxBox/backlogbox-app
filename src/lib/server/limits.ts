@@ -1,6 +1,13 @@
 import type { AccessLevel } from './access';
 
 // ---------------------------------------------------------------------------
+// Hard caps (not tier-differentiated — applies to free/trial users only)
+// ---------------------------------------------------------------------------
+
+/** Maximum total items across all boards for non-paid users */
+export const MAX_TOTAL_ITEMS = 200;
+
+// ---------------------------------------------------------------------------
 // Per-tier feature limits
 // ---------------------------------------------------------------------------
 

@@ -951,6 +951,36 @@ export async function getItemCountForType(userId: string, type: MediaType): Prom
 	return Number(row?.count ?? 0);
 }
 
+/** Total item count across all boards (used for global free-tier cap) */
+export async function getTotalItemCount(userId: string): Promise<number> {
+	const [row] = await db
+		.select({ count: count() })
+		.from(mediaItem)
+		.where(eq(mediaItem.userId, userId));
+	return Number(row?.count ?? 0);
+}
+
+/** Existing titles for a given media type (used for import deduplication) */
+export async function getExistingTitlesForType(
+	userId: string,
+	type: MediaType,
+	titles: string[]
+): Promise<Set<string>> {
+	if (titles.length === 0) return new Set();
+	const lower = titles.map((t) => t.toLowerCase());
+	const rows = await db
+		.select({ title: mediaItem.title })
+		.from(mediaItem)
+		.where(
+			and(
+				eq(mediaItem.userId, userId),
+				eq(mediaItem.type, type),
+				inArray(sql`lower(${mediaItem.title})`, lower)
+			)
+		);
+	return new Set(rows.map((r) => r.title.toLowerCase()));
+}
+
 /** Item counts per media type for sidebar badges */
 export async function getItemCountsByType(
 	userId: string

@@ -42,10 +42,12 @@
 	const comparisonRows = [
 		{ feature: 'Media boards', free: '3 of 5', paid: 'All 5' },
 		{ feature: 'Items per board', free: '20', paid: 'Unlimited' },
+		{ feature: 'Total items', free: '200', paid: 'Unlimited' },
 		{ feature: 'Drag & drop kanban', free: true, paid: true },
 		{ feature: 'Auto-search & metadata', free: true, paid: true },
 		{ feature: 'Dashboard & stats', free: true, paid: true },
 		{ feature: 'Public profile & sharing', free: true, paid: true },
+		{ feature: 'Import from Goodreads & Letterboxd', free: false, paid: true },
 		{ feature: 'Notes on items', free: false, paid: true },
 		{ feature: 'Custom lists', free: false, paid: 'Up to 5' },
 		{ feature: 'Discover — For You recs', free: false, paid: true },

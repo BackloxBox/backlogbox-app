@@ -144,6 +144,7 @@
 	const proFeatures = [
 		'All 5 media boards',
 		'Unlimited items per board',
+		'Import from Goodreads & Letterboxd',
 		'Notes on items',
 		'Custom lists for anything',
 		'Personalized recommendations',
@@ -166,12 +167,12 @@
 		{
 			question: 'Is there a free plan?',
 			answer:
-				'Yes! BacklogBox is free forever with 3 media boards and 20 items per board. Every new account also starts with a 14-day trial of the full Pro plan — no credit card required.'
+				'Yes! BacklogBox is free forever with 3 media boards, 20 items per board, and up to 200 items total. Every new account also starts with a 14-day trial of the full Pro plan — no credit card required.'
 		},
 		{
 			question: 'What happens when my trial ends?',
 			answer:
-				"You're never locked out. When your trial ends, you keep free plan access with your data intact. Boards beyond your 3 free picks become read-only, and items over the 20-per-board limit are preserved — you just can't add more until you upgrade."
+				"You're never locked out. When your trial ends, you keep free plan access with your data intact. Boards beyond your 3 free picks become read-only, and items over the per-board or 200-item total limit are preserved — you just can't add more until you upgrade."
 		},
 		{
 			question: 'How is BacklogBox different from Goodreads or Letterboxd?',

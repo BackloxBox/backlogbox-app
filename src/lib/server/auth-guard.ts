@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { getRequestEvent } from '$app/server';
 import type { MediaType } from '$lib/types';
 import type { AccessLevel } from './access';
-import { getLimits } from './limits';
+import { getLimits, MAX_TOTAL_ITEMS } from './limits';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -104,6 +104,26 @@ export function requireItemLimit(mediaType: MediaType, currentCount: number): st
 			403,
 			`Free plan allows up to ${limits.maxItemsPerBoard} items per board. Upgrade for unlimited.`
 		);
+	}
+	return locals.user.id;
+}
+
+/**
+ * Checks whether adding an item would exceed the global item cap for non-paid users.
+ * Paid users are exempt. Call *after* requireActiveBoard() and requireItemLimit().
+ *
+ * Returns the userId on success, throws 403 if the cap is reached.
+ */
+export function requireTotalItemLimit(totalCount: number): string {
+	const locals = getLocals();
+	if (!locals.user) {
+		error(401, 'Not authenticated');
+	}
+	if (locals.accessLevel === 'paid') {
+		return locals.user.id;
+	}
+	if (totalCount >= MAX_TOTAL_ITEMS) {
+		error(403, `Free plan allows up to ${MAX_TOTAL_ITEMS} items total. Upgrade for unlimited.`);
 	}
 	return locals.user.id;
 }

@@ -56,8 +56,14 @@
 	const itemCount = $derived(
 		mediaType ? ((page.data.itemCounts as Record<string, number>)[mediaType] ?? 0) : 0
 	);
+	const totalItemCount = $derived(
+		Object.values(page.data.itemCounts as Record<string, number>).reduce((s, n) => s + n, 0)
+	);
 	const itemLimit = $derived(isFree ? 20 : Infinity);
+	const totalItemLimit = 200;
 	const atItemLimit = $derived(isFree && itemCount >= itemLimit);
+	const atTotalLimit = $derived(isFree && totalItemCount >= totalItemLimit);
+	const addDisabled = $derived(atItemLimit || atTotalLimit);
 
 	let addModalOpen = $state(false);
 	let selectedItem = $state<MediaItemWithMeta | null>(null);
@@ -257,14 +263,20 @@
 				>
 					{itemCount}/{itemLimit}
 				</span>
+				<span
+					class="text-xs tabular-nums {atTotalLimit ? 'text-red-500' : 'text-muted-foreground'}"
+					title="Total items across all boards"
+				>
+					({totalItemCount}/{totalItemLimit} total)
+				</span>
 			{/if}
 		</div>
 		<div class="flex items-center gap-2">
 			<BoardSearch bind:value={searchQuery} />
 			{#if !boardLocked}
-				<Button size="sm" onclick={() => (addModalOpen = true)} disabled={atItemLimit}>
+				<Button size="sm" onclick={() => (addModalOpen = true)} disabled={addDisabled}>
 					<Plus class="size-4" />
-					{atItemLimit ? 'Limit reached' : 'Add'}
+					{addDisabled ? 'Limit reached' : 'Add'}
 				</Button>
 			{/if}
 		</div>

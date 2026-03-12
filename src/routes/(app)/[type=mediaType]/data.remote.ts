@@ -5,9 +5,10 @@ import {
 	requireUserId,
 	requireActiveBoard,
 	requireItemLimit,
+	requireTotalItemLimit,
 	requirePaid
 } from '$lib/server/auth-guard';
-import { getItemCountForType } from '$lib/server/db/queries';
+import { getItemCountForType, getTotalItemCount } from '$lib/server/db/queries';
 import { log } from '$lib/server/logger';
 import {
 	createMediaItem,
@@ -306,8 +307,12 @@ export const getBoardItems = query(v.string(), async (slug) => {
 export const addItem = command(addItemSchema, async (data) => {
 	const type = resolveType(data.slug);
 	const userId = requireActiveBoard(type);
-	const currentCount = await getItemCountForType(userId, type);
+	const [currentCount, totalCount] = await Promise.all([
+		getItemCountForType(userId, type),
+		getTotalItemCount(userId)
+	]);
 	requireItemLimit(type, currentCount);
+	requireTotalItemLimit(totalCount);
 
 	const meta = extractMeta(type, data);
 
